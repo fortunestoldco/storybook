@@ -1,4 +1,6 @@
-"""Configuration settings for the Storybook application."""
+"""
+Configuration settings for the Storybook application.
+"""
 
 import os
 from enum import Enum
@@ -17,6 +19,10 @@ AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER")
+TWILIO_TO_NUMBER = os.getenv("TWILIO_TO_NUMBER")
 
 # Model Configuration
 USE_GPU = os.getenv("USE_GPU", "false").lower() == "true"
@@ -53,7 +59,6 @@ DEFAULT_WRITERS = int(os.getenv("DEFAULT_WRITERS", "1"))
 JOINT_LLM_THRESHOLD = int(
     os.getenv("JOINT_LLM_THRESHOLD", "2000")
 )  # Word count threshold for joint LLM
-
 
 # Operation Modes
 class OperationMode(str, Enum):
@@ -217,7 +222,7 @@ FIVE_ACT_STRUCTURE = {
                 {"name": "Climactic Moment", "description": "The highest point of tension"},
                 {
                     "name": "Immediate Aftermath",
-                    "description": "Immediate consequences of the climax",
+                    "description": "Initial consequences of the climax",
                 },
             ],
         },
@@ -241,7 +246,7 @@ FIVE_ACT_STRUCTURE = {
                 {"name": "Resolution", "description": "Tie up loose ends"},
                 {
                     "name": "New Status Quo",
-                    "description": "Show the new state of the world/characters",
+                    "description": "Show the transformed state of the world/characters",
                 },
             ],
         },
@@ -472,6 +477,29 @@ class Setting(BaseModel):
     attributes: Optional[Dict[str, Any]] = None
 
 
+class StoryOutline(BaseModel):
+    """Structure for a story outline."""
+
+    title: str
+    summary: str
+    structure: StoryStructure = StoryStructure.THREE_ACT
+    acts: List[Dict[str, Any]] = Field(
+        default_factory=list
+    )  # Structured according to story structure
+    characters: List[Character] = Field(default_factory=list)
+    plot_points: List[PlotPoint] = Field(default_factory.list)
+    settings: List[Setting] = Field(default_factory=list)
+    themes: List[str] = Field(default_factory=list)
+    style_notes: Optional[str] = None
+    target_audience: Optional[str] = None
+"""
+Configuration settings for the Storybook application (continued).
+"""
+
+from pydantic import BaseModel, Field
+
+
+# Pydantic Models for data structures
 class StoryOutline(BaseModel):
     """Structure for a story outline."""
 
