@@ -1,32 +1,12 @@
 {
-  "graphs": {
-    "storybook_graph": {
-      "description": "Multi-agent system for collaborative story creation with research, writing, and publishing teams",
-      "entrypoint": "agents.graph:graph",
-      "dependencies": [
-        "config.py",
-        "agents/graph.py",
-        "agents/state.py",
-        "agents/prompts.py",
-        "agents/tools.py",
-        "agents/utils.py",
-        "agents/researcher.py",
-        "agents/research_supervisor.py",
-        "agents/writer.py",
-        "agents/joint_writer.py",
-        "agents/editor.py",
-        "agents/writing_supervisor.py",
-        "agents/publisher.py",
-        "agents/publishing_supervisor.py",
-        "agents/author_relations.py",
-        "agents/style_guide_editor.py",
-        "agents/human_in_loop.py",
-        "services/database.py",
-        "services/vector_store.py",
-        "services/search_service.py",
-        "services/bible_service.py",
-        "utils/text_utils.py"
-      ]
-    }
-  }
+    "dependencies": [
+        ".",
+        "langchain_openai",
+        "langgraph"
+    ],
+    "graphs": {
+        "storybook": "./storybook/graph.py:story_graph"
+    },
+    "env": "./.env",
+    "python_version": "3.11"
 }
