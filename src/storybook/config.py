@@ -11,11 +11,12 @@ class Config:
     and storybook-specific configurations.
     """
     MONGODB_URI = os.getenv("MONGODB_URI")
-    MONGODB_DATABASE_NAME = os.getenv("OPENAI_API_KEY")
-    MONGODB_COLLECTION_NAME =  os.getenv("OPENAI_API_KEY") 
-    ATLAS_VECTOR_SEARCH_INDEX_NAME =  os.getenv("OPENAI_API_KEY")
+    MONGODB_DATABASE_NAME = os.getenv("MONGODB_DATABASE_NAME")
+    MONGODB_COLLECTION_NAME =  os.getenv("MONGODB_COLLECTION_NAME") 
+    ATLAS_VECTOR_SEARCH_INDEX_NAME =  os.getenv("ATLAS_VECTOR_SEARCH_INDEX_NAME")
     # --- API Keys ---
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Changed to get from env var
+    OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
     SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")  # Optional: SerpAPI for search
     ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY") #Optional: ElevenLabs for Text To Speech
     # Add other API keys here (e.g., for image generation, other LLMs)
