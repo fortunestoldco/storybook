@@ -22,6 +22,11 @@ class Config:
     SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")  # Optional: SerpAPI for search
     ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY")  # Optional: ElevenLabs for Text To Speech
 
+    LANGSMITH_TRACING=true
+    LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
+    LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
+    LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT")
+
     # --- Model Configuration ---
     DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-3.5-turbo-1106")
     TEMPERATURE = float(os.getenv("TEMPERATURE", "0.7"))
