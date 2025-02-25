@@ -1,3 +1,7 @@
+"""
+Utility functions for the Storybook application.
+"""
+
 import datetime
 import uuid
 import json
@@ -249,7 +253,7 @@ def prepare_human_review_prompt(
         ]
     )
 
-    return "\n".join(prompt_parts)
+    return "\n.join(prompt_parts)
 
 
 def format_brainstorm_session(session: Dict[str, Any]) -> str:
@@ -285,7 +289,7 @@ def format_brainstorm_session(session: Dict[str, Any]) -> str:
             ]
         )
 
-    return "\n".join(formatted)
+    return "\n.join(formatted)
 
 
 def get_story_structure_template(structure: StoryStructure) -> Dict[str, Any]:
