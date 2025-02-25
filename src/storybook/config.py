@@ -1,284 +1,493 @@
-from pathlib import Path
-from pydantic import BaseModel
-from typing import Any, Dict, List, Optional, Union
-from datetime import datetime
+"""Configuration settings for the Storybook application."""
 
-class ProjectConfig(BaseModel):
-    """Configuration for the novel writing project."""
-    novel_id: str
+import os
+from enum import Enum
+from typing import Dict, List, Optional, Any, Union
+
+from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# API Keys and Credentials
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+MONGODB_CONNECTION_STRING = os.getenv("MONGODB_CONNECTION_STRING")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+
+# Model Configuration
+USE_GPU = os.getenv("USE_GPU", "false").lower() == "true"
+USE_OLLAMA = os.getenv("USE_OLLAMA", "false").lower() == "true"
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-4-turbo")
+RESEARCH_MODEL = os.getenv("RESEARCH_MODEL", "gpt-4-turbo")
+WRITING_MODEL = os.getenv("WRITING_MODEL", "gpt-4-turbo")
+PUBLISHING_MODEL = os.getenv("PUBLISHING_MODEL", "gpt-4-turbo")
+SUPERVISOR_MODEL = os.getenv("SUPERVISOR_MODEL", "gpt-4-turbo")
+AUTHOR_RELATIONS_MODEL = os.getenv("AUTHOR_RELATIONS_MODEL", "gpt-4-turbo")
+
+# Ollama Models (when USE_OLLAMA=true)
+OLLAMA_DEFAULT_MODEL = os.getenv("OLLAMA_DEFAULT_MODEL", "llama3")
+OLLAMA_RESEARCH_MODEL = os.getenv("OLLAMA_RESEARCH_MODEL", "llama3")
+OLLAMA_WRITING_MODEL = os.getenv("OLLAMA_WRITING_MODEL", "llama3")
+OLLAMA_PUBLISHING_MODEL = os.getenv("OLLAMA_PUBLISHING_MODEL", "llama3")
+OLLAMA_SUPERVISOR_MODEL = os.getenv("OLLAMA_SUPERVISOR_MODEL", "llama3")
+
+# Database Configuration
+DB_NAME = os.getenv("DB_NAME", "storybook")
+STORIES_COLLECTION = os.getenv("STORIES_COLLECTION", "stories")
+RESEARCH_COLLECTION = os.getenv("RESEARCH_COLLECTION", "research")
+BIBLE_COLLECTION = os.getenv("BIBLE_COLLECTION", "bible")
+FEEDBACK_COLLECTION = os.getenv("FEEDBACK_COLLECTION", "feedback")
+USER_COLLECTION = os.getenv("USER_COLLECTION", "users")
+
+# Application Settings
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
+BRAINSTORM_SESSION_TIMEOUT = int(os.getenv("BRAINSTORM_SESSION_TIMEOUT", "1800"))  # 30 minutes
+HUMAN_REVIEW_TIMEOUT = int(os.getenv("HUMAN_REVIEW_TIMEOUT", "86400"))  # 24 hours
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+DEFAULT_WRITERS = int(os.getenv("DEFAULT_WRITERS", "1"))
+JOINT_LLM_THRESHOLD = int(os.getenv("JOINT_LLM_THRESHOLD", "2000"))  # Word count threshold for joint LLM
+
+# Operation Modes
+class OperationMode(str, Enum):
+    CREATE = "create"       # Create new story from scratch
+    IMPORT = "import"       # Import existing content
+    EDIT = "edit"           # Edit existing story
+    CONTINUE = "continue"   # Continue existing story
+
+# Enums for workflow status
+class StoryState(str, Enum):
+    INITIATED = "initiated"
+    BRIEFING = "briefing"
+    RESEARCH = "research"
+    PLANNING = "planning"
+    WRITING = "writing"
+    EDITING = "editing"
+    REVIEW = "review"
+    REVISION = "revision"
+    READY_FOR_PUBLISHING = "ready_for_publishing"
+    PUBLISHED = "published"
+    REJECTED = "rejected"
+    ON_HOLD = "on_hold"
+    ERROR = "error"
+
+class AgentRole(str, Enum):
+    RESEARCHER = "researcher"
+    WRITER = "writer"
+    EDITOR = "editor"
+    PUBLISHER = "publisher"
+    RESEARCH_SUPERVISOR = "research_supervisor"
+    WRITING_SUPERVISOR = "writing_supervisor"
+    PUBLISHING_SUPERVISOR = "publishing_supervisor"
+    AUTHOR_RELATIONS = "author_relations"
+    STYLE_GUIDE_EDITOR = "style_guide_editor"
+    HUMAN_IN_LOOP = "human_in_loop"
+    JOINT_WRITER = "joint_writer"   # Special role for collaborative writing
+
+class TeamType(str, Enum):
+    RESEARCH = "research"
+    WRITING = "writing"
+    PUBLISHING = "publishing"
+    SUPERVISION = "supervision"
+    COORDINATION = "coordination"
+
+class BibleSectionType(str, Enum):
+    STYLE_GUIDE = "style_guide"
+    CHARACTER_PROFILES = "character_profiles"
+    WORLD_BUILDING = "world_building"
+    PLOT_ELEMENTS = "plot_elements"
+    THEMES = "themes"
+    REFERENCE_MATERIAL = "reference_material"
+    AUDIENCE_NOTES = "audience_notes"
+
+class FeedbackType(str, Enum):
+    CONTENT = "content"
+    STYLE = "style"
+    STRUCTURE = "structure"
+    RESEARCH = "research"
+    TECHNICAL = "technical"
+    GENERAL = "general"
+
+class StoryStructure(str, Enum):
+    THREE_ACT = "three_act"
+    FIVE_ACT = "five_act"
+    HEROS_JOURNEY = "heros_journey"
+    CUSTOM = "custom"
+
+# Story Structure Templates
+THREE_ACT_STRUCTURE = {
+    "name": "Three-Act Structure",
+    "description": "Classic storytelling structure with setup, confrontation, and resolution",
+    "acts": [
+        {
+            "name": "Act I: Setup",
+            "description": "Introduce the main characters, setting, and central conflict",
+            "components": [
+                {"name": "Exposition", "description": "Establish the world and characters"},
+                {"name": "Inciting Incident", "description": "Event that sets the story in motion"},
+                {"name": "First Plot Point", "description": "Character commits to addressing the central conflict"}
+            ]
+        },
+        {
+            "name": "Act II: Confrontation",
+            "description": "Character faces obstacles and evolves through conflict",
+            "components": [
+                {"name": "Rising Action", "description": "Character attempts to resolve conflict but faces complications"},
+                {"name": "Midpoint", "description": "Major event that changes the character's perspective"},
+                {"name": "Second Plot Point", "description": "Character faces a major setback"}
+            ]
+        },
+        {
+            "name": "Act III: Resolution",
+            "description": "Climax and conclusion of the story",
+            "components": [
+                {"name": "Pre-Climax", "description": "Character makes final preparations for the climactic moment"},
+                {"name": "Climax", "description": "Final confrontation that resolves the central conflict"},
+                {"name": "Denouement", "description": "Wrap up loose ends and show the new normal"}
+            ]
+        }
+    ]
+}
+
+FIVE_ACT_STRUCTURE = {
+    "name": "Five-Act Structure",
+    "description": "Expanded structure with more detailed dramatic arcs",
+    "acts": [
+        {
+            "name": "Act I: Exposition",
+            "description": "Set up the story world and introduce characters",
+            "components": [
+                {"name": "Introduction", "description": "Present the world, protagonist, and other key characters"},
+                {"name": "Background", "description": "Provide context for the story"},
+                {"name": "Inciting Incident", "description": "Event that disrupts the status quo"}
+            ]
+        },
+        {
+            "name": "Act II: Rising Action",
+            "description": "Build complications and develop conflict",
+            "components": [
+                {"name": "Reaction", "description": "Protagonist reacts to the inciting incident"},
+                {"name": "Action", "description": "Protagonist makes first attempts to address the situation"},
+                {"name": "Complication", "description": "New obstacles emerge that complicate matters"}
+            ]
+        },
+        {
+            "name": "Act III: Climax",
+            "description": "Central turning point in the story",
+            "components": [
+                {"name": "Preparation", "description": "Events leading up to the climactic moment"},
+                {"name": "Climactic Moment", "description": "The highest point of tension"},
+                {"name": "Immediate Aftermath", "description": "Immediate consequences of the climax"}
+            ]
+        },
+        {
+            "name": "Act IV: Falling Action",
+            "description": "Deal with the consequences of the climax",
+            "components": [
+                {"name": "Outcomes", "description": "Effects of the climax unfold"},
+                {"name": "Complications", "description": "New challenges arising from the climax"},
+                {"name": "Approach to Resolution", "description": "Moving toward the story's conclusion"}
+            ]
+        },
+        {
+            "name": "Act V: Denouement",
+            "description": "Resolve the story and provide closure",
+            "components": [
+                {"name": "Final Confrontation", "description": "Address any remaining conflicts"},
+                {"name": "Resolution", "description": "Tie up loose ends"},
+                {"name": "New Status Quo", "description": "Show the new state of the world/characters"}
+            ]
+        }
+    ]
+}
+
+HEROS_JOURNEY_STRUCTURE = {
+    "name": "Hero's Journey",
+    "description": "Joseph Campbell's monomyth structure for transformative adventures",
+    "acts": [
+        {
+            "name": "Act I: Departure",
+            "description": "The hero's journey begins",
+            "components": [
+                {"name": "The Ordinary World", "description": "Establish the hero's normal life and limitations"},
+                {"name": "The Call to Adventure", "description": "Hero is presented with a challenge or quest"},
+                {"name": "Refusal of the Call", "description": "Hero initially hesitates or refuses"},
+                {"name": "Meeting the Mentor", "description": "Hero gains guidance, encouragement, or items"},
+                {"name": "Crossing the Threshold", "description": "Hero commits to the adventure"}
+            ]
+        },
+        {
+            "name": "Act II: Initiation",
+            "description": "The hero faces trials and transformation",
+            "components": [
+                {"name": "Tests, Allies, and Enemies", "description": "Hero encounters challenges and forms relationships"},
+                {"name": "Approach to the Inmost Cave", "description": "Preparations for major challenge"},
+                {"name": "The Ordeal", "description": "Hero faces a central crisis and must overcome it"},
+                {"name": "Reward", "description": "Hero gains something from the ordeal (object, knowledge, etc.)"}
+            ]
+        },
+        {
+            "name": "Act III: Return",
+            "description": "The hero completes the journey and returns transformed",
+            "components": [
+                {"name": "The Road Back", "description": "Hero begins journey back to ordinary world"},
+                {"name": "Resurrection", "description": "Final test that applies what the hero has learned"},
+                {"name": "Return with the Elixir", "description": "Hero brings back something to benefit the ordinary world"}
+            ]
+        }
+    ]
+}
+
+STORY_STRUCTURES = {
+    StoryStructure.THREE_ACT: THREE_ACT_STRUCTURE,
+    StoryStructure.FIVE_ACT: FIVE_ACT_STRUCTURE,
+    StoryStructure.HEROS_JOURNEY: HEROS_JOURNEY_STRUCTURE
+}
+
+# Pydantic Models for data structures
+class UserRequest(BaseModel):
+    """User request for story creation."""
+    title: Optional[str] = None
+    theme: Optional[str] = None
+    genre: Optional[str] = None
+    target_audience: Optional[str] = None
+    length: Optional[str] = None
+    keywords: Optional[List[str]] = None
+    style: Optional[str] = None
+    special_requirements: Optional[str] = None
+    user_id: Optional[str] = None
+    deadline: Optional[str] = None
+    references: Optional[List[str]] = None
+    tone: Optional[str] = None
+    story_structure: Optional[StoryStructure] = StoryStructure.THREE_ACT
+    num_writers: Optional[int] = 1
+    use_joint_llm: Optional[bool] = False
+    operation_mode: Optional[OperationMode] = OperationMode.CREATE
+    existing_content: Optional[str] = None
+    sections_to_edit: Optional[List[str]] = None
+    
+    def to_prompt_string(self) -> str:
+        """Convert request to a formatted string for prompts."""
+        parts = []
+        if self.title:
+            parts.append(f"Title: {self.title}")
+        if self.theme:
+            parts.append(f"Theme: {self.theme}")
+        if self.genre:
+            parts.append(f"Genre: {self.genre}")
+        if self.target_audience:
+            parts.append(f"Target Audience: {self.target_audience}")
+        if self.length:
+            parts.append(f"Length: {self.length}")
+        if self.style:
+            parts.append(f"Style: {self.style}")
+        if self.tone:
+            parts.append(f"Tone: {self.tone}")
+        if self.keywords:
+            parts.append(f"Keywords: {', '.join(self.keywords)}")
+        if self.special_requirements:
+            parts.append(f"Special Requirements: {self.special_requirements}")
+        if self.references:
+            parts.append(f"References: {', '.join(self.references)}")
+        if self.deadline:
+            parts.append(f"Deadline: {self.deadline}")
+        if self.story_structure:
+            structure_name = STORY_STRUCTURES[self.story_structure]["name"] if self.story_structure in STORY_STRUCTURES else "Custom"
+            parts.append(f"Story Structure: {structure_name}")
+            
+        return "\n".join(parts)
+
+class ResearchItem(BaseModel):
+    """Research item containing reference material."""
+    source: str
+    content: str
+    relevance: float = 1.0
+    tags: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+    added_by: Optional[str] = None
+    created_at: Optional[str] = None
+
+class BibleSection(BaseModel):
+    """A section of the story bible."""
+    section_type: BibleSectionType
     title: str
-    word_count: int
-    chapter_count: int
-    guidelines: List[str]
-    notes: Optional[str]
-    genre: Optional[str]
-    target_audience: Optional[str]
-    deadline: Optional[datetime]
+    content: str
+    created_by: str
+    updated_by: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    version: int = 1
+    tags: List[str] = Field(default_factory=list)
+    
+class StoryBible(BaseModel):
+    """The complete story bible containing all sections."""
+    story_id: str
+    sections: Dict[str, List[BibleSection]] = Field(default_factory=dict)
+    current_version: int = 1
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    
+    def add_section(self, section: BibleSection):
+        """Add a section to the bible."""
+        section_type = section.section_type.value
+        if section_type not in self.sections:
+            self.sections[section_type] = []
+        self.sections[section_type].append(section)
+        
+    def get_section(self, section_type: BibleSectionType, title: Optional[str] = None) -> List[BibleSection]:
+        """Get sections of a specific type, optionally filtered by title."""
+        section_type_value = section_type.value
+        if section_type_value not in self.sections:
+            return []
+            
+        if title:
+            return [s for s in self.sections[section_type_value] if s.title == title]
+        return self.sections[section_type_value]
 
-
-class MongoDBConfig(BaseModel):
-    """Configuration for MongoDB Atlas."""
-    connection_string: str
-    database_name: str = "storybook"
-    collections: Dict[str, str] = {
-        "vectors": "document_vectors",
-        "projects": "projects",
-        "story_bible": "story_bible",
-        "drafts": "drafts",
-        "feedback": "feedback",
-        "character": "characters",
-        "world_building": "world_building"
-    }
-    vector_search: Dict[str, Any] = {
-        "index": "default",
-        "num_candidates": 100,
-        "embedding_dimension": 1536  # For OpenAI embeddings
-    }
-
-class ToolConfig(BaseModel):
-    """Configuration for tools used by agents."""
-    name: str
-    description: str
-    parameters: Dict[str, Any]
-    requires_api_key: bool = False
-    api_key_env_var: Optional[str] = None
-
-class AgentConfig(BaseModel):
-    """Configuration for individual agents."""
+class Character(BaseModel):
+    """Character in a story."""
     name: str
     role: str
     description: str
-    tools: List[str]
-    temperature: float = 0.7
-    max_iterations: int = 3
-    memory_type: str = "chat_memory"
-    requires_supervision: bool = True
-    supervisor: Optional[str] = None
+    background: Optional[str] = None
+    motivations: Optional[List[str]] = None
+    traits: Optional[List[str]] = None
+    relationships: Optional[Dict[str, str]] = None
 
-class TeamConfig(BaseModel):
-    """Configuration for agent teams."""
+class PlotPoint(BaseModel):
+    """Plot point in a story."""
+    title: str
+    description: str
+    sequence: int
+    act: Optional[str] = None  # Which act or section this belongs to
+    importance: Optional[float] = 1.0  # 0.0 to 1.0
+    characters_involved: Optional[List[str]] = None
+    setting: Optional[str] = None
+
+class Setting(BaseModel):
+    """Setting in a story."""
     name: str
-    supervisor: str
-    members: List[str]
-    workflow: List[str]
-    parallel_execution: bool = False
+    description: str
+    importance: Optional[float] = 1.0
+    attributes: Optional[Dict[str, Any]] = None
 
-# Base project directory
-BASE_DIR = Path(__file__).parent.absolute()
+class StoryOutline(BaseModel):
+    """Structure for a story outline."""
+    title: str
+    summary: str
+    structure: StoryStructure = StoryStructure.THREE_ACT
+    acts: List[Dict[str, Any]] = Field(default_factory=list)  # Structured according to story structure
+    characters: List[Character] = Field(default_factory=list)
+    plot_points: List[PlotPoint] = Field(default_factory=list)
+    settings: List[Setting] = Field(default_factory=list) 
+    themes: List[str] = Field(default_factory=list)
+    style_notes: Optional[str] = None
+    target_audience: Optional[str] = None
+    estimated_length: Optional[str] = None
 
-# MongoDB Atlas configuration
-MONGODB_CONFIG = MongoDBConfig(
-    connection_string="mongodb+srv://<username>:<password>@cluster.mongodb.net/",
-    vector_search={
-        "index": "vector_index",
-        "num_candidates": 100,
-        "embedding_dimension": 1536,
-        "similarity_metric": "cosine"  # or "euclidean" or "dotProduct"
-    }
-)
+class StorySection(BaseModel):
+    """A section of the story content."""
+    id: str
+    title: str
+    content: str
+    sequence: int
+    act: Optional[str] = None
+    assigned_to: Optional[str] = None  # Agent ID responsible for writing
+    status: str = "not_started"  # not_started, in_progress, completed, revised
+    word_count: Optional[int] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    version: int = 1
+    
+class Feedback(BaseModel):
+    """Feedback on story content."""
+    feedback_type: FeedbackType
+    content: str
+    source: str  # agent_id or user_id
+    source_role: str
+    target_section: Optional[str] = None
+    severity: Optional[int] = None  # 1-5, with 5 being critical
+    suggestions: Optional[List[str]] = None
+    created_at: Optional[str] = None
+    
+class PublishingMetadata(BaseModel):
+    """Metadata for publishing a story."""
+    formatted_content: Optional[str] = None
+    summary: Optional[str] = None
+    seo_keywords: Optional[List[str]] = None
+    categories: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
+    feature_image: Optional[str] = None
+    teaser: Optional[str] = None
+    publish_platform: Optional[str] = None
+    publish_date: Optional[str] = None
+    audience_targeting: Optional[Dict[str, Any]] = None
 
-# Tool configurations
-TOOL_CONFIGS = {
-    "project_management": ToolConfig(
-        name="project_management",
-        description="Manages project status, timelines, and coordination",
-        parameters={"status_update_interval": 300}
-    ),
-    "document_retrieval": ToolConfig(
-        name="document_retrieval",
-        description="Retrieves documents from vector store",
-        parameters={"max_results": 5},
-        requires_api_key=True,
-        api_key_env_var="OPENAI_API_KEY"
-    ),
-    "web_crawler": ToolConfig(
-        name="web_crawler",
-        description="Crawls web for research information",
-        parameters={"max_depth": 3, "timeout": 30}
-    ),
-    "vector_store": ToolConfig(
-        name="vector_store",
-        description="Stores and retrieves vector embeddings",
-        parameters={"collection_name": "embeddings"},
-        requires_api_key=True,
-        api_key_env_var="OPENAI_API_KEY"
-    ),
-    "chat": ToolConfig(
-        name="chat",
-        description="Handles interactive chat sessions",
-        parameters={"max_history": 50}
-    )
-}
+class WriterAssignment(BaseModel):
+    """Assignment of writer to story sections."""
+    writer_id: str
+    sections: List[str]  # Section IDs
+    status: str = "assigned"  # assigned, in_progress, completed
+    joint_llm: bool = False  # Whether to use joint LLM for difficult sections
 
-# Agent configurations
-AGENT_CONFIGS = {
-    "overall_supervisor": AgentConfig(
-        name="Overall Supervisor",
-        role="project_manager",
-        description="Coordinates all teams and manages the overall novel writing process",
-        tools=["project_management", "status_updates", "document_management"],
-        requires_supervision=False
-    ),
-    "author_relations": AgentConfig(
-        name="Author Relations Agent",
-        role="author_liaison",
-        description="Handles communication with the author and manages brainstorming sessions",
-        tools=["chat", "document_retrieval", "vector_store"],
-        supervisor="overall_supervisor"
-    ),
-    "research_supervisor": AgentConfig(
-        name="Research Team Supervisor",
-        role="research_manager",
-        description="Coordinates research activities and manages research team",
-        tools=["project_management", "document_retrieval"],
-        supervisor="overall_supervisor"
-    ),
-    "contextual_researcher": AgentConfig(
-        name="Contextual Research Agent",
-        role="researcher",
-        description="Conducts contextual research for the novel",
-        tools=["document_retrieval", "web_crawler"],
-        supervisor="research_supervisor"
-    ),
-    "market_researcher": AgentConfig(
-        name="Market Research Agent",
-        role="researcher",
-        description="Analyzes market trends and competition",
-        tools=["document_retrieval", "web_crawler"],
-        supervisor="research_supervisor"
-    ),
-    "consumer_insights": AgentConfig(
-        name="Consumer Insights Agent",
-        role="analyst",
-        description="Analyzes consumer preferences and trends",
-        tools=["document_retrieval", "vector_store"],
-        supervisor="research_supervisor"
-    ),
-    "writing_supervisor": AgentConfig(
-        name="Writing Team Supervisor",
-        role="writing_manager",
-        description="Coordinates writing activities and manages writing team",
-        tools=["project_management", "document_management"],
-        supervisor="overall_supervisor"
-    ),
-    "world_builder": AgentConfig(
-        name="World Builder Agent",
-        role="world_designer",
-        description="Creates and maintains the novel's world specifications",
-        tools=["document_retrieval", "vector_store"],
-        supervisor="writing_supervisor"
-    ),
-    "character_builder": AgentConfig(
-        name="Character Builder Agent",
-        role="character_designer",
-        description="Creates and maintains character specifications",
-        tools=["document_retrieval", "vector_store"],
-        supervisor="writing_supervisor"
-    ),
-    "story_writer": AgentConfig(
-        name="Story Writer Agent",
-        role="writer",
-        description="Writes the main narrative content",
-        tools=["document_retrieval"],
-        supervisor="writing_supervisor"
-    ),
-    "dialogue_writer": AgentConfig(
-        name="Dialogue Writer Agent",
-        role="writer",
-        description="Writes and refines character dialogue",
-        tools=["document_retrieval"],
-        supervisor="writing_supervisor"
-    ),
-    "publishing_supervisor": AgentConfig(
-        name="Publishing Team Supervisor",
-        role="publishing_manager",
-        description="Coordinates publishing activities and manages publishing team",
-        tools=["project_management", "document_management"],
-        supervisor="overall_supervisor"
-    ),
-    "consistency_checker": AgentConfig(
-        name="Consistency Checker Agent",
-        role="editor",
-        description="Checks for consistency in plot, characters, and world-building",
-        tools=["document_retrieval"],
-        supervisor="publishing_supervisor"
-    ),
-    "continuity_checker": AgentConfig(
-        name="Continuity Checker Agent",
-        role="editor",
-        description="Checks for continuity between chapters and scenes",
-        tools=["document_retrieval"],
-        supervisor="publishing_supervisor"
-    ),
-    "editor": AgentConfig(
-        name="Editor Agent",
-        role="editor",
-        description="Performs comprehensive editorial review",
-        tools=["document_retrieval"],
-        supervisor="publishing_supervisor"
-    ),
-    "finalisation": AgentConfig(
-        name="Finalisation Agent",
-        role="publisher",
-        description="Prepares manuscript for publication",
-        tools=["document_management"],
-        supervisor="publishing_supervisor"
-    )
-}
-
-# Team configurations
-TEAM_CONFIGS = {
-    "supervisor_team": TeamConfig(
-        name="Supervisor Team",
-        supervisor="overall_supervisor",
-        members=["overall_supervisor"],
-        workflow=["initialize_project", "coordinate_teams", "monitor_progress"]
-    ),
-    "author_relations_team": TeamConfig(
-        name="Author Relations Team",
-        supervisor="overall_supervisor",
-        members=["author_relations"],
-        workflow=["brainstorm", "gather_requirements", "collect_feedback"]
-    ),
-    "research_team": TeamConfig(
-        name="Research Team",
-        supervisor="research_supervisor",
-        members=["contextual_researcher", "market_researcher", "consumer_insights"],
-        workflow=["research_context", "analyze_market", "generate_insights"],
-        parallel_execution=True
-    ),
-    "writing_team": TeamConfig(
-        name="Writing Team",
-        supervisor="writing_supervisor",
-        members=["world_builder", "character_builder", "story_writer", "dialogue_writer"],
-        workflow=["world_building", "character_development", "writing_chapters"]
-    ),
-    "publishing_team": TeamConfig(
-        name="Publishing Team",
-        supervisor="publishing_supervisor",
-        members=["consistency_checker", "continuity_checker", "editor", "finalisation"],
-        workflow=["check_consistency", "check_continuity", "edit", "finalize"]
-    )
-}
-
-# Project status states
-PROJECT_STATES = [
-    "BRAINSTORMING",
-    "RESEARCH",
-    "WORLD_BUILDING",
-    "CHARACTER_DEVELOPMENT",
-    "FIRST_DRAFT",
-    "SECOND_DRAFT",
-    "THIRD_DRAFT",
-    "EDITING",
-    "FINAL_REVIEW",
-    "COMPLETED"
-]
-
-# Environment variables required
-REQUIRED_ENV_VARS = [
-    "OPENAI_API_KEY",
-    "MONGODB_USERNAME",
-    "MONGODB_PASSWORD",
-    "MONGODB_CLUSTER",
-]
+class Story(BaseModel):
+    """Complete story with metadata."""
+    id: Optional[str] = None
+    title: str
+    content: str = ""
+    outline: Optional[StoryOutline] = None
+    sections: List[StorySection] = Field(default_factory=list)
+    bible: Optional[StoryBible] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    state: StoryState = StoryState.INITIATED
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    user_id: Optional[str] = None
+    research: List[ResearchItem] = Field(default_factory=list)
+    feedback: List[Feedback] = Field(default_factory=list)
+    publishing_metadata: Optional[PublishingMetadata] = None
+    structure: StoryStructure = StoryStructure.THREE_ACT
+    operation_mode: OperationMode = OperationMode.CREATE
+    writer_assignments: List[WriterAssignment] = Field(default_factory=list)
+    
+    def add_research(self, research_item: ResearchItem):
+        """Add a research item to the story."""
+        self.research.append(research_item)
+        
+    def add_feedback(self, feedback_item: Feedback):
+        """Add a feedback item to the story."""
+        self.feedback.append(feedback_item)
+        
+    def add_section(self, section: StorySection):
+        """Add a section to the story."""
+        self.sections.append(section)
+        
+    def get_section_by_id(self, section_id: str) -> Optional[StorySection]:
+        """Get a section by ID."""
+        for section in self.sections:
+            if section.id == section_id:
+                return section
+        return None
+        
+    def assign_writer(self, writer_id: str, section_ids: List[str], joint_llm: bool = False):
+        """Assign a writer to story sections."""
+        # Check if writer already has assignments
+        for assignment in self.writer_assignments:
+            if assignment.writer_id == writer_id:
+                # Update existing assignment
+                assignment.sections.extend([s for s in section_ids if s not in assignment.sections])
+                assignment.joint_llm = joint_llm
+                return
+                
+        # Create new assignment
+        self.writer_assignments.append(
+            WriterAssignment(
+                writer_id=writer_id,
+                sections=section_ids,
+                joint_llm=joint_llm
+            )
+        )
