@@ -1,6 +1,5 @@
 from typing import List, Dict, Any
 from langchain.tools import BaseTool
-from langchain.utilities import GoogleSearchAPIWrapper
 from langchain.tools.retriever import create_retriever_tool
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import OpenAIEmbeddings
@@ -8,8 +7,8 @@ import requests
 from bs4 import BeautifulSoup
 from langchain_community.document_loaders.firecrawl import FireCrawlLoader
 from langchain_core.tools import Tool
-from langchain_google_community import GoogleSearchAPIWrapper
-from langchain_core.retrievers import TavilySearchAPIRetriever, WikipediaRetriever
+from langchain_community.utilities import GoogleSearchAPIWrapper
+from langchain_community.retrievers from langchain_community.vectorstores import ChromailySearchAPIRetriever, WikipediaRetriever
 from langchain.vectorstores import MongoDBAtlas
 
 class DocumentRetrieverTool(BaseTool):
