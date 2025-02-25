@@ -11,6 +11,7 @@ dependencies = [
     "langchain>=0.3.7",
     "langchain-openai>=0.3.7",
     "langchain-google_community",
+    "langchain_mongodb",
     "langchain-community>=0.3.18",
     "langchain-core",
     "pydantic>=2.10.6",

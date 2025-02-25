@@ -72,16 +72,7 @@ from storybook.prompts import (
     HUMAN_REVIEW_PROMPT,
 )
 
-from storybook.tools import (
-    RESEARCH_TOOLS,
-    WRITING_TOOLS,
-    EDITING_TOOLS,
-    PUBLISHING_TOOLS,
-    SUPERVISOR_TOOLS,
-    AUTHOR_RELATIONS_TOOLS,
-    BIBLE_EDITOR_TOOLS,
-    HUMAN_IN_LOOP_TOOLS,
-)
+from storybook.tools import ToolsService
 
 from storybook.utils import (
     generate_id,
