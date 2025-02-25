@@ -1,0 +1,9 @@
+[database]
+uri = "mongodb+srv://username:password@cluster0.mongodb.net/"
+database_name = "creative_writing_db"
+
+[agents]
+max_concurrency = 5
+
+[logging]
+level = "INFO"
