@@ -9,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolExecutor
-from langgraph.checkpoint import Checkpoint
+from langgraph.checkpoint import LocalFileCheckpoint, S3Checkpoint
 
 from config import (
     StoryState,
@@ -3953,10 +3953,30 @@ def write_story_section(state: GraphState) -> GraphState:
 
 
 # Build the complete graph with all nodes
-def build_graph():
-    """Build the workflow graph for the Storybook application."""
-    # Create a StateGraph with GraphState
-    workflow = StateGraph(GraphState)
+def build_graph(checkpoint_location: Optional[str] = None):
+    """Build the workflow graph for the Storybook application.
+
+    Args:
+        checkpoint_location (Optional[str]): Path to store checkpoints. If None, no checkpointing is used.
+    """
+    # Configure checkpoint handler based on location
+    checkpoint = None
+    if checkpoint_location:
+        if checkpoint_location.startswith("s3://"):
+            # Use S3 checkpoint if location is an S3 URI
+            bucket, key = checkpoint_location[5:].split("/", 1)
+            checkpoint = S3Checkpoint(
+                bucket=bucket,
+                key_prefix=key,
+            )
+        else:
+            # Use local file checkpoint for local paths
+            checkpoint = LocalFileCheckpoint(
+                base_path=checkpoint_location,
+            )
+
+    # Create a StateGraph with GraphState and configured checkpoint
+    workflow = StateGraph(GraphState, checkpoint=checkpoint)
 
     # Add nodes for each phase of the workflow
     workflow.add_node("initialize", initialize_workflow)
@@ -4215,5 +4235,17 @@ def build_graph():
     return workflow
 
 
-# Create the graph instance
-graph = build_graph().compile()
+def create_graph(checkpoint_location: Optional[str] = None):
+    """Create a compiled graph instance with optional checkpointing.
+
+    Args:
+        checkpoint_location (Optional[str]): Path to store checkpoints. If None, no checkpointing is used.
+
+    Returns:
+        The compiled graph instance
+    """
+    return build_graph(checkpoint_location).compile()
+
+
+# Create the default graph instance without checkpointing
+graph = create_graph()
