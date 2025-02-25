@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from langchain_community.document_loaders.firecrawl import FireCrawlLoader
 from langchain_core.tools import Tool
 from langchain_community.utilities import GoogleSearchAPIWrapper
-from langchain_community.retrievers from langchain_community.vectorstores import ChromailySearchAPIRetriever, WikipediaRetriever
+from langchain_community.retrievers import TavilySearchAPIRetriever, WikipediaRetriever
 from langchain.vectorstores import MongoDBAtlas
 
 class DocumentRetrieverTool(BaseTool):
