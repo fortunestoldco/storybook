@@ -379,8 +379,7 @@ builder.add_conditional_edges(
 builder.set_entry_point("author_relations_brainstorm")
 
 # Build the graph
-graph = builder.compile()
-
+graph = Graph(name="storybook")  # Set the name during graph creation
 # ----------------------------------------------------------------------
 # 6. (Server) Run the Graph
 # ----------------------------------------------------------------------
