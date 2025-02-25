@@ -9,7 +9,8 @@ from langchain_community.document_loaders.firecrawl import FireCrawlLoader
 from langchain_core.tools import Tool
 from langchain_community.utilities import GoogleSearchAPIWrapper
 from langchain_community.retrievers import TavilySearchAPIRetriever, WikipediaRetriever
-from langchain.vectorstores import MongoDBAtlas
+from langchain_mongodb import MongoDBAtlasVectorSearch
+from pymongo import MongoClient
 
 class DocumentRetrieverTool(BaseTool):
     """Tool for retrieving documents from the vector store."""
