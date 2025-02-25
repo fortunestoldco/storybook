@@ -120,7 +120,6 @@ def notify_human_in_loop(message: str):
     to_number = os.getenv("TWILIO_TO_NUMBER")
     if to_number:
         twilio.run(message, to_number)
-
 # Agent Factory Functions
 def create_researcher_agent(agent_id: str) -> Any:
     """Create a researcher agent with appropriate tools."""
@@ -171,6 +170,7 @@ def create_writer_agent(agent_id: str) -> Any:
         agent=prompt, tools=WRITING_TOOLS, verbose=True, handle_parsing_errors=True
     )
 
+
 def create_joint_writer_agent(agent_id: str, component_writer_ids: List[str] = None) -> Any:
     """Create a joint writer agent that combines the power of multiple models."""
     from langchain.agents import AgentExecutor, create_openai_tools_agent
@@ -201,8 +201,6 @@ def create_joint_writer_agent(agent_id: str, component_writer_ids: List[str] = N
     return AgentExecutor(
         agent=prompt, tools=WRITING_TOOLS, verbose=True, handle_parsing_errors=True
     )
-
-
 def create_editor_agent(agent_id: str) -> Any:
     """Create an editor agent with appropriate tools."""
     from langchain.agents import AgentExecutor, create_openai_tools_agent
@@ -234,7 +232,7 @@ def create_writing_supervisor_agent(agent_id: str) -> Any:
         agent=prompt,
         tools=SUPERVISOR_TOOLS + WRITING_TOOLS,
         verbose=True,
-        handle_parsing_errors=True,
+        handle_parsing_errors=True
     )
 
 
@@ -266,7 +264,6 @@ def create_style_guide_editor_agent(agent_id: str) -> Any:
     return AgentExecutor(
         agent=prompt, tools=BIBLE_EDITOR_TOOLS, verbose=True, handle_parsing_errors=True
     )
-
 # LangGraph Node Functions
 def initialize_workflow(state: GraphState) -> GraphState:
     """Initialize the workflow with agents and initial state based on operation mode."""
@@ -329,7 +326,7 @@ def initialize_workflow(state: GraphState) -> GraphState:
         for i in range(new_state.num_writers):
             writer_id = generate_id(f"writer_{i+1}")
             new_state.writing_team[writer_id] = WritingAgentState(
-                agent_id=writer_id, agent role=AgentRole.WRITER, status="idle"
+                agent_id=writer_id, agent_role=AgentRole.WRITER, status="idle"
             )
 
         # Create joint writer if enabled
@@ -347,7 +344,7 @@ def initialize_workflow(state: GraphState) -> GraphState:
     if not new_state.editing_team:
         editor_id = generate_id("editor")
         new_state.editing_team[editor_id] = EditingAgentState(
-            agent_id=editor_id, agent role=AgentRole.EDITOR, status="idle"
+            agent_id=editor_id, agent_role=AgentRole.EDITOR, status="idle"
         )
 
     # Writing supervisor
@@ -372,21 +369,21 @@ def initialize_workflow(state: GraphState) -> GraphState:
     if not new_state.author_relations:
         author_relations_id = generate_id("author_relations")
         new_state.author_relations[author_relations_id] = AuthorRelationsAgentState(
-            agent_id=author_relations_id, agent role=AgentRole.AUTHOR_RELATIONS, status="idle"
+            agent_id=author_relations_id, agent_role=AgentRole.AUTHOR_RELATIONS, status="idle"
         )
 
     # Style guide editor
     if not new_state.style_guide_editor:
         style_guide_id = generate_id("style_guide")
         new_state.style_guide_editor[style_guide_id] = StyleGuideEditorState(
-            agent_id=style_guide_id, agent role=AgentRole.STYLE_GUIDE_EDITOR, status="idle"
+            agent_id=style_guide_id, agent_role=AgentRole.STYLE_GUIDE_EDITOR, status="idle"
         )
 
     # Human in the loop
     if not new_state.human_in_loop:
         human_id = generate_id("human")
         new_state.human_in_loop[human_id] = HumanInLoopState(
-            agent_id=human_id, agent role=AgentRole.HUMAN_IN_LOOP, status="ready"
+            agent_id=human_id, agent_role=AgentRole.HUMAN_IN_LOOP, status="ready"
         )
 
     # Initialize story state based on operation mode
@@ -490,7 +487,6 @@ state_graph.add_transition("process_user_request", "plan_edit_continuation", con
 state_graph.add_transition("plan_edit_continuation", "execute_edit_continuation")
 state_graph.add_transition("execute_edit_continuation", "review_edit_continuation")
 state_graph.add_transition("review_edit_continuation", "process_human_edit_approval", condition=lambda state: True)
-state_graph.add_transition("process_human_edit_approval", "execute_edit_continuation", condition=lambda state: state.current_state == StoryState.REVISION)
 state_graph.add_transition("process_human_edit_approval", "start_publishing_phase", condition=lambda state: state.current_state == StoryState.READY_FOR_PUBLISHING)
 state_graph.add_transition("start_publishing_phase", "complete_project")
 state_graph.add_transition("complete_project", END)
