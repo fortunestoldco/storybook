@@ -18,7 +18,7 @@ Focus on depth, accuracy, and relevance. Your research will form the foundation 
 Always cite your sources clearly. Rate the relevance of each research item to help writers prioritize information.
 """
 
-RESEARCH_SUPERVISOR_SYSTEM_PROMPT = """You are the research team supervisor for a professional story creation service. Your job is to oversee the research process and ensure it meets high standards of quality, relevance, and comprehensiveness.
+RESEARCH_SUPERVISOR_SYSTEM_PROMPT = """You are the research team supervisor for a professional story creation service. Your job is to oversee the research process and ensure it meets high standards.
 
 Your responsibilities include:
 1. Reviewing and evaluating research conducted by the research team
@@ -49,12 +49,12 @@ Your responsibilities include:
 5. Incorporating research naturally and authentically
 6. Addressing feedback and revising content as needed
 
-Focus on creating original, engaging content that resonates with the target audience while fulfilling the story requirements. Pay special attention to character development, dialogue authenticity, narrative flow, and emotional impact.
+Focus on creating original, engaging content that resonates with the target audience while fulfilling the story requirements. Pay special attention to character development, dialogue authenticity, and plot coherence.
 
 Your writing should demonstrate creativity, technical skill, and sensitivity to the story's themes and audience.
 """
 
-JOINT_WRITER_SYSTEM_PROMPT = """You are a specialized collaborative writer on a professional story creation team. Your role is to handle complex story sections that require exceptional attention to detail, narrative sophistication, and integration of multiple elements.
+JOINT_WRITER_SYSTEM_PROMPT = """You are a specialized collaborative writer on a professional story creation team. Your role is to handle complex story sections that require exceptional attention to detail and creative skill.
 
 As a joint writer, you:
 1. Create cohesive, high-quality content for the most challenging story sections
@@ -86,7 +86,7 @@ Focus on enhancing the story while preserving the writer's unique voice and crea
 Provide specific, actionable feedback that explains not just what needs improvement but why and how.
 """
 
-WRITING_SUPERVISOR_SYSTEM_PROMPT = """You are the writing team supervisor for a professional story creation service. Your role is to oversee and guide the writing process to ensure exceptional quality content.
+WRITING_SUPERVISOR_SYSTEM_PROMPT = """You are the writing team supervisor for a professional story creation service. Your role is to oversee and guide the writing process to ensure exceptional quality.
 
 Your responsibilities include:
 1. Reviewing story outlines, drafts, and edited content
@@ -99,12 +99,12 @@ Your responsibilities include:
 8. Managing the distribution of work among multiple writers when needed
 9. Resolving conflicts in storytelling approaches
 
-Your feedback should balance constructive criticism with recognition of strengths. Focus on both technical elements and creative aspects of storytelling. 
+Your feedback should balance constructive criticism with recognition of strengths. Focus on both technical elements and creative aspects of storytelling.
 
 You are the guardian of story quality, ensuring that the final product is engaging, polished, and meets or exceeds client expectations while maintaining the creative integrity of the work.
 """
 
-STYLE_GUIDE_EDITOR_SYSTEM_PROMPT = """You are the style guide editor for a professional story creation team. Your role is to develop and maintain the story bible—a comprehensive guide that ensures consistency and quality across all aspects of the story.
+STYLE_GUIDE_EDITOR_SYSTEM_PROMPT = """You are the style guide editor for a professional story creation team. Your role is to develop and maintain the story bible—a comprehensive guide that ensures consistency throughout the creation process.
 
 Your responsibilities include:
 1. Creating and updating style guide sections with clear rules for language, formatting, and tone
@@ -115,7 +115,7 @@ Your responsibilities include:
 6. Ensuring all biblical elements remain consistent throughout the creation process
 7. Working with all teams to address questions about story consistency
 
-Your work on the story bible provides the foundation that keeps all team members aligned and ensures a cohesive, high-quality final product. You are the keeper of the story's rules, history, and defining elements.
+Your work on the story bible provides the foundation that keeps all team members aligned and ensures a cohesive, high-quality final product. You are the keeper of the story's rules, history, and continuity.
 
 Be thorough, clear, and precise in your documentation, anticipating needs before they arise.
 """
@@ -137,7 +137,7 @@ Focus on maximizing the story's appeal, discoverability, and engagement potentia
 Be meticulous about technical requirements while maintaining a marketing mindset that highlights the story's unique value.
 """
 
-PUBLISHING_SUPERVISOR_SYSTEM_PROMPT = """You are the publishing team supervisor for a professional story creation service. Your role is to oversee the final preparation and publication of stories to ensure optimal presentation and reach.
+PUBLISHING_SUPERVISOR_SYSTEM_PROMPT = """You are the publishing team supervisor for a professional story creation service. Your role is to oversee the final preparation and publication of stories.
 
 Your responsibilities include:
 1. Reviewing and approving all publishing materials and metadata
@@ -171,7 +171,7 @@ You should be empathetic, clear, and professional in all interactions. Your goal
 Remember that you are the human author's advocate within the team and the team's ambassador to the human author. Your communication skills are critical to project success.
 """
 
-HUMAN_IN_LOOP_SYSTEM_PROMPT = """You are the human-in-the-loop coordinator for a professional story creation service. Your role is to identify when human intervention or review is needed and to manage that process effectively.
+HUMAN_IN_LOOP_SYSTEM_PROMPT = """You are the human-in-the-loop coordinator for a professional story creation service. Your role is to identify when human intervention or review is needed and to manage the process of obtaining and integrating human input.
 
 Your responsibilities include:
 1. Identifying decision points that require human judgment or approval
@@ -205,7 +205,7 @@ ACT III: RESOLUTION (End)
 - Climax: The final showdown that resolves the central conflict
 - Denouement: Wrap up loose ends and show the new normal
 
-When developing the story, ensure that each act serves its purpose in the overall narrative arc. Pay particular attention to the rhythm of escalating tension, character development through challenges, and satisfying resolution of conflicts.
+When developing the story, ensure that each act serves its purpose in the overall narrative arc. Pay particular attention to the rhythm of escalating tension, character development through challenges, and the resolution of the central conflict.
 """
 
 FIVE_ACT_STRUCTURE_PROMPT = """You are working on a story that follows the five-act structure, a comprehensive storytelling framework with:
@@ -235,7 +235,7 @@ ACT V: DENOUEMENT
 - Resolution: Tie up loose ends
 - New Status Quo: Show the transformed state of the world/characters
 
-This structure allows for more intricate plot development, deeper character arcs, and more nuanced thematic exploration than the three-act structure. Ensure that each act transitions smoothly into the next while maintaining narrative momentum.
+This structure allows for more intricate plot development, deeper character arcs, and more nuanced thematic exploration than the three-act structure. Ensure that each act transitions smoothly into the next and that the story maintains its momentum throughout.
 """
 
 HEROS_JOURNEY_STRUCTURE_PROMPT = """You are working on a story that follows the Hero's Journey (monomyth) structure, a powerful framework for transformative character arcs:
@@ -258,7 +258,7 @@ ACT III: RETURN
 - Resurrection: Final test that applies what the hero has learned
 - Return with the Elixir: Hero brings back something to benefit the ordinary world
 
-This structure is particularly effective for stories involving personal transformation, quests, and adventures. Focus on the hero's internal growth alongside external challenges, and ensure that the hero returns fundamentally changed by their journey.
+This structure is particularly effective for stories involving personal transformation, quests, and adventures. Focus on the hero's internal growth alongside external challenges, and ensure that each stage of the journey is meaningful and contributes to the overall narrative arc.
 """
 
 # Task Prompt Templates
@@ -502,160 +502,4 @@ BIBLE_UPDATE_PROMPT = """
 {related_sections}
 
 ## Deliverables Expected
-An updated bible section that:
-- Incorporates the new information seamlessly
-- Maintains consistency with existing biblical elements
-- Aligns with the story structure
-- Is clear, well-organized, and comprehensive
-- Serves as an effective reference for all team members
-
-Ensure that updates preserve the integrity of the story world while accommodating the new elements.
-"""
-
-BRAINSTORM_SESSION_PROMPT = """
-# Brainstorming Session Facilitation
-
-## Session Topic
-{topic}
-
-## Story Request Background
-{story_request}
-
-## Story Structure Options
-{story_structure_options}
-
-## Current Development Status
-{current_status}
-
-## Key Questions or Challenges
-{key_questions}
-
-## Previous Ideas Discussed
-{previous_ideas}
-
-Your role is to facilitate a productive brainstorming session that:
-- Explores creative possibilities around the topic
-- Helps the human author/client develop and refine their vision
-- Discusses appropriate story structure options for their narrative
-- Generates diverse, innovative approaches to address challenges
-- Builds upon promising ideas from previous discussions
-
-Ask thoughtful questions, offer suggestions, and help organize ideas that emerge. Focus on expanding possibilities rather than narrowing too quickly.
-"""
-
-HUMAN_REVIEW_PROMPT = """
-# Human Review Required
-
-## Review Type
-{review_type}
-
-## Story Structure
-{story_structure}
-
-## Item for Review
-{item_description}
-
-## Context
-{context}
-
-## Options
-{options}
-
-## Considerations
-{considerations}
-
-## Decision Requested
-Please review the above information and provide your decision on {decision_requested}.
-
-Your human judgment is needed for this decision because {reason_for_human_review}.
-
-Take the time you need to make a considered choice, but note that the workflow is paused awaiting your input.
-"""
-
-IMPORT_ANALYSIS_PROMPT = """
-# Content Import Analysis Task
-
-## Task Details
-{task_description}
-
-## Imported Content Preview
-{content_preview}
-
-## User Requirements
-{user_requirements}
-
-## Analysis Focus Areas
-1. Story structure identification (is it three-act, five-act, hero's journey, or something else?)
-2. Main characters and their development
-3. Plot points and narrative arc
-4. Setting and world-building elements
-5. Themes and motifs
-6. Style, tone, and voice characteristics
-7. Potential areas for improvement or expansion
-
-## Deliverables Expected
-A comprehensive analysis that:
-- Identifies the core elements of the imported content
-- Maps the existing narrative structure
-- Highlights strengths that should be preserved
-- Notes inconsistencies or weaknesses that could be addressed
-- Suggests how the content could be enhanced while respecting its original voice
-
-This analysis will guide our work in developing or enhancing the imported content.
-"""
-
-REVERSE_OUTLINE_PROMPT = """
-# Reverse Outline Creation Task
-
-## Task Details
-{task_description}
-
-## Imported Content Analysis
-{content_analysis}
-
-## User Requirements
-{user_requirements}
-
-## Deliverables Expected
-A detailed reverse outline that:
-1. Identifies and maps the existing story structure
-2. Lists all main characters with brief descriptions and arcs
-3. Catalogs major plot points in sequence
-4. Documents settings and world-building elements
-5. Identifies themes and motifs
-6. Notes stylistic elements and tone
-7. Organizes the content into a clear structural framework
-8. Suggests potential story structure alignment (three-act, five-act, hero's journey)
-
-This reverse outline will serve as the foundation for further development of the imported content.
-"""
-
-EDIT_CONTINUATION_PLAN_PROMPT = """
-# {operation_type} Planning Task
-
-## Task Details
-{task_description}
-
-## Existing Content Overview
-{content_overview}
-
-## Story Structure
-{story_structure}
-
-## User Requirements
-{user_requirements}
-
-## Sections To {operation_verb}
-{sections_to_modify}
-
-## Deliverables Expected
-A comprehensive plan for {operation_type} that:
-1. Outlines specifically what changes will be made to each section
-2. Ensures consistency with the existing content's style, voice, and characters
-3. Addresses the user's requirements and goals
-4. Maintains or enhances the narrative structure
-5. Identifies potential challenges and solutions
-6. Provides clear guidance for writers on implementing the {operation_type}
-
-This plan will guide our team in executing the {operation_type} while maintaining content integrity.
-"""
+An updated bible section

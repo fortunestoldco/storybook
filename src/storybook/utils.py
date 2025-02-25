@@ -5,8 +5,8 @@ import re
 import requests
 from typing import Dict, List, Any, Optional, Tuple, Union, Callable
 
-import config
-from config import StoryStructure, STORY_STRUCTURES
+import storybook.config
+from storybook.config import StoryStructure, STORY_STRUCTURES
 
 def generate_id(prefix: str = "") -> str:
     """Generate a unique ID with optional prefix."""
