@@ -4,7 +4,7 @@ from typing import Dict, List, Any, Optional, Set, Union
 from enum import Enum
 from pydantic import BaseModel, Field
 
-from config import (
+from storybook.config import (
     StoryState, AgentRole, TeamType, BibleSectionType, FeedbackType, StoryStructure, OperationMode,
     UserRequest, ResearchItem, BibleSection, StoryBible, Character, 
     PlotPoint, Setting, StoryOutline, StorySection, Feedback, PublishingMetadata, Story, WriterAssignment

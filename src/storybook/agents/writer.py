@@ -6,13 +6,13 @@ import datetime
 from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from config import AgentRole, WRITING_MODEL, USE_OLLAMA, OLLAMA_WRITING_MODEL, StoryStructure
-from agents.tools import WRITING_TOOLS
-from agents.prompts import (
+from storybook.config import AgentRole, WRITING_MODEL, USE_OLLAMA, OLLAMA_WRITING_MODEL, StoryStructure
+from storybook.tools import WRITING_TOOLS
+from storybook.prompts import (
     WRITER_SYSTEM_PROMPT, WRITING_TASK_PROMPT, 
     THREE_ACT_STRUCTURE_PROMPT, FIVE_ACT_STRUCTURE_PROMPT, HEROS_JOURNEY_STRUCTURE_PROMPT
 )
-from agents.utils import create_model_instance, extract_json_from_text, format_agent_response
+from storybook.utils import create_model_instance, extract_json_from_text, format_agent_response
 
 def get_structure_prompt(structure: str) -> str:
     """Get the appropriate structure prompt based on the story structure."""

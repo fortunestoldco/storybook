@@ -7,10 +7,10 @@ import json
 from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from config import AgentRole, SUPERVISOR_MODEL, USE_OLLAMA, OLLAMA_SUPERVISOR_MODEL
-from agents.tools import SUPERVISOR_TOOLS, PUBLISHING_TOOLS
-from agents.prompts import PUBLISHING_SUPERVISOR_SYSTEM_PROMPT, REVIEW_TASK_PROMPT
-from agents.utils import create_model_instance, extract_json_from_text, format_agent_response
+from storybook.config import AgentRole, SUPERVISOR_MODEL, USE_OLLAMA, OLLAMA_SUPERVISOR_MODEL
+from storybook.tools import SUPERVISOR_TOOLS, PUBLISHING_TOOLS
+from storybook.prompts import PUBLISHING_SUPERVISOR_SYSTEM_PROMPT, REVIEW_TASK_PROMPT
+from storybook.utils import create_model_instance, extract_json_from_text, format_agent_response
 
 def get_publishing_supervisor_agent(agent_id: str) -> AgentExecutor:
     """Create a publishing supervisor agent with appropriate tools."""

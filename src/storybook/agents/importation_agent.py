@@ -1,6 +1,6 @@
 from typing import Dict, Any
 import logging
-from agents.base_agent import BaseAgent
+from storybook.base_agent import BaseAgent
 
 class ContextualResearchAgent(BaseAgent):
     def __init__(self, tools_service):

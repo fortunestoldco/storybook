@@ -6,10 +6,10 @@ import datetime
 from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from config import AgentRole, PUBLISHING_MODEL, USE_OLLAMA, OLLAMA_PUBLISHING_MODEL
-from agents.tools import PUBLISHING_TOOLS
-from agents.prompts import PUBLISHER_SYSTEM_PROMPT, PUBLISHING_TASK_PROMPT
-from agents.utils import create_model_instance, extract_json_from_text, format_agent_response
+from storybook.config import AgentRole, PUBLISHING_MODEL, USE_OLLAMA, OLLAMA_PUBLISHING_MODEL
+from storybook.tools import PUBLISHING_TOOLS
+from storybook.prompts import PUBLISHER_SYSTEM_PROMPT, PUBLISHING_TASK_PROMPT
+from storybook.utils import create_model_instance, extract_json_from_text, format_agent_response
 
 def get_publisher_agent(agent_id: str) -> AgentExecutor:
     """Create a publisher agent with appropriate tools."""

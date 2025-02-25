@@ -3,9 +3,9 @@
 from typing import Dict, List, Any, Optional
 import datetime
 
-from config import AgentRole
-from agents.prompts import HUMAN_REVIEW_PROMPT
-from agents.utils import format_agent_response, prepare_human_review_prompt
+from storybook.config import AgentRole
+from storybook.prompts import HUMAN_REVIEW_PROMPT
+from storybook.utils import format_agent_response, prepare_human_review_prompt
 
 def create_human_review_prompt(
     review_type: str,

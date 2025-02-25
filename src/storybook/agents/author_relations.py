@@ -6,10 +6,10 @@ import datetime
 from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from config import AgentRole, AUTHOR_RELATIONS_MODEL, USE_OLLAMA, StoryStructure, STORY_STRUCTURES
-from agents.tools import AUTHOR_RELATIONS_TOOLS
-from agents.prompts import AUTHOR_RELATIONS_SYSTEM_PROMPT, BRAINSTORM_SESSION_PROMPT
-from agents.utils import create_model_instance, extract_json_from_text, format_agent_response
+from storybook.config import AgentRole, AUTHOR_RELATIONS_MODEL, USE_OLLAMA, StoryStructure, STORY_STRUCTURES
+from storybook.tools import AUTHOR_RELATIONS_TOOLS
+from storybook.prompts import AUTHOR_RELATIONS_SYSTEM_PROMPT, BRAINSTORM_SESSION_PROMPT
+from storybook.utils import create_model_instance, extract_json_from_text, format_agent_response
 
 def get_author_relations_agent(agent_id: str) -> AgentExecutor:
     """Create an author relations agent with appropriate tools."""

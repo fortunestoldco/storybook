@@ -8,7 +8,7 @@ from langchain.tools import Tool
 from langchain.utilities import GoogleSearchAPIWrapper, GoogleSerperAPIWrapper
 from langchain.utilities.tavily_search import TavilySearchAPIWrapper
 
-from config import (
+from storybook.config import (
     GOOGLE_API_KEY, GOOGLE_CSE_ID, 
     SERPER_API_KEY, TAVILY_API_KEY,
     GOOGLE_BOOKS_API_KEY

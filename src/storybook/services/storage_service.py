@@ -7,7 +7,7 @@ from typing import Dict, List, Any, Optional, Union, BinaryIO
 import boto3
 from botocore.exceptions import ClientError
 
-from config import (
+from storybook.config import (
     AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, 
     S3_BUCKET_NAME
 )

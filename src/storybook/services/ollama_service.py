@@ -5,7 +5,7 @@ import json
 import requests
 from typing import Dict, List, Any, Optional, Union
 
-from config import OLLAMA_BASE_URL
+from storybook.config import OLLAMA_BASE_URL
 
 class OllamaService:
     """Service for interacting with Ollama local LLM instances."""

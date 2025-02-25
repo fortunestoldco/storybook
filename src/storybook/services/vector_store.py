@@ -7,7 +7,7 @@ from langchain.schema import Document
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Pinecone
 
-from config import (
+from storybook.config import (
     OPENAI_API_KEY, PINECONE_API_KEY, PINECONE_ENVIRONMENT,
     VECTOR_INDEX_NAME, VECTOR_DIMENSION
 )

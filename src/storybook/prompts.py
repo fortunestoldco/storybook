@@ -1,6 +1,6 @@
 """Prompts for the Storybook application."""
 
-from config import AgentRole, TeamType, StoryState, BibleSectionType, StoryStructure
+from storybook.config import AgentRole, TeamType, StoryState, BibleSectionType, StoryStructure
 
 # Research Team Prompts
 RESEARCHER_SYSTEM_PROMPT = """You are an expert researcher on a professional story creation team. Your role is to gather extensive background information, references, and inspiration based on the story request.

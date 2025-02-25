@@ -5,7 +5,7 @@ import json
 from typing import Dict, List, Any, Set, Tuple, Optional
 from collections import Counter
 
-from utils.text_utils import (
+from storybook.text_utils import (
     preprocess_text, extract_keywords, extract_topics, analyze_text_sentiment,
     extract_entities, detect_dialogue, detect_narrative_perspective, detect_reading_level,
     detect_style_elements, calculate_text_stats

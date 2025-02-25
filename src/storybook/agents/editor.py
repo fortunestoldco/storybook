@@ -6,10 +6,10 @@ import datetime
 from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from config import AgentRole, WRITING_MODEL, USE_OLLAMA, OLLAMA_WRITING_MODEL
-from agents.tools import EDITING_TOOLS
-from agents.prompts import EDITOR_SYSTEM_PROMPT, EDITING_TASK_PROMPT
-from agents.utils import create_model_instance, extract_json_from_text, format_agent_response
+from storybook.config import AgentRole, WRITING_MODEL, USE_OLLAMA, OLLAMA_WRITING_MODEL
+from storybook.tools import EDITING_TOOLS
+from storybook.prompts import EDITOR_SYSTEM_PROMPT, EDITING_TASK_PROMPT
+from storybook.utils import create_model_instance, extract_json_from_text, format_agent_response
 
 def get_editor_agent(agent_id: str) -> AgentExecutor:
     """Create an editor agent with appropriate tools."""

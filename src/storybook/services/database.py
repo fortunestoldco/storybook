@@ -5,7 +5,7 @@ from typing import Dict, List, Any, Optional, Union
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
-from config import MONGODB_CONNECTION_STRING, DB_NAME
+from storybook.config import MONGODB_CONNECTION_STRING, DB_NAME
 
 class DatabaseConnector:
     """Connector for MongoDB database operations."""
