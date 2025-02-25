@@ -1,6 +1,0 @@
-{
-  "graphs": {
-    "workflow_graph": "graph.workflow_graph:StoryBook"
-  },
-  "dependencies": ["graph"]
-}
