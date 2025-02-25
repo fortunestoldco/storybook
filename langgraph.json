@@ -1,0 +1,184 @@
+{
+  "version": "1.0",
+  "graph": {
+    "nodes": [
+      {
+        "id": "overall_supervisor",
+        "type": "agent",
+        "class": "src.storybook.supervisors.overall_supervisor.OverallSupervisor",
+        "dependencies": [
+          "writing_supervisor",
+          "research_supervisor",
+          "publishing_supervisor",
+          "author_relations"
+        ]
+      },
+      {
+        "id": "writing_supervisor",
+        "type": "agent",
+        "class": "src.storybook.supervisors.team_supervisor.TeamSupervisor",
+        "dependencies": [
+          "world_builder",
+          "character_builder",
+          "story_writer",
+          "dialogue_writer"
+        ]
+      },
+      {
+        "id": "research_supervisor",
+        "type": "agent",
+        "class": "src.storybook.supervisors.team_supervisor.TeamSupervisor",
+        "dependencies": [
+          "contextual_researcher",
+          "market_researcher",
+          "consumer_insights"
+        ]
+      },
+      {
+        "id": "publishing_supervisor",
+        "type": "agent",
+        "class": "src.storybook.supervisors.team_supervisor.TeamSupervisor",
+        "dependencies": [
+          "consistency_checker",
+          "continuity_checker",
+          "editor",
+          "finalisation"
+        ]
+      },
+      {
+        "id": "author_relations",
+        "type": "agent",
+        "class": "src.storybook.agents.author_relations_agent.AuthorRelationsAgent",
+        "dependencies": []
+      },
+      {
+        "id": "world_builder",
+        "type": "agent",
+        "class": "src.storybook.agents.writing.world_building_agent.WorldBuildingAgent",
+        "dependencies": []
+      },
+      {
+        "id": "character_builder",
+        "type": "agent",
+        "class": "src.storybook.agents.writing.character_builder_agent.CharacterBuilderAgent",
+        "dependencies": []
+      },
+      {
+        "id": "story_writer",
+        "type": "agent",
+        "class": "src.storybook.agents.writing.story_writer_agent.StoryWriterAgent",
+        "dependencies": []
+      },
+      {
+        "id": "dialogue_writer",
+        "type": "agent",
+        "class": "src.storybook.agents.writing.dialogue_writer_agent.DialogueWriterAgent",
+        "dependencies": []
+      },
+      {
+        "id": "contextual_researcher",
+        "type": "agent",
+        "class": "src.storybook.agents.research.contextual_research_agent.ContextualResearchAgent",
+        "dependencies": []
+      },
+      {
+        "id": "market_researcher",
+        "type": "agent",
+        "class": "src.storybook.agents.research.market_research_agent.MarketResearchAgent",
+        "dependencies": []
+      },
+      {
+        "id": "consumer_insights",
+        "type": "agent",
+        "class": "src.storybook.agents.research.consumer_insights_agent.ConsumerInsightsAgent",
+        "dependencies": []
+      },
+      {
+        "id": "consistency_checker",
+        "type": "agent",
+        "class": "src.storybook.agents.publishing.consistency_checker_agent.ConsistencyCheckerAgent",
+        "dependencies": []
+      },
+      {
+        "id": "continuity_checker",
+        "type": "agent",
+        "class": "src.storybook.agents.publishing.continuity_checker_agent.ContinuityCheckerAgent",
+        "dependencies": []
+      },
+      {
+        "id": "editor",
+        "type": "agent",
+        "class": "src.storybook.agents.publishing.editor_agent.EditorAgent",
+        "dependencies": []
+      },
+      {
+        "id": "finalisation",
+        "type": "agent",
+        "class": "src.storybook.agents.publishing.finalisation_agent.FinalisationAgent",
+        "dependencies": []
+      }
+    ],
+    "edges": [
+      {
+        "source": "overall_supervisor",
+        "target": "writing_supervisor"
+      },
+      {
+        "source": "overall_supervisor",
+        "target": "research_supervisor"
+      },
+      {
+        "source": "overall_supervisor",
+        "target": "publishing_supervisor"
+      },
+      {
+        "source": "overall_supervisor",
+        "target": "author_relations"
+      },
+      {
+        "source": "writing_supervisor",
+        "target": "world_builder"
+      },
+      {
+        "source": "writing_supervisor",
+        "target": "character_builder"
+      },
+      {
+        "source": "writing_supervisor",
+        "target": "story_writer"
+      },
+      {
+        "source": "writing_supervisor",
+        "target": "dialogue_writer"
+      },
+      {
+        "source": "research_supervisor",
+        "target": "contextual_researcher"
+      },
+      {
+        "source": "research_supervisor",
+        "target": "market_researcher"
+      },
+      {
+        "source": "research_supervisor",
+        "target": "consumer_insights"
+      },
+      {
+        "source": "publishing_supervisor",
+        "target": "consistency_checker"
+      },
+      {
+        "source": "publishing_supervisor",
+        "target": "continuity_checker"
+      },
+      {
+        "source": "publishing_supervisor",
+        "target": "editor"
+      },
+      {
+        "source": "publishing_supervisor",
+        "target": "finalisation"
+      }
+    ]
+  }
+}
