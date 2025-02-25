@@ -10,9 +10,12 @@ class Config:
     This class handles API keys, model settings, data storage, logging,
     and storybook-specific configurations.
     """
-
+    MONGODB_URI = os.getenv("MONGODB_URI")
+    MONGODB_DATABASE_NAME = os.getenv("OPENAI_API_KEY")
+    MONGODB_COLLECTION_NAME =  os.getenv("OPENAI_API_KEY") 
+    ATLAS_VECTOR_SEARCH_INDEX_NAME =  os.getenv("OPENAI_API_KEY")
     # --- API Keys ---
-    OPENAI_API_KEY = "DXHH"
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Changed to get from env var
     SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")  # Optional: SerpAPI for search
     ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY") #Optional: ElevenLabs for Text To Speech
     # Add other API keys here (e.g., for image generation, other LLMs)
@@ -44,8 +47,6 @@ class Config:
     # --- Tool Specific Settings ---
     IMAGE_GENERATION_MODEL = os.getenv("IMAGE_GENERATION_MODEL", "dall-e-3") #Model to use for image gen
 
-    # Add more configuration options as needed (e.g., for specific tools, etc.)
-
     @classmethod
     def validate(cls):
         """
@@ -57,9 +58,17 @@ class Config:
         if cls.STORY_LENGTH_WORDS <= 0:
             raise ValueError("STORY_LENGTH_WORDS must be a positive integer.")
 
-        # Example: Validate other required settings
-        # if not cls.DATABASE_URL:
-        #     raise ValueError("DATABASE_URL must be set.")
         if cls.USE_TEXT_TO_SPEECH and not cls.ELEVEN_LABS_API_KEY:
             raise ValueError("ElevenLabs API key needed for enabling text to speech")
 
+    @classmethod
+    def initialize(cls):
+        """Initialize and validate the configuration."""
+        cls.validate()
+        return cls
+
+# Initialize the configuration
+config = Config.initialize()
+
+# Export the config instance for use in other modules
+__all__ = ['config']

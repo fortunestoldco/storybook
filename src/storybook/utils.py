@@ -4,18 +4,24 @@ from langchain_mongodb import MongoDBAtlasVectorSearch
 from pymongo import MongoClient
 from langchain_core.documents import Document
 from langchain.embeddings import OpenAIEmbeddings
+from storybook.config import Config  # This is correct
 import requests  # For web crawling
 
 # Initialize OpenAI Embeddings (or alternative)
-embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+embeddings = OpenAIEmbeddings(openai_api_key=Config.OPENAI_API_KEY)
+
+MONGODB_URI = Config.MONGODB_URI
+MONGODB_DATABASE_NAME = Config.MONGODB_DATABASE_NAME
+MONGODB_COLLECTION_NAME = Config.MONGODB_COLLECTION_NAME
+ATLAS_VECTOR_SEARCH_INDEX_NAME = Config.ATLAS_VECTOR_SEARCH_INDEX_NAME
 
 # MongoDB Client
-mongo_client = MongoClient(MONGODB_URI)
-db = mongo_client[MONGODB_DATABASE_NAME]
+mongo_client = MongoClient(Config.MONGODB_URI)
+db = mongo_client[Config.MONGODB_DATABASE_NAME]
 
 def get_llm():
     """Returns a configured ChatOpenAI language model."""
-    return ChatOpenAI(model_name=OPENAI_MODEL_NAME, temperature=0.7, openai_api_key=OPENAI_API_KEY)
+    return ChatOpenAI(model_name=Config.OPENAI_MODEL_NAME, temperature=0.7, openai_api_key=Config.OPENAI_API_KEY)
 
 def consolidate_sections(sections: Dict[str, str]) -> str:
     """Consolidates all story sections into a single complete story. Returns the complete story."""

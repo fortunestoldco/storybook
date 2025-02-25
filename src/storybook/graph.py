@@ -1,7 +1,8 @@
 from typing import Dict, List
 from langgraph.graph import StateGraph, MessageGraph
-from state import StoryCreationState
-from prompts import (
+from storybook.config import Config  # This is correct
+from storybook.state import StoryCreationState
+from storybook.prompts import (
     RESEARCH_PROMPT,
     OUTLINE_PROMPT,
     WRITING_PROMPT,
@@ -19,16 +20,14 @@ from prompts import (
     CHAPTER_EDITORIAL_FEEDBACK_PROMPT,
 )
 
-from config import OPENAI_API_KEY
-
-from utils import (
+from storybook.utils import (
     get_llm,
     consolidate_sections,
     add_to_story_bible,
     get_story_bible_vectorstore,
     web_crawl,
 )
-from tools import update_story_bible
+from storybook.tools import update_story_bible
 from langchain_core.runnables import chain
 
 
