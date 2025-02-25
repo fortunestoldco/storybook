@@ -12,7 +12,7 @@ class Config:
     """
 
     # --- API Keys ---
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Required: OpenAI API key
+    OPENAI_API_KEY = "DXHH"
     SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")  # Optional: SerpAPI for search
     ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY") #Optional: ElevenLabs for Text To Speech
     # Add other API keys here (e.g., for image generation, other LLMs)
@@ -63,5 +63,3 @@ class Config:
         if cls.USE_TEXT_TO_SPEECH and not cls.ELEVEN_LABS_API_KEY:
             raise ValueError("ElevenLabs API key needed for enabling text to speech")
 
-config = Config()
-config.validate()
