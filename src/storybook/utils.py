@@ -16,8 +16,8 @@ MONGODB_COLLECTION_NAME = Config.MONGODB_COLLECTION_NAME
 ATLAS_VECTOR_SEARCH_INDEX_NAME = Config.ATLAS_VECTOR_SEARCH_INDEX_NAME
 
 # MongoDB Client
-mongo_client = MongoClient(Config.MONGODB_URI)
-db = mongo_client[Config.MONGODB_DATABASE_NAME]
+mongo_client = MongoClient(MONGODB_URI)
+db = mongo_client[MONGODB_DATABASE_NAME]
 
 def get_llm():
     """Returns a configured ChatOpenAI language model."""

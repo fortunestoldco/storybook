@@ -10,57 +10,70 @@ class Config:
     This class handles API keys, model settings, data storage, logging,
     and storybook-specific configurations.
     """
-    MONGODB_URI = os.getenv("MONGODB_URI")
-    MONGODB_DATABASE_NAME = os.getenv("MONGODB_DATABASE_NAME")
-    MONGODB_COLLECTION_NAME =  os.getenv("MONGODB_COLLECTION_NAME") 
-    ATLAS_VECTOR_SEARCH_INDEX_NAME =  os.getenv("ATLAS_VECTOR_SEARCH_INDEX_NAME")
+    # --- MongoDB Configuration ---
+    MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+    MONGODB_DATABASE_NAME = os.getenv("MONGODB_DATABASE_NAME", "storybook")  # Added default
+    MONGODB_COLLECTION_NAME = os.getenv("MONGODB_COLLECTION_NAME", "story_bible")  # Added default
+    ATLAS_VECTOR_SEARCH_INDEX_NAME = os.getenv("ATLAS_VECTOR_SEARCH_INDEX_NAME", "default")  # Added default
+
     # --- API Keys ---
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Changed to get from env var
-    OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "gpt-3.5-turbo-1106")  # Added default
     SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")  # Optional: SerpAPI for search
-    ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY") #Optional: ElevenLabs for Text To Speech
-    # Add other API keys here (e.g., for image generation, other LLMs)
+    ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY")  # Optional: ElevenLabs for Text To Speech
 
     # --- Model Configuration ---
-    DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-3.5-turbo-1106")  # Default LLM
-    TEMPERATURE = float(os.getenv("TEMPERATURE", 0.7))  # Creativity (0.0 to 1.0)
-    MAX_TOKENS = int(os.getenv("MAX_TOKENS", 1024)) #Maximum number of tokens allowed in output.
+    DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-3.5-turbo-1106")
+    TEMPERATURE = float(os.getenv("TEMPERATURE", "0.7"))
+    MAX_TOKENS = int(os.getenv("MAX_TOKENS", "1024"))
 
     # --- Data Storage ---
-    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./storybook.db")  # SQLite, PostgreSQL, etc.
-    STORY_DIRECTORY = os.getenv("STORY_DIRECTORY", "stories") # Directory to save generated stories
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./storybook.db")
+    STORY_DIRECTORY = os.getenv("STORY_DIRECTORY", "stories")
 
     # --- Logging Configuration ---
-    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
     # --- Storybook Specific Settings ---
-    STORY_LENGTH_WORDS = int(os.getenv("STORY_LENGTH_WORDS", 750))  # Target word count per story. Increased from previous example.
-    CHAPTER_LENGTH_WORDS = int(os.getenv("CHAPTER_LENGTH_WORDS", 250)) #Target word count per chapter
-    STORY_TONE = os.getenv("STORY_TONE", "adventurous")  # Default tone/style
-    STORY_TARGET_AGE = int(os.getenv("STORY_TARGET_AGE", 8)) #Target audience age.
-    ENABLE_SEARCH = os.getenv("ENABLE_SEARCH", "True").lower() == "true" # Use Search tool or not.
-    USE_TEXT_TO_SPEECH = os.getenv("USE_TEXT_TO_SPEECH", "False").lower() == "true" #Enable Text to Speech through ElevenLabs
+    STORY_LENGTH_WORDS = int(os.getenv("STORY_LENGTH_WORDS", "750"))
+    CHAPTER_LENGTH_WORDS = int(os.getenv("CHAPTER_LENGTH_WORDS", "250"))
+    STORY_TONE = os.getenv("STORY_TONE", "adventurous")
+    STORY_TARGET_AGE = int(os.getenv("STORY_TARGET_AGE", "8"))
+    ENABLE_SEARCH = os.getenv("ENABLE_SEARCH", "True").lower() == "true"
+    USE_TEXT_TO_SPEECH = os.getenv("USE_TEXT_TO_SPEECH", "False").lower() == "true"
 
-    # --- Advanced LangGraph Settings (Potentially) ---
-    MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", 50)) #Max steps for the graph
-    EARLY_STOPPING_THRESHOLD = float(os.getenv("EARLY_STOPPING_THRESHOLD", 0.95)) # Example for a reward function.
+    # --- Advanced LangGraph Settings ---
+    MAX_ITERATIONS = int(os.getenv("MAX_ITERATIONS", "50"))
+    EARLY_STOPPING_THRESHOLD = float(os.getenv("EARLY_STOPPING_THRESHOLD", "0.95"))
 
     # --- Tool Specific Settings ---
-    IMAGE_GENERATION_MODEL = os.getenv("IMAGE_GENERATION_MODEL", "dall-e-3") #Model to use for image gen
+    IMAGE_GENERATION_MODEL = os.getenv("IMAGE_GENERATION_MODEL", "dall-e-3")
 
     @classmethod
     def validate(cls):
         """
         Validate the configuration settings.  Raise an exception if something is missing or invalid.
         """
-        if not cls.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY must be set.")
+        required_settings = {
+            "MONGODB_URI": "MongoDB URI",
+            "MONGODB_DATABASE_NAME": "MongoDB database name",
+            "MONGODB_COLLECTION_NAME": "MongoDB collection name",
+            "OPENAI_API_KEY": "OpenAI API key",
+        }
+
+        for setting, description in required_settings.items():
+            if not getattr(cls, setting):
+                raise ValueError(f"{description} must be set in environment or have a valid default")
 
         if cls.STORY_LENGTH_WORDS <= 0:
-            raise ValueError("STORY_LENGTH_WORDS must be a positive integer.")
+            raise ValueError("STORY_LENGTH_WORDS must be a positive integer")
 
         if cls.USE_TEXT_TO_SPEECH and not cls.ELEVEN_LABS_API_KEY:
             raise ValueError("ElevenLabs API key needed for enabling text to speech")
+
+        # Validate MongoDB URI format
+        if not cls.MONGODB_URI.startswith(("mongodb://", "mongodb+srv://")):
+            raise ValueError("Invalid MongoDB URI format")
 
     @classmethod
     def initialize(cls):
