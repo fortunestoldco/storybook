@@ -1,9 +1,9 @@
 from typing import Dict, List
 from langgraph.graph import StateGraph, MessageGraph
-from .state import StoryCreationState
-from .prompts import RESEARCH_PROMPT, OUTLINE_PROMPT, WRITING_PROMPT, EDITING_PROMPT, MARKET_RESEARCH_PROMPT, CONTEXTUAL_RESEARCH_PROMPT, CONSUMER_RESEARCH_PROMPT, WORLD_BUILDING_PROMPT, CHARACTER_DEVELOPMENT_PROMPT, STORY_WRITER_PROMPT, DIALOGUE_WRITER_PROMPT, CONTINUITY_CHECKER_PROMPT, COHESIVENESS_CHECKER_PROMPT, EDITORIAL_FEEDBACK_PROMPT, CHAPTER_EDITORIAL_FEEDBACK_PROMPT
-from .utils import get_llm, consolidate_sections, add_to_story_bible, get_story_bible_vectorstore, web_crawl
-from .tools import update_story_bible
+from storybook.state import StoryCreationState
+from storybook.prompts import RESEARCH_PROMPT, OUTLINE_PROMPT, WRITING_PROMPT, EDITING_PROMPT, MARKET_RESEARCH_PROMPT, CONTEXTUAL_RESEARCH_PROMPT, CONSUMER_RESEARCH_PROMPT, WORLD_BUILDING_PROMPT, CHARACTER_DEVELOPMENT_PROMPT, STORY_WRITER_PROMPT, DIALOGUE_WRITER_PROMPT, CONTINUITY_CHECKER_PROMPT, COHESIVENESS_CHECKER_PROMPT, EDITORIAL_FEEDBACK_PROMPT, CHAPTER_EDITORIAL_FEEDBACK_PROMPT
+from storybook.utils import get_llm, consolidate_sections, add_to_story_bible, get_story_bible_vectorstore, web_crawl
+from storybook.tools import update_story_bible
 from langchain_core.runnables import chain
 
 
@@ -375,10 +375,66 @@ builder.add_conditional_edges(
 )
 
 # Set the entrypoint
-builder.set_entry_point("author_relations_brainstorm")
+def build_graph() -> StateGraph:
+    """
+    Builds and returns the configured StateGraph.
+    
+    Returns:
+        StateGraph: The fully configured graph ready for execution
+    """
+    try:
+        # builder is already configured with nodes and edges in the main code
+        # Compile the graph and return it
+        return builder.compile()
+    except Exception as e:
+        print(f"Error building graph: {str(e)}")
+        raise
 
-# Build the graph
-graph = build_graph()
+def run_graph(graph: StateGraph, initial_state: Dict[str, Any] = None) -> Dict[str, Any]:
+    """
+    Runs the graph with the provided initial state.
+    
+    Args:
+        graph (StateGraph): The compiled state graph to run
+        initial_state (Dict[str, Any], optional): Initial state to start the graph with. 
+                                                Defaults to None.
+    
+    Returns:
+        Dict[str, Any]: The final state after running the graph
+    """
+    try:
+        # Create default initial state if none provided
+        if initial_state is None:
+            initial_state = {
+                "title": "",
+                "genre": "",
+                "themes": [],
+                "current_step": "author_relations_brainstorm",
+                "project_status": "Not Started",
+                "project_progress": 0,
+                "chapters_written": 0,
+                "chapter_drafts": {},
+                "editorial_notes": {},
+                "overall_manuscript_draft_number": 0,
+                "all_chapters_finished": False,
+                "human_validation": False,
+                "input": ""
+            }
+
+        # Create a config for the graph run
+        config = RunnableConfig(
+            recursion_limit=100,  # Prevent infinite loops
+            tags=["storybook_workflow"]
+        )
+
+        # Run the graph
+        workflow = graph.configurable_chain()
+        result = workflow.invoke(initial_state, config=config)
+        
+        return result
+    except Exception as e:
+        print(f"Error running graph: {str(e)}")
+        raise
 
 # Running the graph:
 graph_ouput = run_graph(graph)

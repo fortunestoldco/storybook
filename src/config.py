@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file (if it exists)
 load_dotenv()
 
-class config:
+class Config:
     """
     Configuration settings for the Storybook LangGraph application.
     This class handles API keys, model settings, data storage, logging,
@@ -63,5 +63,5 @@ class config:
         if cls.USE_TEXT_TO_SPEECH and not cls.ELEVEN_LABS_API_KEY:
             raise ValueError("ElevenLabs API key needed for enabling text to speech")
 
-config = config()
+config = Config()
 config.validate()
