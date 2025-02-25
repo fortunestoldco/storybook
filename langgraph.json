@@ -1,15 +1,7 @@
 {
-    "dockerfile_lines": [],
-    "graphs": {
-        "graph": ",..src/storybook/graph.py:storybook"
-    },
-    "env": ".env",
-    "python_version": "3.11",
-    "dependencies": ["./src/storybook/"],
-    "store": {
-        "index": {
-            "dims": 1536,
-            "embed": "openai:text-embedding-3-small"
-        }
-    }
+  "dependencies": ["."],
+  "graphs": {
+    "graph": "./src/graph.py"
+  },
+  "env": ".env"
 }

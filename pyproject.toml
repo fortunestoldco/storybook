@@ -1,45 +1,55 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "storybook"
-version = "0.1.0"
-description = "A LangGraph Storybook application"
+version = "0.0.2"
+description = "Starter template for making a new agent LangGraph."
 authors = [
-    { name = "David", email = "david@example.com" } # REPLACE WITH YOUR DETAILS
+    { name = "William Fu-Hinthorn", email = "13333726+hinthornw@users.noreply.github.com" },
 ]
 readme = "README.md"
-requires-python = ">=3.8"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = [
+    "langgraph>=0.2.6",
+    "python-dotenv>=1.0.1",
 ]
 
-[project.urls]
-"Homepage" = "https://github.com/yourusername/storybook" # REPLACE
-"Bug Tracker" = "https://github.com/yourusername/storybook/issues" # REPLACE
+
+[project.optional-dependencies]
+dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
+
+[build-system]
+requires = ["setuptools>=73.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["storybook"] # This *MUST* match the name of your package directory
-
+packages = ["storybook"]
 [tool.setuptools.package-dir]
-"storybook" = "src/storybook" # Link from the source directory for importing code
+"storybook" = "./src/"
 
-[tool.setuptools.install_requires]
-langchain = ">=0.1.0" # UPDATE TO A *SPECIFIC, TESTED* VERSION IF YOU CAN
-langgraph = ">=0.1.0" # UPDATE TO A *SPECIFIC, TESTED* VERSION IF YOU CAN
-python-dotenv = ">=1.0.0" # UPDATE TO A *SPECIFIC, TESTED* VERSION IF YOU CAN
-openai = ">=1.0.0"     # UPDATE TO A *SPECIFIC, TESTED* VERSION IF YOU CAN
-tiktoken = ">=0.4.0"  # UPDATE TO A *SPECIFIC, TESTED* VERSION IF YOU CAN
-# ADD ALL OTHER DEPENDENCIES WITH *SPECIFIC, TESTED* VERSIONS
-# EXAMPLE:
-# requests = "==2.28.1"
 
-[tool.setuptools.exclude-package-data]
-"*" = ["*.pyc"] # Exclude compiled python files
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
 
-[tool.pytest.ini_options]
-addopts = ["-v", "--cov"]
-testpaths = ["tests"] # If you have tests/
+[tool.ruff]
+lint.select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "D",    # pydocstyle
+    "D401", # First line should be in imperative mood
+    "T201",
+    "UP",
+]
+lint.ignore = [
+    "UP006",
+    "UP007",
+    # We actually do want to import from typing_extensions
+    "UP035",
+    # Relax the convention by _not_ requiring documentation for every function parameter.
+    "D417",
+    "E501",
+]
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "UP"]
+[tool.ruff.lint.pydocstyle]
+convention = "google"

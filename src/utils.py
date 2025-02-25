@@ -1,6 +1,6 @@
 from typing import Dict, List
 from langchain_community.chat_models import ChatOpenAI
-from storybook.config import OPENAI_API_KEY, OPENAI_MODEL_NAME, MONGODB_URI, MONGODB_DATABASE_NAME, MONGODB_COLLECTION_NAME, ATLAS_VECTOR_SEARCH_INDEX_NAME
+from agent.config import OPENAI_API_KEY, OPENAI_MODEL_NAME, MONGODB_URI, MONGODB_DATABASE_NAME, MONGODB_COLLECTION_NAME, ATLAS_VECTOR_SEARCH_INDEX_NAME
 from langchain_mongodb import MongoDBAtlasVectorSearch
 from pymongo import MongoClient
 from langchain_core.documents import Document

@@ -1,10 +1,9 @@
 from typing import Dict, List
 from langgraph.graph import StateGraph, MessageGraph
-from storybook.config import NUM_RESEARCHERS
-from storybook.state import StoryCreationState
-from storybook.prompts import RESEARCH_PROMPT, OUTLINE_PROMPT, WRITING_PROMPT, EDITING_PROMPT, MARKET_RESEARCH_PROMPT, CONTEXTUAL_RESEARCH_PROMPT, CONSUMER_RESEARCH_PROMPT, WORLD_BUILDING_PROMPT, CHARACTER_DEVELOPMENT_PROMPT, STORY_WRITER_PROMPT, DIALOGUE_WRITER_PROMPT, CONTINUITY_CHECKER_PROMPT, COHESIVENESS_CHECKER_PROMPT, EDITORIAL_FEEDBACK_PROMPT, CHAPTER_EDITORIAL_FEEDBACK_PROMPT
-from storybook.utils import get_llm, consolidate_sections, add_to_story_bible, get_story_bible_vectorstore, web_crawl
-from storybook.tools import update_story_bible
+from .state import StoryCreationState
+from .prompts import RESEARCH_PROMPT, OUTLINE_PROMPT, WRITING_PROMPT, EDITING_PROMPT, MARKET_RESEARCH_PROMPT, CONTEXTUAL_RESEARCH_PROMPT, CONSUMER_RESEARCH_PROMPT, WORLD_BUILDING_PROMPT, CHARACTER_DEVELOPMENT_PROMPT, STORY_WRITER_PROMPT, DIALOGUE_WRITER_PROMPT, CONTINUITY_CHECKER_PROMPT, COHESIVENESS_CHECKER_PROMPT, EDITORIAL_FEEDBACK_PROMPT, CHAPTER_EDITORIAL_FEEDBACK_PROMPT
+from .utils import get_llm, consolidate_sections, add_to_story_bible, get_story_bible_vectorstore, web_crawl
+from .tools import update_story_bible
 from langchain_core.runnables import chain
 
 
@@ -379,8 +378,10 @@ builder.add_conditional_edges(
 builder.set_entry_point("author_relations_brainstorm")
 
 # Build the graph
-graph = builder.compile()
+graph = build_graph()
 
+# Running the graph:
+graph_ouput = run_graph(graph)
 # ----------------------------------------------------------------------
 # 6. (Server) Run the Graph
 # ----------------------------------------------------------------------

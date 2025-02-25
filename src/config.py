@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file (if it exists)
 load_dotenv()
 
-class Config:
+class config:
     """
     Configuration settings for the Storybook LangGraph application.
     This class handles API keys, model settings, data storage, logging,
@@ -16,7 +16,7 @@ class Config:
     SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")  # Optional: SerpAPI for search
     ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY") #Optional: ElevenLabs for Text To Speech
     # Add other API keys here (e.g., for image generation, other LLMs)
-    NUM_RESEARCHERS = int(os.getenv("NUM_RESEARCHERS", 3))  # Example default value: 3
+
     # --- Model Configuration ---
     DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-3.5-turbo-1106")  # Default LLM
     TEMPERATURE = float(os.getenv("TEMPERATURE", 0.7))  # Creativity (0.0 to 1.0)
@@ -63,5 +63,5 @@ class Config:
         if cls.USE_TEXT_TO_SPEECH and not cls.ELEVEN_LABS_API_KEY:
             raise ValueError("ElevenLabs API key needed for enabling text to speech")
 
-config = Config()
+config = config()
 config.validate()
