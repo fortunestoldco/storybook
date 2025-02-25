@@ -45,7 +45,7 @@ class WebCrawlerTool(BaseTool):
             "User-Agent": "Mozilla/5.0 (compatible; StoryBookBot/1.0; +http://example.com/bot)"
         }
 
-    def _run(self, url: str) -> Dict[str, Any]]:
+    def _run(self, url: str) -> Dict[str, Any]:
         """Run the tool to crawl a web page."""
         try:
             response = requests.get(url, headers=self.headers)
@@ -67,7 +67,7 @@ class WebCrawlerTool(BaseTool):
         except Exception as e:
             return {"error": str(e)}
 
-    async def _arun(self, url: str) -> Dict[str, Any]]:
+    async def _arun(self, url: str) -> Dict[str, Any]:
         """Async version of web crawling."""
         return await self._run(url)
 
