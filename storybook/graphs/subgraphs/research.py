@@ -2,11 +2,11 @@
 from typing import Dict, List, Any, Annotated, TypedDict
 from langgraph.graph import StateGraph
 
-from ...agents.research import ResearchSupervisorAgent, HistoricalResearchAgent, TechnicalDomainAgent, CulturalAuthenticityAgent
-from ...agents.story_architecture import StructureSpecialistAgent, PlotDevelopmentAgent, WorldBuildingAgent
-from ...agents.project_management import ProjectLeadAgent
-from ...utils.state import NovelState, ProjectStatus, ResearchTopic, ResearchItem, StoryStructure
-from ...config import storybookConfig
+from storybook.agents.research import ResearchSupervisorAgent, HistoricalResearchAgent, TechnicalDomainAgent, CulturalAuthenticityAgent
+from storybook.agents.story_architecture import StructureSpecialistAgent, PlotDevelopmentAgent, WorldBuildingAgent
+from storybook.agents.project_management import ProjectLeadAgent
+from storybook.utils.state import NovelState, ProjectStatus, ResearchTopic, ResearchItem, StoryStructure
+from storybook.config import storybookConfig
 
 class ResearchState(TypedDict):
     """State for the research subgraph."""

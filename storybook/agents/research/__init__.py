@@ -4,8 +4,8 @@ from langchain_openai import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 
-from ...utils.state import NovelState, ResearchItem
-from ...config import storybookConfig
+from storybook.utils.state import NovelState, ResearchItem
+from storybook.config import storybookConfig
 
 class ResearchTopic(BaseModel):
     """Research topic to be investigated."""

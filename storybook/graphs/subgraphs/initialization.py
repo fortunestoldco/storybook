@@ -4,9 +4,9 @@ from langgraph.graph import StateGraph
 import uuid
 from datetime import datetime
 
-from ...agents.project_management import ProjectLeadAgent, MarketResearchAgent, ConceptDevelopmentAgent
-from ...utils.state import NovelState, ProjectStatus, ProjectConcept
-from ...config import storybookConfig
+from storybook.agents.project_management import ProjectLeadAgent, MarketResearchAgent, ConceptDevelopmentAgent
+from storybook.utils.state import NovelState, ProjectStatus, ProjectConcept
+from storybook.config import storybookConfig
 
 class InitializationState(TypedDict):
     """State for the initialization subgraph."""

@@ -2,11 +2,11 @@
 from typing import Dict, List, Any, Annotated, TypedDict
 from langgraph.graph import StateGraph
 
-from ...agents.writing import WritingSupervisorAgent, ChapterWriterAgent, ContinuityManagerAgent, DescriptionSpecialistAgent
-from ...agents.story_architecture import PlotDevelopmentAgent
-from ...agents.project_management import ProjectLeadAgent
-from ...utils.state import NovelState, ProjectStatus, Chapter
-from ...config import storybookConfig
+from storybook.agents.writing import WritingSupervisorAgent, ChapterWriterAgent, ContinuityManagerAgent, DescriptionSpecialistAgent
+from storybook.agents.story_architecture import PlotDevelopmentAgent
+from storybook.agents.project_management import ProjectLeadAgent
+from storybook.utils.state import NovelState, ProjectStatus, Chapter
+from storybook.config import storybookConfig
 
 class DraftingState(TypedDict):
     """State for the drafting subgraph."""

@@ -6,8 +6,8 @@ from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 import json
 
-from ...utils.state import NovelState, Character
-from ...config import storybookConfig
+from storybook.utils.state import NovelState, Character
+from storybook.config import storybookConfig
 
 class CharacterPersonality(BaseModel):
     """Detailed personality model for a character."""

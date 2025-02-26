@@ -4,8 +4,8 @@ from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from ...utils.state import NovelState
-from ...config import storybookConfig
+from storybook.utils.state import NovelState
+from storybook.config import storybookConfig
 
 class BlurbGeneratorAgent:
     """Blurb Generator Agent that creates compelling book descriptions."""

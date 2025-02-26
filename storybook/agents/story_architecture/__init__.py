@@ -4,8 +4,8 @@ from langchain_openai import ChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 
-from ...utils.state import NovelState, PlotPoint
-from ...config import storybookConfig
+from storybook.utils.state import NovelState, PlotPoint
+from storybook.config import storybookConfig
 
 class StoryStructure(BaseModel):
     """Story structure definition."""

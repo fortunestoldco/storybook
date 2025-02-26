@@ -2,10 +2,10 @@
 from typing import Dict, List, Any, Annotated, TypedDict
 from langgraph.graph import StateGraph
 
-from ...agents.reader_experience import EmotionalArcAnalyzerAgent, HookOptimizationAgent, ReadabilitySpecialistAgent, PageTurnerDesignerAgent
-from ...agents.project_management import ProjectLeadAgent
-from ...utils.state import NovelState, ProjectStatus, Chapter
-from ...config import storybookConfig
+from storybook.agents.reader_experience import EmotionalArcAnalyzerAgent, HookOptimizationAgent, ReadabilitySpecialistAgent, PageTurnerDesignerAgent
+from storybook.agents.project_management import ProjectLeadAgent
+from storybook.utils.state import NovelState, ProjectStatus, Chapter
+from storybook.config import storybookConfig
 
 class ReaderOptimizationState(TypedDict):
     """State for the reader optimization subgraph."""

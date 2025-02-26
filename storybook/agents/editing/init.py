@@ -5,8 +5,8 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 import re
 
-from ...utils.state import NovelState, Chapter
-from ...config import storybookConfig
+from storybook.utils.state import NovelState, Chapter
+from storybook.config import storybookConfig
 
 class DevelopmentalEditorAgent:
     """Developmental Editor Agent that addresses structural and thematic issues."""

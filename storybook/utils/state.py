@@ -15,6 +15,16 @@ class ProjectStatus(str, Enum):
     PREPARING_PUBLICATION = "preparing_publication"
     COMPLETED = "completed"
 
+class ProjectConcept(BaseModel):
+    """Model representing the core concept of the novel project."""
+    premise: str
+    genre: str
+    target_audience: str
+    theme: str
+    setting: Optional[str] = None
+    hook: Optional[str] = None
+    estimated_length: Optional[int] = None
+
 class ResearchItem(BaseModel):
     """A research item collected during the research phase."""
     topic: str

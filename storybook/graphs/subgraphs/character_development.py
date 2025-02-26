@@ -2,10 +2,10 @@
 from typing import Dict, List, Any, Annotated, TypedDict
 from langgraph.graph import StateGraph
 
-from ...agents.character_development import CharacterResearchAgent, CharacterArcDesignerAgent, CharacterRelationshipMapperAgent, DialogueSpecialistAgent
-from ...agents.project_management import ProjectLeadAgent
-from ...utils.state import NovelState, ProjectStatus, Character
-from ...config import storybookConfig
+from storybook.agents.character_development import CharacterResearchAgent, CharacterArcDesignerAgent, CharacterRelationshipMapperAgent, DialogueSpecialistAgent
+from storybook.agents.project_management import ProjectLeadAgent
+from storubook.utils.state import NovelState, ProjectStatus, Character
+from storubook.config import storybookConfig
 
 class CharacterDevelopmentState(TypedDict):
     """State for the character development subgraph."""

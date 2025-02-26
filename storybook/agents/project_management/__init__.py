@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field
 import uuid
 from datetime import datetime
 
-from ...utils.state import NovelState, ProjectStatus
-from ...config import storybookConfig
+from storybook.utils.state import NovelState, ProjectStatus
+from storybook.config import storybookConfig
 
 class ProjectConcept(BaseModel):
     """Project concept with market analysis."""
