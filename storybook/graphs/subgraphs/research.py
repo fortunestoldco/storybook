@@ -1,27 +1,24 @@
 # graphs/subgraphs/research.py
-from typing import Dict, List, Any, Annotated, TypedDict
+from typing import Annotated, Any, Dict, List, TypedDict
+
 from langgraph.graph import StateGraph
 
+from storybook.agents.project_management import ProjectLeadAgent
 from storybook.agents.research import (
-    ResearchSupervisorAgent,
-    HistoricalResearchAgent,
-    TechnicalDomainAgent,
     CulturalAuthenticityAgent,
+    HistoricalResearchAgent,
+    ResearchSupervisorAgent,
+    ResearchTopic,
+    TechnicalDomainAgent,
 )
 from storybook.agents.story_architecture import (
-    StructureSpecialistAgent,
     PlotDevelopmentAgent,
+    StoryStructure,
+    StructureSpecialistAgent,
     WorldBuildingAgent,
 )
-from storybook.agents.project_management import ProjectLeadAgent
-from storybook.utils.state import (
-    NovelState,
-    ProjectStatus,
-    ResearchTopic,
-    ResearchItem,
-    StoryStructure,
-)
 from storybook.config import Config
+from storybook.utils.state import NovelState, ProjectStatus, ResearchItem
 
 
 class ResearchState(TypedDict):

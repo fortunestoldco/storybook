@@ -1,16 +1,17 @@
 # graphs/subgraphs/reader_optimization.py
-from typing import Dict, List, Any, Annotated, TypedDict
+from typing import Annotated, Any, Dict, List, TypedDict
+
 from langgraph.graph import StateGraph
 
+from storybook.agents.project_management import ProjectLeadAgent
 from storybook.agents.reader_experience import (
     EmotionalArcAnalyzerAgent,
     HookOptimizationAgent,
-    ReadabilitySpecialistAgent,
     PageTurnerDesignerAgent,
+    ReadabilitySpecialistAgent,
 )
-from storybook.agents.project_management import ProjectLeadAgent
-from storybook.utils.state import NovelState, ProjectStatus, Chapter
 from storybook.config import Config
+from storybook.utils.state import Chapter, NovelState, ProjectStatus
 
 
 class ReaderOptimizationState(TypedDict):

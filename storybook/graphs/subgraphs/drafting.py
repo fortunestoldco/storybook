@@ -1,17 +1,24 @@
-# graphs/subgraphs/drafting.py
-from typing import Dict, List, Any, Annotated, TypedDict
+"""
+Drafting subgraph module for managing the novel drafting workflow.
+This module handles the creation and coordination of the drafting phase,
+including chapter writing, continuity checking, and description enhancement.
+"""
+
+from typing import Any, Dict, List, TypedDict
+
+# Ensure langgraph is installed via: pip install langgraph
 from langgraph.graph import StateGraph
 
+from storybook.agents.project_management import ProjectLeadAgent
+from storybook.agents.story_architecture import PlotDevelopmentAgent
 from storybook.agents.writing import (
-    WritingSupervisorAgent,
     ChapterWriterAgent,
     ContinuityManagerAgent,
     DescriptionSpecialistAgent,
+    WritingSupervisorAgent,
 )
-from storybook.agents.story_architecture import PlotDevelopmentAgent
-from storybook.agents.project_management import ProjectLeadAgent
-from storybook.utils.state import NovelState, ProjectStatus, Chapter
 from storybook.config import Config
+from storybook.utils.state import Chapter, NovelState, ProjectStatus
 
 
 class DraftingState(TypedDict):

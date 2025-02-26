@@ -1,10 +1,11 @@
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from storybook.utils.state import NovelState, ProjectStatus
 from storybook.config import Config
+from storybook.utils.state import NovelState, ProjectStatus
 
 
 class ProjectConcept(BaseModel):

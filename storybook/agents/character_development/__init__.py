@@ -1,13 +1,14 @@
 # agents/character_development/__init__.py
-from typing import Dict, List, Any, Optional
+import json
+from typing import Any, Dict, List, Optional
+
+from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
-import json
 
-from storybook.utils.state import NovelState, Character
 from storybook.config import Config
+from storybook.utils.state import Character, NovelState
 
 
 class CharacterPersonality(BaseModel):

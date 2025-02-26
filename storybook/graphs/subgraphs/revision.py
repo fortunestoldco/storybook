@@ -1,17 +1,18 @@
 # graphs/subgraphs/revision.py
-from typing import Dict, List, Any, Annotated, TypedDict
+from typing import Annotated, Any, Dict, List, TypedDict
+
 from langgraph.graph import StateGraph
 
 from storybook.agents.editing import (
     DevelopmentalEditorAgent,
-    LineEditorAgent,
     DialogueEnhancementAgent,
+    LineEditorAgent,
     TensionOptimizationAgent,
 )
-from storybook.agents.writing import WritingSupervisorAgent, ChapterWriterAgent
 from storybook.agents.project_management import ProjectLeadAgent
-from storybook.utils.state import NovelState, ProjectStatus, Chapter
+from storybook.agents.writing import ChapterWriterAgent, WritingSupervisorAgent
 from storybook.config import Config
+from storybook.utils.state import Chapter, NovelState, ProjectStatus
 
 
 class RevisionState(TypedDict):

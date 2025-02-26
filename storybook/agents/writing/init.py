@@ -1,12 +1,15 @@
-# agents/writing/__init__.py
-from typing import Dict, List, Any, Optional
+"""
+This module contains agent classes for writing and managing novel content.
+Includes supervisor, writer, continuity manager and description specialist agents.
+"""
+
+from typing import Any, Dict
+
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
-from pydantic import BaseModel, Field
-import re
 
-from storybook.utils.state import NovelState, Chapter
 from storybook.config import Config
+from storybook.utils.state import Chapter, NovelState
 
 
 class WritingSupervisorAgent:
@@ -85,6 +88,14 @@ Format your response as a detailed writing plan document with clear sections.
         if not plot_summary:
             plot_summary = "Plot still being developed."
 
+        sections = {
+            "chapter_sequencing": "",
+            "writing_priorities": "",
+            "stylistic_guidelines": "",
+            "consistency_requirements": "",
+            "quality_metrics": "",
+        }
+
         response = self.llm.invoke(
             prompt.format(
                 project_name=state.project_name,
@@ -95,15 +106,6 @@ Format your response as a detailed writing plan document with clear sections.
                 plot_summary=plot_summary,
             )
         )
-
-        # Extract sections from the response
-        sections = {
-            "chapter_sequencing": "",
-            "writing_priorities": "",
-            "stylistic_guidelines": "",
-            "consistency_requirements": "",
-            "quality_metrics": "",
-        }
 
         current_section = None
 
@@ -186,10 +188,6 @@ Format your response with clear sections for each criterion and a final summary.
                     [f"- {k}: {v}" for k, v in quality_criteria.items()]
                 ),
             )
-        )
-
-        # Extract scores from the response
-        # This is a simplified extraction - in a real implementation, would be more robust
         scores = {}
         for criterion in quality_criteria.keys():
             pattern = rf"{criterion}.*?(\d+\.\d+)"
@@ -197,7 +195,10 @@ Format your response with clear sections for each criterion and a final summary.
             if match:
                 try:
                     scores[criterion] = float(match.group(1))
-                except:
+                except (ValueError, IndexError):
+                    scores[criterion] = 0.5  # Default if parsing fails
+            else:
+                scores[criterion] = 0.5  # Default if not found
                     scores[criterion] = 0.5  # Default if parsing fails
             else:
                 scores[criterion] = 0.5  # Default if not found
@@ -244,9 +245,15 @@ Based on the current state of all chapters, identify:
 Provide a comprehensive revision strategy that addresses the most critical issues first.
 """,
             input_variables=["project_name", "genre", "chapter_status"],
-        )
-
-        # Create chapter status summary
+            status_text = (
+                f"Chapter {num}: {chapter.title}\n"
+                f"  - Words: {chapter.word_count}\n"
+                f"  - Revisions: {chapter.revision_count}\n"
+                f"  - Quality: {quality_str}\n"
+            )
+            chapter_status += status_text
+                f"  - Quality: {quality_str}\n"
+            )
         chapter_status = ""
         for num, chapter in sorted(state.chapters.items()):
             quality_str = (
@@ -306,10 +313,8 @@ class ChapterWriterAgent:
     """Chapter Writer Agent that generates chapter content."""
 
     def __init__(self, config: Config):
-        self.config = config
-        self.llm = ChatOpenAI(**config.get_llm_kwargs())
-        self.name = "ChapterWriter"
-
+                    speech_style = character.dialogue_patterns.get('speech_style', 'Not specified')
+                    characters_info += f"Speech style: {speech_style}\n"
     def write_chapter(
         self, chapter_outline: Any, state: NovelState, style_guide: Dict[str, Any]
     ) -> Chapter:
@@ -449,17 +454,18 @@ Use your strongest narrative writing to create a chapter that feels like it belo
             pov_character=chapter_outline.pov_character,
             summary=chapter_outline.summary,
             content=response.content,
-            word_count=word_count,
+        chapter = Chapter(
+            number=chapter_outline.chapter_number,
+            title=chapter_outline.title,
+        chapter = Chapter(
+            number=chapter_outline.chapter_number,
+            title=chapter_outline.title,
+            pov_character=chapter_outline.pov_character,
+            summary=chapter_outline.summary,
+            content=response.content,
             completed=True,
             revision_count=0,
-            quality_metrics={},
-        )
-
-        return chapter
-
-    def revise_chapter(
-        self,
-        chapter: Chapter,
+            quality_metrics={})
         revision_notes: Dict[str, Any],
         style_guide: Dict[str, Any],
     ) -> Chapter:
@@ -627,8 +633,8 @@ Also provide an overall consistency score from 0.0 to 1.0 and a summary of the c
                     issues.append(current_issue)
                     current_issue = ""
                 in_issue = False
-
-        if current_issue:
+            except ValueError:
+                pass
             issues.append(current_issue)
 
         # Extract consistency score
@@ -859,8 +865,8 @@ Also provide an overall description quality score and summary.
         response = self.llm.invoke(
             prompt.format(text=text[:3000])
         )  # Limit text length for token constraints
-
-        # Extract scores from the response
+                except ValueError:
+                    scores[aspect.replace(" ", "_")] = 0.5  # Default if parsing fails
         scores = {}
         aspects = [
             "sensory balance",

@@ -1,16 +1,17 @@
 # graphs/subgraphs/initialization.py
-from typing import Dict, List, Any, Annotated, TypedDict
-from langgraph.graph import StateGraph
 import uuid
 from datetime import datetime
+from typing import Annotated, Any, Dict, List, TypedDict
+
+from langgraph.graph import StateGraph
 
 from storybook.agents.project_management import (
-    ProjectLeadAgent,
-    MarketResearchAgent,
     ConceptDevelopmentAgent,
+    MarketResearchAgent,
+    ProjectLeadAgent,
 )
-from storybook.utils.state import NovelState, ProjectStatus, ProjectConcept
 from storybook.config import Config
+from storybook.utils.state import NovelState, ProjectConcept, ProjectStatus
 
 
 class InitializationState(TypedDict):

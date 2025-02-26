@@ -1,18 +1,23 @@
 # graphs/main_graph.py
-from typing import Dict, List, Any, Annotated, TypedDict, Literal
-from langgraph.graph import StateGraph
 import uuid
 from datetime import datetime
+from typing import Annotated, Any, Dict, List, Literal, TypedDict
 
-from storybook.utils.state import NovelState, ProjectStatus
+from langgraph.graph import StateGraph
+
 from storybook.config import Config
-from storybook.subgraphs.initialization import create_initialization_graph
-from storybook.subgraphs.research import create_research_graph
-from storybook.subgraphs.character_development import create_character_development_graph
-from storybook.subgraphs.drafting import create_drafting_graph
-from storybook.subgraphs.revision import create_revision_graph
-from storybook.subgraphs.reader_optimization import create_reader_optimization_graph
-from storybook.subgraphs.publication import create_publication_graph
+from storybook.graphs.subgraphs.character_development import (
+    create_character_development_graph,
+)
+from storybook.graphs.subgraphs.drafting import create_drafting_graph
+from storybook.graphs.subgraphs.initialization import create_initialization_graph
+from storybook.graphs.subgraphs.publication import create_publication_graph
+from storybook.graphs.subgraphs.reader_optimization import (
+    create_reader_optimization_graph,
+)
+from storybook.graphs.subgraphs.research import create_research_graph
+from storybook.graphs.subgraphs.revision import create_revision_graph
+from storybook.utils.state import NovelState, ProjectStatus
 
 
 class NovelGenerationState(TypedDict):

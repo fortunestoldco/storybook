@@ -1,16 +1,17 @@
 # graphs/subgraphs/character_development.py
-from typing import Dict, List, Any, Annotated, TypedDict
+from typing import Annotated, Any, Dict, List, TypedDict
+
 from langgraph.graph import StateGraph
 
 from storybook.agents.character_development import (
-    CharacterResearchAgent,
     CharacterArcDesignerAgent,
     CharacterRelationshipMapperAgent,
+    CharacterResearchAgent,
     DialogueSpecialistAgent,
 )
 from storybook.agents.project_management import ProjectLeadAgent
-from storubook.utils.state import NovelState, ProjectStatus, Character
-from storubook.config import Config
+from storybook.config import Config
+from storybook.utils.state import Character, NovelState, ProjectStatus
 
 
 class CharacterDevelopmentState(TypedDict):

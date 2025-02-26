@@ -1,11 +1,12 @@
 # agents/publication/__init__.py
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from storybook.utils.state import NovelState
 from storybook.config import Config
+from storybook.utils.state import NovelState
 
 
 class BlurbGeneratorAgent:

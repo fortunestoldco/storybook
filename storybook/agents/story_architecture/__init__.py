@@ -1,11 +1,12 @@
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
+
+from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 
-from storybook.utils.state import NovelState, PlotPoint
 from storybook.config import Config
+from storybook.utils.state import NovelState, PlotPoint
 
 
 class StoryStructure(BaseModel):

@@ -1,12 +1,13 @@
 # agents/reader_experience/__init__.py
-from typing import Dict, List, Any, Optional
+import re
+from typing import Any, Dict, List, Optional
+
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
-import re
 
-from storybook.utils.state import NovelState, Chapter
 from storybook.config import Config
+from storybook.utils.state import Chapter, NovelState
 
 
 class EmotionalArcAnalyzerAgent:

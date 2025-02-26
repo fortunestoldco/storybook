@@ -1,6 +1,6 @@
-from typing import Dict, List, Any, Optional
 import re
 from collections import Counter
+from typing import Any, Dict, List, Optional
 
 
 class QualityMetrics:
