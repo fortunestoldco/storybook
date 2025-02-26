@@ -6,7 +6,7 @@ from ...agents.writing import WritingSupervisorAgent, ChapterWriterAgent, Contin
 from ...agents.story_architecture import PlotDevelopmentAgent
 from ...agents.project_management import ProjectLeadAgent
 from ...utils.state import NovelState, ProjectStatus, Chapter
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class DraftingState(TypedDict):
     """State for the drafting subgraph."""
@@ -18,7 +18,7 @@ class DraftingState(TypedDict):
     enhanced_chapters: Dict[int, Chapter]
     narrative_tracking: Dict[str, Any]
 
-def create_drafting_graph(config: NovelGenConfig):
+def create_drafting_graph(config: storybookConfig):
     """Create the drafting phase subgraph."""
     # Initialize agents
     writing_supervisor = WritingSupervisorAgent(config)

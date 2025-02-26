@@ -5,12 +5,12 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
 from ...utils.state import NovelState
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class BlurbGeneratorAgent:
     """Blurb Generator Agent that creates compelling book descriptions."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "BlurbGenerator"
@@ -178,7 +178,7 @@ Also provide an overall effectiveness score and summary.
 class BookTitleOptimizerAgent:
     """Book Title Optimizer Agent that tests potential titles for market appeal."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "BookTitleOptimizer"
@@ -360,7 +360,7 @@ Also provide an overall effectiveness score and summary.
 class ComparableTitleAnalystAgent:
     """Comparable Title Analyst Agent that identifies strategic comp titles."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "ComparableTitleAnalyst"
@@ -565,7 +565,7 @@ MARKETING STRATEGY:
 class TagAndCategorySpecialistAgent:
     """Tag and Category Specialist Agent that optimizes metadata for discovery."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "TagAndCategorySpecialist"

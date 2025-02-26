@@ -5,7 +5,7 @@ from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 
 from ...utils.state import NovelState, PlotPoint
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class StoryStructure(BaseModel):
     """Story structure definition."""
@@ -32,7 +32,7 @@ class ChapterOutline(BaseModel):
 class StructureSpecialistAgent:
     """Structure Specialist Agent that designs the novel's structure."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "StructureSpecialist"
@@ -154,7 +154,7 @@ The structure should support the premise and themes while adhering to genre expe
 class PlotDevelopmentAgent:
     """Plot Development Agent that creates detailed plot outlines."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "PlotDevelopment"
@@ -345,7 +345,7 @@ Ensure the chapters collectively form a cohesive novel with proper pacing, risin
 class WorldBuildingAgent:
     """World Building Agent that develops setting rules, maps, and systems."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "WorldBuilding"

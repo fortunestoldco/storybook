@@ -1,6 +1,16 @@
-storybook.ml
+storybook.
 
-A LLM Based Novel Generator Tasked to Ensure Cohesive Best-Seller Grade Work based on Inference of Consumer Habits, Market Research, Trend Analysis with continuous feedback and review loops measuring standards of Generative Works.
+A LLM Based Novel Generation Workflow with Consumer Behavioural and Market Trend Analysis Tools - Tasked to Ensure Cohesive Best-Seller Grade Work based on Inference of Consumer Habits, Market Research, Trend Analysis with continuous feedback and review loops measuring standards of Generative Works.
+
+Basic Usage from CLI:
+python main.py
+
+Tailored Use from Config:
+python main.py --config my_config.json --output ./novel.doc
+
+Resuming Previous Work:
+python main.py --input ./output/my-novel-draft.json
+
 
 
 Generate Work from Scratch or from Configuration Files (JSON/YAML):
@@ -53,7 +63,7 @@ from pydantic import BaseModel, Field, validator
 import json
 import yaml
 
-class NovelGenConfig(BaseModel):
+class storybookConfig(BaseModel):
     """Configuration for the novel generation system."""
     # LLM Configuration
     llm_model: str = Field(default="gpt-4", description="The LLM model to use")
@@ -142,7 +152,7 @@ class NovelGenConfig(BaseModel):
         }
     
     @classmethod
-    def from_file(cls, file_path: str) -> "NovelGenConfig":
+    def from_file(cls, file_path: str) -> "storybookConfig":
         """Load configuration from a file (JSON or YAML)."""
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Configuration file not found: {file_path}")
@@ -170,7 +180,7 @@ class NovelGenConfig(BaseModel):
                 raise ValueError("Output file must have .json, .yaml, or .yml extension")
 
 # Default configuration
-default_config = NovelGenConfig()
+default_config = storybookConfig()
 Sample Configuration Files
 Basic JSON Configuration (config.json)
 jsonCopy{
@@ -235,13 +245,13 @@ memory_optimization: "high"
 Usage in Code
 To use the configuration in the main application:
 pythonCopyimport os
-from config import NovelGenConfig
+from config import storybookConfig
 
 # Load from environment variables or defaults
-config = NovelGenConfig()
+config = storybookConfig()
 
 # Or load from a file
-config = NovelGenConfig.from_file("novel_config.json")
+config = storybookConfig.from_file("novel_config.json")
 
 # Override specific settings
 config.target_word_count = 100000

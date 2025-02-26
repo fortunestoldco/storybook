@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 
 from ..utils.state import NovelState, ProjectStatus
-from ..config import NovelGenConfig
+from ..config import storybookConfig
 from .subgraphs.initialization import create_initialization_graph
 from .subgraphs.research import create_research_graph
 from .subgraphs.character_development import create_character_development_graph
@@ -14,7 +14,7 @@ from .subgraphs.revision import create_revision_graph
 from .subgraphs.reader_optimization import create_reader_optimization_graph
 from .subgraphs.publication import create_publication_graph
 
-class NovelGenerationState(TypedDict):
+class storybookerationState(TypedDict):
     """State for the novel generation workflow."""
     novel_state: NovelState
     current_phase: str
@@ -22,10 +22,10 @@ class NovelGenerationState(TypedDict):
     phase_outputs: Dict[str, Dict[str, Any]]
     publication_package: Dict[str, Any]
 
-def create_main_graph(config: NovelGenConfig = None):
+def create_main_graph(config: storybookConfig = None):
     """Create the main workflow graph for novel generation."""
     if config is None:
-        config = NovelGenConfig()
+        config = storybookConfig()
     
     # Create subgraphs
     initialization_graph = create_initialization_graph(config)
@@ -37,12 +37,12 @@ def create_main_graph(config: NovelGenConfig = None):
     publication_graph = create_publication_graph(config)
     
     # Define state for the main graph
-    workflow = StateGraph(NovelGenerationState)
+    workflow = StateGraph(storybookerationState)
     
     # Define nodes
     
     # Start: Initialize empty state
-    def initialize_state() -> NovelGenerationState:
+    def initialize_state() -> storybookerationState:
         """Initialize the workflow state."""
         return {
             "novel_state": None,
@@ -53,7 +53,7 @@ def create_main_graph(config: NovelGenConfig = None):
         }
     
     # 1. Initialization Phase
-    def run_initialization_phase(state: NovelGenerationState) -> NovelGenerationState:
+    def run_initialization_phase(state: storybookerationState) -> storybookerationState:
         """Run the initialization phase."""
         # Prepare input state for the subgraph
         init_input = {}
@@ -88,7 +88,7 @@ def create_main_graph(config: NovelGenConfig = None):
         }
     
     # 2. Research Phase
-    def run_research_phase(state: NovelGenerationState) -> NovelGenerationState:
+    def run_research_phase(state: storybookerationState) -> storybookerationState:
         """Run the research phase."""
         # Prepare input state for the subgraph
         research_input = {"novel_state": state["novel_state"]}
@@ -123,7 +123,7 @@ def create_main_graph(config: NovelGenConfig = None):
         }
     
     # 3. Character Development Phase
-    def run_character_development_phase(state: NovelGenerationState) -> NovelGenerationState:
+    def run_character_development_phase(state: storybookerationState) -> storybookerationState:
         """Run the character development phase."""
         # Prepare input state for the subgraph
         char_dev_input = {"novel_state": state["novel_state"]}
@@ -158,7 +158,7 @@ def create_main_graph(config: NovelGenConfig = None):
         }
     
     # 4. Drafting Phase
-    def run_drafting_phase(state: NovelGenerationState) -> NovelGenerationState:
+    def run_drafting_phase(state: storybookerationState) -> storybookerationState:
         """Run the drafting phase."""
         # Prepare input state for the subgraph
         drafting_input = {"novel_state": state["novel_state"]}
@@ -193,7 +193,7 @@ def create_main_graph(config: NovelGenConfig = None):
         }
     
     # 5. Revision Phase
-    def run_revision_phase(state: NovelGenerationState) -> NovelGenerationState:
+    def run_revision_phase(state: storybookerationState) -> storybookerationState:
         """Run the revision phase."""
         # Prepare input state for the subgraph
         revision_input = {"novel_state": state["novel_state"]}
@@ -227,7 +227,7 @@ def create_main_graph(config: NovelGenConfig = None):
         }
     
     # 6. Reader Optimization Phase
-    def run_reader_optimization_phase(state: NovelGenerationState) -> NovelGenerationState:
+    def run_reader_optimization_phase(state: storybookerationState) -> storybookerationState:
         """Run the reader optimization phase."""
         # Prepare input state for the subgraph
         optimization_input = {"novel_state": state["novel_state"]}
@@ -260,7 +260,7 @@ def create_main_graph(config: NovelGenConfig = None):
         }
     
     # 7. Publication Preparation Phase
-    def run_publication_phase(state: NovelGenerationState) -> NovelGenerationState:
+    def run_publication_phase(state: storybookerationState) -> storybookerationState:
         """Run the publication preparation phase."""
         # Prepare input state for the subgraph
         publication_input = {"novel_state": state["novel_state"]}
@@ -307,7 +307,7 @@ def create_main_graph(config: NovelGenConfig = None):
     workflow.add_node("publication_phase", run_publication_phase)
     
     # Define conditional routing based on current phase
-    def route_by_phase(state: NovelGenerationState) -> Literal["initialization_phase", "research_phase", "character_development_phase", "drafting_phase", "revision_phase", "reader_optimization_phase", "publication_phase", "end"]:
+    def route_by_phase(state: storybookerationState) -> Literal["initialization_phase", "research_phase", "character_development_phase", "drafting_phase", "revision_phase", "reader_optimization_phase", "publication_phase", "end"]:
         """Route to the appropriate phase based on the current state."""
         current_phase = state["current_phase"]
         

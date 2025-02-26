@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 
 from ...utils.state import NovelState, ProjectStatus
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class ProjectConcept(BaseModel):
     """Project concept with market analysis."""
@@ -25,7 +25,7 @@ class ProjectConcept(BaseModel):
 class ProjectLeadAgent:
     """Project Lead Agent that manages the overall novel project."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "ProjectLead"
@@ -120,7 +120,7 @@ Provide a detailed analysis with specific recommendations for improvement.
 class MarketResearchAgent:
     """Market Research Agent that analyzes market trends and reader preferences."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "MarketResearch"
@@ -216,7 +216,7 @@ Make each concept distinct and oriented toward a different market segment or rea
 class ConceptDevelopmentAgent:
     """Concept Development Agent that refines novel concepts."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "ConceptDevelopment"

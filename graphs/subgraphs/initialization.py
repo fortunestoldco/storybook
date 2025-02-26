@@ -6,7 +6,7 @@ from datetime import datetime
 
 from ...agents.project_management import ProjectLeadAgent, MarketResearchAgent, ConceptDevelopmentAgent
 from ...utils.state import NovelState, ProjectStatus, ProjectConcept
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class InitializationState(TypedDict):
     """State for the initialization subgraph."""
@@ -17,7 +17,7 @@ class InitializationState(TypedDict):
     refined_concept: ProjectConcept
     evaluation: Dict[str, Any]
 
-def create_initialization_graph(config: NovelGenConfig):
+def create_initialization_graph(config: storybookConfig):
     """Create the initialization phase subgraph."""
     # Initialize agents
     project_lead = ProjectLeadAgent(config)

@@ -2,7 +2,7 @@ import os
 from typing import Dict, Any, Optional
 from pydantic import BaseModel, Field
 
-class NovelGenConfig(BaseModel):
+class storybookConfig(BaseModel):
     """Configuration for the novel generation system."""
     # LLM Configuration
     llm_model: str = Field(default="gpt-4", description="The LLM model to use")
@@ -40,4 +40,4 @@ class NovelGenConfig(BaseModel):
         }
 
 # Default configuration
-default_config = NovelGenConfig()
+default_config = storybookConfig()

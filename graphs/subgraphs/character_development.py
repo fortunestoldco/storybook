@@ -5,7 +5,7 @@ from langgraph.graph import StateGraph
 from ...agents.character_development import CharacterResearchAgent, CharacterArcDesignerAgent, CharacterRelationshipMapperAgent, DialogueSpecialistAgent
 from ...agents.project_management import ProjectLeadAgent
 from ...utils.state import NovelState, ProjectStatus, Character
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class CharacterDevelopmentState(TypedDict):
     """State for the character development subgraph."""
@@ -17,7 +17,7 @@ class CharacterDevelopmentState(TypedDict):
     dialogue_patterns: Dict[str, Dict[str, Any]]
     dialogue_examples: Dict[str, Dict[str, str]]
 
-def create_character_development_graph(config: NovelGenConfig):
+def create_character_development_graph(config: storybookConfig):
     """Create the character development phase subgraph."""
     # Initialize agents
     character_research = CharacterResearchAgent(config)

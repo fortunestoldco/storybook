@@ -6,12 +6,12 @@ from pydantic import BaseModel, Field
 import re
 
 from ...utils.state import NovelState, Chapter
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class EmotionalArcAnalyzerAgent:
     """Emotional Arc Analyzer Agent that verifies emotional impact trajectory."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "EmotionalArcAnalyzer"
@@ -196,7 +196,7 @@ Provide the complete revised chapter.
 class HookOptimizationAgent:
     """Hook Optimization Agent that strengthens chapter openings and closings."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "HookOptimization"
@@ -321,7 +321,7 @@ Also provide an overall hook effectiveness score and summary.
 class ReadabilitySpecialistAgent:
     """Readability Specialist Agent that adjusts language complexity for target audience."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "ReadabilitySpecialist"
@@ -450,7 +450,7 @@ Also provide an overall readability assessment, identifying the ideal target aud
 class PageTurnerDesignerAgent:
     """Page-Turner Designer Agent that enhances addictive reading qualities."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "PageTurnerDesigner"

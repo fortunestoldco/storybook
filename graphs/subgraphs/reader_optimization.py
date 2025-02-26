@@ -5,7 +5,7 @@ from langgraph.graph import StateGraph
 from ...agents.reader_experience import EmotionalArcAnalyzerAgent, HookOptimizationAgent, ReadabilitySpecialistAgent, PageTurnerDesignerAgent
 from ...agents.project_management import ProjectLeadAgent
 from ...utils.state import NovelState, ProjectStatus, Chapter
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class ReaderOptimizationState(TypedDict):
     """State for the reader optimization subgraph."""
@@ -17,7 +17,7 @@ class ReaderOptimizationState(TypedDict):
     adjusted_chapters: Dict[int, Chapter]
     page_turner_enhanced_chapters: Dict[int, Chapter]
 
-def create_reader_optimization_graph(config: NovelGenConfig):
+def create_reader_optimization_graph(config: storybookConfig):
     """Create the reader optimization phase subgraph."""
     # Initialize agents
     emotional_arc_analyzer = EmotionalArcAnalyzerAgent(config)

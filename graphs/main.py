@@ -5,7 +5,7 @@ import json
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from config import NovelGenConfig
+from config import storybookConfig
 from graphs.main_graph import create_main_graph
 from utils.state import NovelState, ProjectStatus
 
@@ -162,7 +162,7 @@ def load_state(input_file: str) -> Optional[Dict[str, Any]]:
 def main(config_file: Optional[str] = None, input_file: Optional[str] = None, output_dir: str = "output"):
     """Run the novel generation workflow."""
     # Load configuration
-    config = NovelGenConfig()
+    config = storybookConfig()
     if config_file:
         # Load custom config if provided
         pass

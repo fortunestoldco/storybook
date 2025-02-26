@@ -6,7 +6,7 @@ from ...agents.research import ResearchSupervisorAgent, HistoricalResearchAgent,
 from ...agents.story_architecture import StructureSpecialistAgent, PlotDevelopmentAgent, WorldBuildingAgent
 from ...agents.project_management import ProjectLeadAgent
 from ...utils.state import NovelState, ProjectStatus, ResearchTopic, ResearchItem, StoryStructure
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class ResearchState(TypedDict):
     """State for the research subgraph."""
@@ -21,7 +21,7 @@ class ResearchState(TypedDict):
     world_building: Dict[str, Any]
     setting_bible: Dict[str, Any]
 
-def create_research_graph(config: NovelGenConfig):
+def create_research_graph(config: storybookConfig):
     """Create the research phase subgraph."""
     # Initialize agents
     research_supervisor = ResearchSupervisorAgent(config)

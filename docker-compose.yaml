@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  storybook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./output:/app/output
+      - ./config:/app/config
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    command: --config /app/config/my_config.json --output /app/output
+
+  # Optional API service
+  storybook-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./output:/app/output
+      - ./config:/app/config
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    command: python -m uvicorn api:app --host 0.0.0.0 --port 8000
+

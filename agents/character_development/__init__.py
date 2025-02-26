@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 import json
 
 from ...utils.state import NovelState, Character
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class CharacterPersonality(BaseModel):
     """Detailed personality model for a character."""
@@ -42,7 +42,7 @@ class DialoguePattern(BaseModel):
 class CharacterResearchAgent:
     """Character Research Agent that creates psychological profiles for characters."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "CharacterResearch"
@@ -378,7 +378,7 @@ SUBVERSIONS:
 class CharacterArcDesignerAgent:
     """Character Arc Designer Agent that plots character growth trajectories."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "CharacterArcDesigner"
@@ -592,7 +592,7 @@ INTERNAL TRANSFORMATION:
 class CharacterRelationshipMapperAgent:
     """Character Relationship Mapper Agent that defines complex relationship dynamics."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "CharacterRelationshipMapper"
@@ -698,7 +698,7 @@ CHARACTER 2 -> CHARACTER 1:
 class DialogueSpecialistAgent:
     """Dialogue Specialist Agent that develops distinctive speech patterns for characters."""
     
-    def __init__(self, config: NovelGenConfig):
+    def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "DialogueSpecialist"

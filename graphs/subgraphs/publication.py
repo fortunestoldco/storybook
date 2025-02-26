@@ -5,7 +5,7 @@ from langgraph.graph import StateGraph
 from ...agents.publication import BlurbGeneratorAgent, BookTitleOptimizerAgent, ComparableTitleAnalystAgent, TagAndCategorySpecialistAgent
 from ...agents.project_management import ProjectLeadAgent
 from ...utils.state import NovelState, ProjectStatus
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class PublicationState(TypedDict):
     """State for the publication subgraph."""
@@ -20,7 +20,7 @@ class PublicationState(TypedDict):
     category_optimization: Dict[str, Any]
     publication_package: Dict[str, Any]
 
-def create_publication_graph(config: NovelGenConfig):
+def create_publication_graph(config: storybookConfig):
     """Create the publication preparation phase subgraph."""
     # Initialize agents
     blurb_generator = BlurbGeneratorAgent(config)

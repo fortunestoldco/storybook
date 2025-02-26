@@ -6,7 +6,7 @@ from ...agents.editing import DevelopmentalEditorAgent, LineEditorAgent, Dialogu
 from ...agents.writing import WritingSupervisorAgent, ChapterWriterAgent
 from ...agents.project_management import ProjectLeadAgent
 from ...utils.state import NovelState, ProjectStatus, Chapter
-from ...config import NovelGenConfig
+from ...config import storybookConfig
 
 class RevisionState(TypedDict):
     """State for the revision subgraph."""
@@ -19,7 +19,7 @@ class RevisionState(TypedDict):
     tension_map: Dict[str, Any]
     tension_optimized_chapters: Dict[int, Chapter]
 
-def create_revision_graph(config: NovelGenConfig):
+def create_revision_graph(config: storybookConfig):
     """Create the revision phase subgraph."""
     # Initialize agents
     developmental_editor = DevelopmentalEditorAgent(config)
