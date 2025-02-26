@@ -1,4 +1,4 @@
-# Storybook: Best-Seller Novel Generation System
+# Storybook: Research and NLP/AI/LM Based Novel Generation System
 
 Storybook is an advanced AI system designed to generate high-quality literary fiction with the potential to achieve best-seller status. It leverages a hierarchical multi-agent architecture, sophisticated NLP tools, and creative innovations to produce engaging and professionally crafted novels.
 
