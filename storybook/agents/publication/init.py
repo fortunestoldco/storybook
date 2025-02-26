@@ -7,21 +7,30 @@ from pydantic import BaseModel, Field
 from storybook.utils.state import NovelState
 from storybook.config import storybookConfig
 
+
 class BlurbGeneratorAgent:
     """Blurb Generator Agent that creates compelling book descriptions."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "BlurbGenerator"
-    
-    def generate_blurbs(self, state: NovelState, styles: List[str] = None) -> Dict[str, str]:
+
+    def generate_blurbs(
+        self, state: NovelState, styles: List[str] = None
+    ) -> Dict[str, str]:
         """Generate multiple book blurb options in different styles."""
         if styles is None:
-            styles = ["standard", "intriguing", "character-focused", "action-focused", "thematic"]
-        
+            styles = [
+                "standard",
+                "intriguing",
+                "character-focused",
+                "action-focused",
+                "thematic",
+            ]
+
         blurbs = {}
-        
+
         for style in styles:
             prompt = PromptTemplate(
                 template="""You are a professional copywriter creating a compelling {style} book blurb for a novel.
@@ -52,51 +61,71 @@ For a {style} blurb specifically:
 
 Write only the blurb text, not any analysis or explanation.
 """,
-                input_variables=["style", "title", "genre", "target_audience", "premise", "themes", "characters", "plot_overview", "style_guidance"]
+                input_variables=[
+                    "style",
+                    "title",
+                    "genre",
+                    "target_audience",
+                    "premise",
+                    "themes",
+                    "characters",
+                    "plot_overview",
+                    "style_guidance",
+                ],
             )
-            
+
             # Create character summary
             characters_text = ""
             for name, character in state.characters.items():
-                characters_text += f"{name}: {character.role} - {character.background[:100]}...\n"
-            
+                characters_text += (
+                    f"{name}: {character.role} - {character.background[:100]}...\n"
+                )
+
             if not characters_text:
                 characters_text = "Main protagonist and supporting characters."
-            
+
             # Create plot overview
             plot_overview = ""
-            for i, point in enumerate(state.plot_points[:5]):  # Limit to first 5 major plot points
+            for i, point in enumerate(
+                state.plot_points[:5]
+            ):  # Limit to first 5 major plot points
                 plot_overview += f"- {point.title}: {point.description[:100]}...\n"
-                
+
             if not plot_overview:
                 plot_overview = state.premise
-            
+
             # Define style-specific guidance
             style_guidance = {
                 "standard": "Use classic blurb structure with setup, complication, and stake-raising question.",
                 "intriguing": "Focus on mystery and unanswered questions. Use provocative language that creates curiosity.",
                 "character-focused": "Center on character journey and internal conflicts. Make the reader care deeply about the protagonist.",
                 "action-focused": "Emphasize exciting plot elements and external conflicts. Use dynamic, propulsive language.",
-                "thematic": "Highlight the novel's themes and deeper meanings. Appeal to readers looking for thought-provoking content."
+                "thematic": "Highlight the novel's themes and deeper meanings. Appeal to readers looking for thought-provoking content.",
             }
-            
-            response = self.llm.invoke(prompt.format(
-                style=style,
-                title=state.project_name,
-                genre=state.genre,
-                target_audience=state.target_audience,
-                premise=state.premise,
-                themes=", ".join(state.themes),
-                characters=characters_text,
-                plot_overview=plot_overview,
-                style_guidance=style_guidance.get(style, "Create a compelling and marketable description.")
-            ))
-            
+
+            response = self.llm.invoke(
+                prompt.format(
+                    style=style,
+                    title=state.project_name,
+                    genre=state.genre,
+                    target_audience=state.target_audience,
+                    premise=state.premise,
+                    themes=", ".join(state.themes),
+                    characters=characters_text,
+                    plot_overview=plot_overview,
+                    style_guidance=style_guidance.get(
+                        style, "Create a compelling and marketable description."
+                    ),
+                )
+            )
+
             blurbs[style] = response.content
-        
+
         return blurbs
-    
-    def analyze_blurb_effectiveness(self, blurb: str, genre: str, target_audience: str) -> Dict[str, Any]:
+
+    def analyze_blurb_effectiveness(
+        self, blurb: str, genre: str, target_audience: str
+    ) -> Dict[str, Any]:
         """Analyze the effectiveness of a book blurb for its intended audience."""
         prompt = PromptTemplate(
             template="""You are a publishing marketing expert analyzing the effectiveness of a book blurb.
@@ -138,25 +167,27 @@ For each aspect, provide:
 
 Also provide an overall effectiveness score and summary.
 """,
-            input_variables=["blurb", "genre", "target_audience"]
+            input_variables=["blurb", "genre", "target_audience"],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            blurb=blurb,
-            genre=genre,
-            target_audience=target_audience
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(blurb=blurb, genre=genre, target_audience=target_audience)
+        )
+
         # Extract aspects and scores from the response
         # This is a simplified extraction - a real implementation would be more robust
-        aspects = ["hook strength", "premise clarity", "genre alignment", "character appeal", 
-                   "stakes communication", "marketability", "curiosity generation"]
-        
-        analysis = {
-            "full_analysis": response.content,
-            "scores": {}
-        }
-        
+        aspects = [
+            "hook strength",
+            "premise clarity",
+            "genre alignment",
+            "character appeal",
+            "stakes communication",
+            "marketability",
+            "curiosity generation",
+        ]
+
+        analysis = {"full_analysis": response.content, "scores": {}}
+
         for aspect in aspects:
             # Look for score pattern like "Hook Strength: 0.8" or "Hook Strength - 0.8"
             pattern = f"{aspect}.*?(\d+\.\d+)"
@@ -166,24 +197,35 @@ Also provide an overall effectiveness score and summary.
                     score = float(match.group(1))
                     analysis["scores"][aspect.replace(" ", "_")] = score
                 except:
-                    analysis["scores"][aspect.replace(" ", "_")] = 0.5  # Default if parsing fails
+                    analysis["scores"][
+                        aspect.replace(" ", "_")
+                    ] = 0.5  # Default if parsing fails
             else:
-                analysis["scores"][aspect.replace(" ", "_")] = 0.5  # Default if not found
-        
+                analysis["scores"][
+                    aspect.replace(" ", "_")
+                ] = 0.5  # Default if not found
+
         # Calculate overall score as average of individual scores
-        analysis["overall_score"] = sum(analysis["scores"].values()) / len(analysis["scores"]) if analysis["scores"] else 0.5
-        
+        analysis["overall_score"] = (
+            sum(analysis["scores"].values()) / len(analysis["scores"])
+            if analysis["scores"]
+            else 0.5
+        )
+
         return analysis
+
 
 class BookTitleOptimizerAgent:
     """Book Title Optimizer Agent that tests potential titles for market appeal."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "BookTitleOptimizer"
-    
-    def generate_title_options(self, state: NovelState, count: int = 10) -> List[Dict[str, Any]]:
+
+    def generate_title_options(
+        self, state: NovelState, count: int = 10
+    ) -> List[Dict[str, Any]]:
         """Generate multiple title options with different approaches."""
         prompt = PromptTemplate(
             template="""You are a title generation specialist for a publishing company, creating compelling book titles.
@@ -219,22 +261,24 @@ APPEAL: [Commercial appeal factors]
 TARGET: [Specific audience segments]
 MARKETABILITY: [0.0-1.0 score]
 """,
-            input_variables=["genre", "premise", "themes", "target_audience", "count"]
+            input_variables=["genre", "premise", "themes", "target_audience", "count"],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            genre=state.genre,
-            premise=state.premise,
-            themes=", ".join(state.themes),
-            target_audience=state.target_audience,
-            count=count
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                genre=state.genre,
+                premise=state.premise,
+                themes=", ".join(state.themes),
+                target_audience=state.target_audience,
+                count=count,
+            )
+        )
+
         # Parse the response into title options
         title_options = []
         current_title = {}
         current_field = None
-        
+
         for line in response.content.split("\n"):
             line = line.strip()
             if not line:
@@ -243,13 +287,13 @@ MARKETABILITY: [0.0-1.0 score]
                     title_options.append(current_title)
                     current_title = {}
                 continue
-            
+
             if line.startswith("TITLE:"):
                 # Start of a new title
                 if current_title:
                     title_options.append(current_title)
                     current_title = {}
-                
+
                 current_title["title"] = line.split("TITLE:")[1].strip()
                 current_field = "title"
             elif line.startswith("SUBTITLE:"):
@@ -267,21 +311,25 @@ MARKETABILITY: [0.0-1.0 score]
             elif line.startswith("MARKETABILITY:"):
                 try:
                     score_text = line.split("MARKETABILITY:")[1].strip()
-                    current_title["marketability"] = float(re.search(r"(\d+\.\d+)", score_text).group(1))
+                    current_title["marketability"] = float(
+                        re.search(r"(\d+\.\d+)", score_text).group(1)
+                    )
                 except:
                     current_title["marketability"] = 0.5  # Default if parsing fails
                 current_field = "marketability"
             elif current_field and current_field in current_title:
                 # Continue previous field
                 current_title[current_field] += " " + line
-        
+
         # Add the last title if there is one
         if current_title:
             title_options.append(current_title)
-        
+
         return title_options
-    
-    def test_title_effectiveness(self, title: str, genre: str, target_audience: str) -> Dict[str, Any]:
+
+    def test_title_effectiveness(
+        self, title: str, genre: str, target_audience: str
+    ) -> Dict[str, Any]:
         """Test the market effectiveness of a book title."""
         prompt = PromptTemplate(
             template="""You are a publishing market analyst evaluating the effectiveness of a book title.
@@ -321,24 +369,26 @@ For each aspect, provide:
 
 Also provide an overall effectiveness score and summary.
 """,
-            input_variables=["title", "genre", "target_audience"]
+            input_variables=["title", "genre", "target_audience"],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            title=title,
-            genre=genre,
-            target_audience=target_audience
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(title=title, genre=genre, target_audience=target_audience)
+        )
+
         # Extract aspects and scores from the response
-        aspects = ["immediate appeal", "genre signaling", "memorability", "intrigue factor", 
-                   "thematic relevance", "marketability", "competitive differentiation"]
-        
-        analysis = {
-            "full_analysis": response.content,
-            "scores": {}
-        }
-        
+        aspects = [
+            "immediate appeal",
+            "genre signaling",
+            "memorability",
+            "intrigue factor",
+            "thematic relevance",
+            "marketability",
+            "competitive differentiation",
+        ]
+
+        analysis = {"full_analysis": response.content, "scores": {}}
+
         for aspect in aspects:
             # Look for score pattern
             pattern = f"{aspect}.*?(\d+\.\d+)"
@@ -348,24 +398,35 @@ Also provide an overall effectiveness score and summary.
                     score = float(match.group(1))
                     analysis["scores"][aspect.replace(" ", "_")] = score
                 except:
-                    analysis["scores"][aspect.replace(" ", "_")] = 0.5  # Default if parsing fails
+                    analysis["scores"][
+                        aspect.replace(" ", "_")
+                    ] = 0.5  # Default if parsing fails
             else:
-                analysis["scores"][aspect.replace(" ", "_")] = 0.5  # Default if not found
-        
+                analysis["scores"][
+                    aspect.replace(" ", "_")
+                ] = 0.5  # Default if not found
+
         # Calculate overall score
-        analysis["overall_score"] = sum(analysis["scores"].values()) / len(analysis["scores"]) if analysis["scores"] else 0.5
-        
+        analysis["overall_score"] = (
+            sum(analysis["scores"].values()) / len(analysis["scores"])
+            if analysis["scores"]
+            else 0.5
+        )
+
         return analysis
+
 
 class ComparableTitleAnalystAgent:
     """Comparable Title Analyst Agent that identifies strategic comp titles."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "ComparableTitleAnalyst"
-    
-    def identify_comp_titles(self, state: NovelState, count: int = 8) -> List[Dict[str, Any]]:
+
+    def identify_comp_titles(
+        self, state: NovelState, count: int = 8
+    ) -> List[Dict[str, Any]]:
         """Identify strategic comparable titles for marketing positioning."""
         prompt = PromptTemplate(
             template="""You are a literary agent or publishing marketing specialist identifying comparable titles for a novel.
@@ -406,30 +467,40 @@ READER APPEAL: [Why readers of the comp would like this novel]
 COMMERCIAL STATUS: [Sales level, awards, recognition]
 MARKETING LEVERAGE: [How to use this comp in marketing]
 """,
-            input_variables=["title", "genre", "premise", "themes", "target_audience", "writing_style", "count"]
+            input_variables=[
+                "title",
+                "genre",
+                "premise",
+                "themes",
+                "target_audience",
+                "writing_style",
+                "count",
+            ],
         )
-        
+
         # Extract writing style information if available
         writing_style = "Not specified"
-        if hasattr(state, 'writing_plan') and state.writing_plan:
-            if 'stylistic_guidelines' in state.writing_plan:
-                writing_style = state.writing_plan['stylistic_guidelines']
-        
-        response = self.llm.invoke(prompt.format(
-            title=state.project_name,
-            genre=state.genre,
-            premise=state.premise,
-            themes=", ".join(state.themes),
-            target_audience=state.target_audience,
-            writing_style=writing_style,
-            count=count
-        ))
-        
+        if hasattr(state, "writing_plan") and state.writing_plan:
+            if "stylistic_guidelines" in state.writing_plan:
+                writing_style = state.writing_plan["stylistic_guidelines"]
+
+        response = self.llm.invoke(
+            prompt.format(
+                title=state.project_name,
+                genre=state.genre,
+                premise=state.premise,
+                themes=", ".join(state.themes),
+                target_audience=state.target_audience,
+                writing_style=writing_style,
+                count=count,
+            )
+        )
+
         # Parse the response into comp titles
         comp_titles = []
         current_comp = {}
         current_field = None
-        
+
         for line in response.content.split("\n"):
             line = line.strip()
             if not line:
@@ -438,13 +509,13 @@ MARKETING LEVERAGE: [How to use this comp in marketing]
                     comp_titles.append(current_comp)
                     current_comp = {}
                 continue
-            
+
             if line.startswith("TITLE:"):
                 # Start of a new comp
                 if current_comp:
                     comp_titles.append(current_comp)
                     current_comp = {}
-                
+
                 current_comp["title"] = line.split("TITLE:")[1].strip()
                 current_field = "title"
             elif line.startswith("AUTHOR:"):
@@ -453,7 +524,9 @@ MARKETING LEVERAGE: [How to use this comp in marketing]
             elif line.startswith("PUBLISHED:"):
                 try:
                     year_text = line.split("PUBLISHED:")[1].strip()
-                    current_comp["year"] = int(re.search(r"(\d{4})", year_text).group(1))
+                    current_comp["year"] = int(
+                        re.search(r"(\d{4})", year_text).group(1)
+                    )
                 except:
                     current_comp["year"] = 0  # Default if parsing fails
                 current_field = "year"
@@ -461,28 +534,36 @@ MARKETING LEVERAGE: [How to use this comp in marketing]
                 current_comp["description"] = line.split("DESCRIPTION:")[1].strip()
                 current_field = "description"
             elif line.startswith("COMPARISON POINTS:"):
-                current_comp["comparison_points"] = line.split("COMPARISON POINTS:")[1].strip()
+                current_comp["comparison_points"] = line.split("COMPARISON POINTS:")[
+                    1
+                ].strip()
                 current_field = "comparison_points"
             elif line.startswith("READER APPEAL:"):
                 current_comp["reader_appeal"] = line.split("READER APPEAL:")[1].strip()
                 current_field = "reader_appeal"
             elif line.startswith("COMMERCIAL STATUS:"):
-                current_comp["commercial_status"] = line.split("COMMERCIAL STATUS:")[1].strip()
+                current_comp["commercial_status"] = line.split("COMMERCIAL STATUS:")[
+                    1
+                ].strip()
                 current_field = "commercial_status"
             elif line.startswith("MARKETING LEVERAGE:"):
-                current_comp["marketing_leverage"] = line.split("MARKETING LEVERAGE:")[1].strip()
+                current_comp["marketing_leverage"] = line.split("MARKETING LEVERAGE:")[
+                    1
+                ].strip()
                 current_field = "marketing_leverage"
             elif current_field and current_field in current_comp:
                 # Continue previous field
                 current_comp[current_field] += " " + line
-        
+
         # Add the last comp if there is one
         if current_comp:
             comp_titles.append(current_comp)
-        
+
         return comp_titles
-    
-    def create_positioning_statement(self, state: NovelState, comp_titles: List[Dict[str, Any]]) -> Dict[str, str]:
+
+    def create_positioning_statement(
+        self, state: NovelState, comp_titles: List[Dict[str, Any]]
+    ) -> Dict[str, str]:
         """Create a marketing positioning statement based on comparable titles."""
         prompt = PromptTemplate(
             template="""You are a publishing marketing expert creating a positioning statement for a novel.
@@ -518,58 +599,69 @@ ALTERNATIVES:
 MARKETING STRATEGY:
 [Brief explanation of how to leverage this positioning in marketing]
 """,
-            input_variables=["title", "genre", "premise", "themes", "comp_titles"]
+            input_variables=["title", "genre", "premise", "themes", "comp_titles"],
         )
-        
+
         # Format comp titles for the prompt
         comp_titles_text = ""
         for comp in comp_titles[:5]:  # Limit to first 5 comps
-            comp_titles_text += f"- {comp['title']} by {comp['author']}: {comp['comparison_points']}\n"
-        
-        response = self.llm.invoke(prompt.format(
-            title=state.project_name,
-            genre=state.genre,
-            premise=state.premise,
-            themes=", ".join(state.themes),
-            comp_titles=comp_titles_text
-        ))
-        
+            comp_titles_text += (
+                f"- {comp['title']} by {comp['author']}: {comp['comparison_points']}\n"
+            )
+
+        response = self.llm.invoke(
+            prompt.format(
+                title=state.project_name,
+                genre=state.genre,
+                premise=state.premise,
+                themes=", ".join(state.themes),
+                comp_titles=comp_titles_text,
+            )
+        )
+
         # Extract sections from the response
         sections = {
             "primary_positioning": "",
             "alternatives": [],
-            "marketing_strategy": ""
+            "marketing_strategy": "",
         }
-        
+
         current_section = None
-        
+
         for line in response.content.split("\n"):
             if "PRIMARY POSITIONING:" in line:
                 current_section = "primary_positioning"
-                sections["primary_positioning"] = line.split("PRIMARY POSITIONING:")[1].strip()
+                sections["primary_positioning"] = line.split("PRIMARY POSITIONING:")[
+                    1
+                ].strip()
             elif "ALTERNATIVES:" in line:
                 current_section = "alternatives"
             elif "MARKETING STRATEGY:" in line:
                 current_section = "marketing_strategy"
-                sections["marketing_strategy"] = line.split("MARKETING STRATEGY:")[1].strip()
-            elif current_section == "alternatives" and line.strip() and line[0].isdigit():
+                sections["marketing_strategy"] = line.split("MARKETING STRATEGY:")[
+                    1
+                ].strip()
+            elif (
+                current_section == "alternatives" and line.strip() and line[0].isdigit()
+            ):
                 # This is an alternative positioning statement
                 alternative = line.split(".", 1)[1].strip()
                 sections["alternatives"].append(alternative)
             elif current_section == "marketing_strategy" and line.strip():
                 # Continue marketing strategy
                 sections["marketing_strategy"] += " " + line.strip()
-        
+
         return sections
+
 
 class TagAndCategorySpecialistAgent:
     """Tag and Category Specialist Agent that optimizes metadata for discovery."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "TagAndCategorySpecialist"
-    
+
     def generate_metadata(self, state: NovelState) -> Dict[str, Any]:
         """Generate optimized metadata for book discovery platforms."""
         prompt = PromptTemplate(
@@ -608,29 +700,38 @@ Create optimized metadata for this novel to maximize its discovery on platforms 
 
 Format your response with clear sections for each metadata type.
 """,
-            input_variables=["title", "genre", "subgenres", "premise", "themes", "target_audience"]
+            input_variables=[
+                "title",
+                "genre",
+                "subgenres",
+                "premise",
+                "themes",
+                "target_audience",
+            ],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            title=state.project_name,
-            genre=state.genre,
-            subgenres=", ".join(state.subgenres),
-            premise=state.premise,
-            themes=", ".join(state.themes),
-            target_audience=state.target_audience
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                title=state.project_name,
+                genre=state.genre,
+                subgenres=", ".join(state.subgenres),
+                premise=state.premise,
+                themes=", ".join(state.themes),
+                target_audience=state.target_audience,
+            )
+        )
+
         # Extract sections from the response
         sections = {
             "primary_categories": [],
             "keywords": [],
             "audience_tags": [],
             "content_descriptors": [],
-            "comparable_associations": []
+            "comparable_associations": [],
         }
-        
+
         current_section = None
-        
+
         for line in response.content.split("\n"):
             if "PRIMARY CATEGORIES" in line or "1. PRIMARY CATEGORIES" in line:
                 current_section = "primary_categories"
@@ -647,35 +748,48 @@ Format your response with clear sections for each metadata type.
             elif "COMPARABLE TITLE ASSOCIATIONS" in line or "5. COMPARABLE" in line:
                 current_section = "comparable_associations"
                 continue
-                
+
             if current_section and line.strip():
                 # Check if this is a list item
-                if line.strip().startswith("-") or line.strip().startswith("•") or (line.strip()[0].isdigit() and "." in line[:3]):
+                if (
+                    line.strip().startswith("-")
+                    or line.strip().startswith("•")
+                    or (line.strip()[0].isdigit() and "." in line[:3])
+                ):
                     # Extract the item text
                     item_text = line.strip()
                     for prefix in ["-", "•"]:
                         if item_text.startswith(prefix):
-                            item_text = item_text[len(prefix):].strip()
-                    
+                            item_text = item_text[len(prefix) :].strip()
+
                     if line.strip()[0].isdigit() and "." in line[:3]:
                         item_text = line.strip().split(".", 1)[1].strip()
-                    
+
                     sections[current_section].append(item_text)
-        
+
         # For keywords, if we didn't extract any as list items, try to extract from text
         if not sections["keywords"] and current_section == "keywords":
-            keyword_text = " ".join([line for line in response.content.split("\n") if "KEYWORDS" not in line])
+            keyword_text = " ".join(
+                [
+                    line
+                    for line in response.content.split("\n")
+                    if "KEYWORDS" not in line
+                ]
+            )
             # Extract terms in quotes or comma-separated
             quoted_keywords = re.findall(r'"([^"]*)"', keyword_text)
-            comma_keywords = [k.strip() for k in keyword_text.split(",") if k.strip() and len(k.strip()) > 3]
+            comma_keywords = [
+                k.strip()
+                for k in keyword_text.split(",")
+                if k.strip() and len(k.strip()) > 3
+            ]
             sections["keywords"] = list(set(quoted_keywords + comma_keywords))
-        
-        return {
-            "metadata": sections,
-            "full_metadata_document": response.content
-        }
-    
-    def optimize_categories(self, metadata: Dict[str, Any], target_platform: str) -> Dict[str, Any]:
+
+        return {"metadata": sections, "full_metadata_document": response.content}
+
+    def optimize_categories(
+        self, metadata: Dict[str, Any], target_platform: str
+    ) -> Dict[str, Any]:
         """Optimize category selection for a specific platform."""
         prompt = PromptTemplate(
             template="""You are a book category optimization specialist for {target_platform}.
@@ -706,25 +820,33 @@ Create an optimized category strategy for this novel specifically on {target_pla
 
 Format your response with clear sections and specific, actionable recommendations.
 """,
-            input_variables=["target_platform", "metadata"]
+            input_variables=["target_platform", "metadata"],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            target_platform=target_platform,
-            metadata="\n".join([f"{k}: {v}" for k, v in metadata.items() if k != "full_metadata_document"])
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                target_platform=target_platform,
+                metadata="\n".join(
+                    [
+                        f"{k}: {v}"
+                        for k, v in metadata.items()
+                        if k != "full_metadata_document"
+                    ]
+                ),
+            )
+        )
+
         # Extract sections from the response
         sections = {
             "primary_category": "",
             "secondary_categories": [],
             "category_strategy": "",
             "browse_paths": [],
-            "category_keywords": []
+            "category_keywords": [],
         }
-        
+
         current_section = None
-        
+
         for line in response.content.split("\n"):
             if "PRIMARY CATEGORY" in line or "1. PRIMARY CATEGORY" in line:
                 current_section = "primary_category"
@@ -741,7 +863,7 @@ Format your response with clear sections and specific, actionable recommendation
             elif "CATEGORY-SPECIFIC KEYWORDS" in line or "5. CATEGORY" in line:
                 current_section = "category_keywords"
                 continue
-                
+
             if current_section and line.strip():
                 if current_section == "primary_category":
                     if sections["primary_category"]:
@@ -753,28 +875,38 @@ Format your response with clear sections and specific, actionable recommendation
                         sections["category_strategy"] += " " + line.strip()
                     else:
                         sections["category_strategy"] = line.strip()
-                elif current_section in ["secondary_categories", "browse_paths", "category_keywords"]:
+                elif current_section in [
+                    "secondary_categories",
+                    "browse_paths",
+                    "category_keywords",
+                ]:
                     # Check if this is a list item
-                    if line.strip().startswith("-") or line.strip().startswith("•") or (line.strip()[0].isdigit() and "." in line[:3]):
+                    if (
+                        line.strip().startswith("-")
+                        or line.strip().startswith("•")
+                        or (line.strip()[0].isdigit() and "." in line[:3])
+                    ):
                         # Extract the item text
                         item_text = line.strip()
                         for prefix in ["-", "•"]:
                             if item_text.startswith(prefix):
-                                item_text = item_text[len(prefix):].strip()
-                        
+                                item_text = item_text[len(prefix) :].strip()
+
                         if line.strip()[0].isdigit() and "." in line[:3]:
                             item_text = line.strip().split(".", 1)[1].strip()
-                        
+
                         sections[current_section].append(item_text)
-        
+
         # Clean up the primary category
         if sections["primary_category"]:
             # Remove prefixes like "Primary Category:" if present
             if ":" in sections["primary_category"]:
-                sections["primary_category"] = sections["primary_category"].split(":", 1)[1].strip()
-        
+                sections["primary_category"] = (
+                    sections["primary_category"].split(":", 1)[1].strip()
+                )
+
         return {
             "platform": target_platform,
             "optimized_categories": sections,
-            "full_category_strategy": response.content
+            "full_category_strategy": response.content,
         }

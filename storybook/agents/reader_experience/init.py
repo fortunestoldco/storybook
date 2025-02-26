@@ -8,14 +8,15 @@ import re
 from storybook.utils.state import NovelState, Chapter
 from storybook.config import storybookConfig
 
+
 class EmotionalArcAnalyzerAgent:
     """Emotional Arc Analyzer Agent that verifies emotional impact trajectory."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "EmotionalArcAnalyzer"
-    
+
     def analyze_emotional_arc(self, state: NovelState) -> Dict[str, Any]:
         """Analyze the emotional arc across the entire novel."""
         prompt = PromptTemplate(
@@ -58,9 +59,15 @@ Analyze the emotional arc of this novel to determine:
 
 Create a comprehensive emotional arc analysis with specific recommendations for improvement.
 """,
-            input_variables=["project_name", "genre", "premise", "themes", "chapter_summaries"]
+            input_variables=[
+                "project_name",
+                "genre",
+                "premise",
+                "themes",
+                "chapter_summaries",
+            ],
         )
-        
+
         # Create chapter summaries
         chapter_summaries = ""
         for num, chapter in sorted(state.chapters.items()):
@@ -70,18 +77,20 @@ Create a comprehensive emotional arc analysis with specific recommendations for 
             if chapter.content:
                 chapter_summaries += f"Excerpt: {chapter.content[:200]}...\n"
             chapter_summaries += "\n"
-        
+
         if not chapter_summaries:
             chapter_summaries = "Chapter details not yet available."
-        
-        response = self.llm.invoke(prompt.format(
-            project_name=state.project_name,
-            genre=state.genre,
-            premise=state.premise,
-            themes=", ".join(state.themes),
-            chapter_summaries=chapter_summaries
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                project_name=state.project_name,
+                genre=state.genre,
+                premise=state.premise,
+                themes=", ".join(state.themes),
+                chapter_summaries=chapter_summaries,
+            )
+        )
+
         # Extract sections from the response
         sections = {
             "reader_journey": "",
@@ -89,52 +98,72 @@ Create a comprehensive emotional arc analysis with specific recommendations for 
             "theme_emotion_alignment": "",
             "character_emotion_mapping": "",
             "genre_expectations": "",
-            "emotional_payoff": ""
+            "emotional_payoff": "",
         }
-        
+
         current_section = None
-        
+
         for line in response.content.split("\n"):
-            if "READER EMOTIONAL JOURNEY" in line or "1. READER EMOTIONAL JOURNEY" in line:
+            if (
+                "READER EMOTIONAL JOURNEY" in line
+                or "1. READER EMOTIONAL JOURNEY" in line
+            ):
                 current_section = "reader_journey"
                 continue
             elif "EMOTIONAL COHERENCE" in line or "2. EMOTIONAL COHERENCE" in line:
                 current_section = "emotional_coherence"
                 continue
-            elif "THEME-EMOTION ALIGNMENT" in line or "3. THEME-EMOTION ALIGNMENT" in line:
+            elif (
+                "THEME-EMOTION ALIGNMENT" in line
+                or "3. THEME-EMOTION ALIGNMENT" in line
+            ):
                 current_section = "theme_emotion_alignment"
                 continue
-            elif "CHARACTER EMOTION MAPPING" in line or "4. CHARACTER EMOTION MAPPING" in line:
+            elif (
+                "CHARACTER EMOTION MAPPING" in line
+                or "4. CHARACTER EMOTION MAPPING" in line
+            ):
                 current_section = "character_emotion_mapping"
                 continue
             elif "GENRE EXPECTATIONS" in line or "5. GENRE EXPECTATIONS" in line:
                 current_section = "genre_expectations"
                 continue
-            elif "EMOTIONAL PAYOFF ASSESSMENT" in line or "6. EMOTIONAL PAYOFF ASSESSMENT" in line:
+            elif (
+                "EMOTIONAL PAYOFF ASSESSMENT" in line
+                or "6. EMOTIONAL PAYOFF ASSESSMENT" in line
+            ):
                 current_section = "emotional_payoff"
                 continue
-                
+
             if current_section and line.strip():
                 sections[current_section] += line + "\n"
-        
+
         # Calculate overall emotional coherence score
         coherence_score = 0.7  # Default score
-        score_line = [line for line in sections["emotional_coherence"].split("\n") if "score" in line.lower()]
+        score_line = [
+            line
+            for line in sections["emotional_coherence"].split("\n")
+            if "score" in line.lower()
+        ]
         if score_line:
             try:
                 score_text = score_line[0]
-                score = float([s for s in score_text.split() if s.replace(".", "").isdigit()][0])
+                score = float(
+                    [s for s in score_text.split() if s.replace(".", "").isdigit()][0]
+                )
                 coherence_score = score
             except:
                 pass
-        
+
         return {
             "emotional_analysis": response.content,
             "sections": sections,
-            "coherence_score": coherence_score
+            "coherence_score": coherence_score,
         }
-    
-    def enhance_emotional_impact(self, chapter: Chapter, emotional_goal: str) -> Chapter:
+
+    def enhance_emotional_impact(
+        self, chapter: Chapter, emotional_goal: str
+    ) -> Chapter:
         """Enhance the emotional impact of a chapter to achieve a specific emotional goal."""
         prompt = PromptTemplate(
             template="""You are an emotional impact specialist enhancing the emotional resonance of a novel chapter.
@@ -175,32 +204,41 @@ Your revision should maintain all plot points and character decisions while enha
 
 Provide the complete revised chapter.
 """,
-            input_variables=["title", "chapter_number", "summary", "emotional_goal", "content"]
+            input_variables=[
+                "title",
+                "chapter_number",
+                "summary",
+                "emotional_goal",
+                "content",
+            ],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            title=chapter.title,
-            chapter_number=chapter.number,
-            summary=chapter.summary,
-            emotional_goal=emotional_goal,
-            content=chapter.content
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                title=chapter.title,
+                chapter_number=chapter.number,
+                summary=chapter.summary,
+                emotional_goal=emotional_goal,
+                content=chapter.content,
+            )
+        )
+
         # Update the chapter
         enhanced_chapter = chapter.model_copy()
         enhanced_chapter.content = response.content
         enhanced_chapter.word_count = len(response.content.split())
-        
+
         return enhanced_chapter
+
 
 class HookOptimizationAgent:
     """Hook Optimization Agent that strengthens chapter openings and closings."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "HookOptimization"
-    
+
     def optimize_hooks(self, chapter: Chapter) -> Chapter:
         """Optimize the opening and closing hooks of a chapter."""
         prompt = PromptTemplate(
@@ -238,23 +276,25 @@ Your optimization should maintain the existing plot and character development wh
 
 Provide the complete revised chapter.
 """,
-            input_variables=["title", "chapter_number", "summary", "content"]
+            input_variables=["title", "chapter_number", "summary", "content"],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            title=chapter.title,
-            chapter_number=chapter.number,
-            summary=chapter.summary,
-            content=chapter.content
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                title=chapter.title,
+                chapter_number=chapter.number,
+                summary=chapter.summary,
+                content=chapter.content,
+            )
+        )
+
         # Update the chapter
         optimized_chapter = chapter.model_copy()
         optimized_chapter.content = response.content
         optimized_chapter.word_count = len(response.content.split())
-        
+
         return optimized_chapter
-    
+
     def analyze_hook_effectiveness(self, text: str) -> Dict[str, Any]:
         """Analyze the effectiveness of opening and closing hooks in a text."""
         prompt = PromptTemplate(
@@ -288,44 +328,57 @@ For each aspect, provide:
 
 Also provide an overall hook effectiveness score and summary.
 """,
-            input_variables=["text"]
+            input_variables=["text"],
         )
-        
-        response = self.llm.invoke(prompt.format(text=text[:3000]))  # Limit text length for token constraints
-        
+
+        response = self.llm.invoke(
+            prompt.format(text=text[:3000])
+        )  # Limit text length for token constraints
+
         # Extract scores from the response
         scores = {}
-        aspects = ["opening hook effectiveness", "closing hook effectiveness", 
-                   "hook-content alignment", "hook distinctiveness"]
-        
+        aspects = [
+            "opening hook effectiveness",
+            "closing hook effectiveness",
+            "hook-content alignment",
+            "hook distinctiveness",
+        ]
+
         for aspect in aspects:
             pattern = rf"{aspect}.*?(\d+\.\d+)"
             match = re.search(pattern, response.content, re.IGNORECASE)
             if match:
                 try:
-                    scores[aspect.replace(" ", "_").replace("-", "_")] = float(match.group(1))
+                    scores[aspect.replace(" ", "_").replace("-", "_")] = float(
+                        match.group(1)
+                    )
                 except:
-                    scores[aspect.replace(" ", "_").replace("-", "_")] = 0.5  # Default if parsing fails
+                    scores[aspect.replace(" ", "_").replace("-", "_")] = (
+                        0.5  # Default if parsing fails
+                    )
             else:
-                scores[aspect.replace(" ", "_").replace("-", "_")] = 0.5  # Default if not found
-        
+                scores[aspect.replace(" ", "_").replace("-", "_")] = (
+                    0.5  # Default if not found
+                )
+
         # Calculate overall score
         overall_score = sum(scores.values()) / len(scores) if scores else 0.5
-        
+
         return {
             "analysis": response.content,
             "scores": scores,
-            "overall_score": overall_score
+            "overall_score": overall_score,
         }
+
 
 class ReadabilitySpecialistAgent:
     """Readability Specialist Agent that adjusts language complexity for target audience."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "ReadabilitySpecialist"
-    
+
     def adjust_readability(self, chapter: Chapter, target_audience: str) -> Chapter:
         """Adjust the readability of a chapter for a specific target audience."""
         prompt = PromptTemplate(
@@ -365,23 +418,25 @@ Your adjustments should maintain the story, plot points, and character developme
 
 Provide the complete revised chapter.
 """,
-            input_variables=["title", "chapter_number", "target_audience", "content"]
+            input_variables=["title", "chapter_number", "target_audience", "content"],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            title=chapter.title,
-            chapter_number=chapter.number,
-            target_audience=target_audience,
-            content=chapter.content
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                title=chapter.title,
+                chapter_number=chapter.number,
+                target_audience=target_audience,
+                content=chapter.content,
+            )
+        )
+
         # Update the chapter
         adjusted_chapter = chapter.model_copy()
         adjusted_chapter.content = response.content
         adjusted_chapter.word_count = len(response.content.split())
-        
+
         return adjusted_chapter
-    
+
     def analyze_readability(self, text: str) -> Dict[str, Any]:
         """Analyze the readability metrics of a text."""
         prompt = PromptTemplate(
@@ -415,11 +470,13 @@ For each aspect, provide specific data points and examples from the text.
 
 Also provide an overall readability assessment, identifying the ideal target audience age range and education level.
 """,
-            input_variables=["text"]
+            input_variables=["text"],
         )
-        
-        response = self.llm.invoke(prompt.format(text=text[:3000]))  # Limit text length for token constraints
-        
+
+        response = self.llm.invoke(
+            prompt.format(text=text[:3000])
+        )  # Limit text length for token constraints
+
         # Extract grade level from the response
         grade_level = 8  # Default middle grade level
         grade_pattern = r"grade level.*?(\d+(?:\.\d+)?)"
@@ -429,7 +486,7 @@ Also provide an overall readability assessment, identifying the ideal target aud
                 grade_level = float(grade_match.group(1))
             except:
                 pass
-        
+
         # Extract target audience from the response
         age_range = "Adult"
         age_pattern = r"age range.*?(\d+(?:-\d+)?)"
@@ -439,22 +496,23 @@ Also provide an overall readability assessment, identifying the ideal target aud
                 age_range = age_match.group(1)
             except:
                 pass
-        
+
         return {
             "analysis": response.content,
             "grade_level": grade_level,
             "target_age_range": age_range,
-            "full_readability_report": response.content
+            "full_readability_report": response.content,
         }
+
 
 class PageTurnerDesignerAgent:
     """Page-Turner Designer Agent that enhances addictive reading qualities."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "PageTurnerDesigner"
-    
+
     def enhance_page_turner_qualities(self, chapter: Chapter) -> Chapter:
         """Enhance the page-turner qualities of a chapter."""
         prompt = PromptTemplate(
@@ -494,23 +552,25 @@ Your enhancements should maintain the story, plot points, and character developm
 
 Provide the complete enhanced chapter.
 """,
-            input_variables=["title", "chapter_number", "summary", "content"]
+            input_variables=["title", "chapter_number", "summary", "content"],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            title=chapter.title,
-            chapter_number=chapter.number,
-            summary=chapter.summary,
-            content=chapter.content
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                title=chapter.title,
+                chapter_number=chapter.number,
+                summary=chapter.summary,
+                content=chapter.content,
+            )
+        )
+
         # Update the chapter
         enhanced_chapter = chapter.model_copy()
         enhanced_chapter.content = response.content
         enhanced_chapter.word_count = len(response.content.split())
-        
+
         return enhanced_chapter
-    
+
     def analyze_page_turner_qualities(self, text: str) -> Dict[str, Any]:
         """Analyze the page-turner qualities of a text."""
         prompt = PromptTemplate(
@@ -548,32 +608,45 @@ For each aspect, provide:
 
 Also provide an overall "page-turner score" and summary of the text's addictive reading qualities.
 """,
-            input_variables=["text"]
+            input_variables=["text"],
         )
-        
-        response = self.llm.invoke(prompt.format(text=text[:3000]))  # Limit text length for token constraints
-        
+
+        response = self.llm.invoke(
+            prompt.format(text=text[:3000])
+        )  # Limit text length for token constraints
+
         # Extract scores from the response
         scores = {}
-        aspects = ["micro-tension", "pacing effectiveness", "curiosity generation", 
-                   "immersion quality", "language propulsion"]
-        
+        aspects = [
+            "micro-tension",
+            "pacing effectiveness",
+            "curiosity generation",
+            "immersion quality",
+            "language propulsion",
+        ]
+
         for aspect in aspects:
             pattern = rf"{aspect}.*?(\d+\.\d+)"
             match = re.search(pattern, response.content, re.IGNORECASE)
             if match:
                 try:
-                    scores[aspect.replace("-", "_").replace(" ", "_")] = float(match.group(1))
+                    scores[aspect.replace("-", "_").replace(" ", "_")] = float(
+                        match.group(1)
+                    )
                 except:
-                    scores[aspect.replace("-", "_").replace(" ", "_")] = 0.5  # Default if parsing fails
+                    scores[aspect.replace("-", "_").replace(" ", "_")] = (
+                        0.5  # Default if parsing fails
+                    )
             else:
-                scores[aspect.replace("-", "_").replace(" ", "_")] = 0.5  # Default if not found
-        
+                scores[aspect.replace("-", "_").replace(" ", "_")] = (
+                    0.5  # Default if not found
+                )
+
         # Calculate overall score
         overall_score = sum(scores.values()) / len(scores) if scores else 0.5
-        
+
         return {
             "analysis": response.content,
             "scores": scores,
-            "overall_score": overall_score
+            "overall_score": overall_score,
         }

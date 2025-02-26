@@ -63,7 +63,7 @@ from pydantic import BaseModel, Field, validator
 import json
 import yaml
 
-class storybookConfig(BaseModel):
+class Config(BaseModel):
     """Configuration for the novel generation system."""
     # LLM Configuration
     llm_model: str = Field(default="gpt-4", description="The LLM model to use")

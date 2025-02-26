@@ -8,14 +8,15 @@ import re
 from storybook.utils.state import NovelState, Chapter
 from storybook.config import storybookConfig
 
+
 class DevelopmentalEditorAgent:
     """Developmental Editor Agent that addresses structural and thematic issues."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "DevelopmentalEditor"
-    
+
     def evaluate_structure(self, state: NovelState) -> Dict[str, Any]:
         """Evaluate the overall narrative structure of the novel."""
         prompt = PromptTemplate(
@@ -58,9 +59,15 @@ Evaluate the novel's overall structure for:
 
 Provide a comprehensive structural analysis with specific examples and actionable recommendations.
 """,
-            input_variables=["project_name", "genre", "premise", "themes", "chapter_structure"]
+            input_variables=[
+                "project_name",
+                "genre",
+                "premise",
+                "themes",
+                "chapter_structure",
+            ],
         )
-        
+
         # Create chapter structure summary
         chapter_structure = ""
         for num, chapter in sorted(state.chapters.items()):
@@ -68,18 +75,20 @@ Provide a comprehensive structural analysis with specific examples and actionabl
             chapter_structure += f"Summary: {chapter.summary}\n"
             chapter_structure += f"POV: {chapter.pov_character or 'Not specified'}\n"
             chapter_structure += f"Word count: {chapter.word_count}\n\n"
-        
+
         if not chapter_structure:
             chapter_structure = "Chapters not yet developed."
-        
-        response = self.llm.invoke(prompt.format(
-            project_name=state.project_name,
-            genre=state.genre,
-            premise=state.premise,
-            themes=", ".join(state.themes),
-            chapter_structure=chapter_structure
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                project_name=state.project_name,
+                genre=state.genre,
+                premise=state.premise,
+                themes=", ".join(state.themes),
+                chapter_structure=chapter_structure,
+            )
+        )
+
         # Extract sections from the response
         sections = {
             "narrative_arc": "",
@@ -87,11 +96,11 @@ Provide a comprehensive structural analysis with specific examples and actionabl
             "structural_balance": "",
             "thematic_development": "",
             "character_arcs": "",
-            "recommended_changes": ""
+            "recommended_changes": "",
         }
-        
+
         current_section = None
-        
+
         for line in response.content.split("\n"):
             if "NARRATIVE ARC" in line or "1. NARRATIVE ARC" in line:
                 current_section = "narrative_arc"
@@ -108,19 +117,21 @@ Provide a comprehensive structural analysis with specific examples and actionabl
             elif "CHARACTER ARCS" in line or "5. CHARACTER ARCS" in line:
                 current_section = "character_arcs"
                 continue
-            elif "RECOMMENDED STRUCTURAL CHANGES" in line or "6. RECOMMENDED STRUCTURAL CHANGES" in line:
+            elif (
+                "RECOMMENDED STRUCTURAL CHANGES" in line
+                or "6. RECOMMENDED STRUCTURAL CHANGES" in line
+            ):
                 current_section = "recommended_changes"
                 continue
-                
+
             if current_section and line.strip():
                 sections[current_section] += line + "\n"
-        
-        return {
-            "structural_analysis": response.content,
-            "sections": sections
-        }
-    
-    def revise_chapter_structure(self, chapter: Chapter, structural_notes: str) -> Dict[str, Any]:
+
+        return {"structural_analysis": response.content, "sections": sections}
+
+    def revise_chapter_structure(
+        self, chapter: Chapter, structural_notes: str
+    ) -> Dict[str, Any]:
         """Provide structural revision guidance for a chapter."""
         prompt = PromptTemplate(
             template="""You are a developmental editor providing structural revision guidance for a novel chapter.
@@ -161,29 +172,42 @@ Provide detailed guidance on how to restructure this chapter to address the iden
 
 Your guidance should be specific and actionable, providing clear direction for revision while respecting the chapter's core purpose and content.
 """,
-            input_variables=["title", "chapter_number", "summary", "pov_character", "content", "structural_notes"]
+            input_variables=[
+                "title",
+                "chapter_number",
+                "summary",
+                "pov_character",
+                "content",
+                "structural_notes",
+            ],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            title=chapter.title,
-            chapter_number=chapter.number,
-            summary=chapter.summary,
-            pov_character=chapter.pov_character or "Not specified",
-            content=chapter.content[:2000] + "..." if len(chapter.content) > 2000 else chapter.content,
-            structural_notes=structural_notes
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                title=chapter.title,
+                chapter_number=chapter.number,
+                summary=chapter.summary,
+                pov_character=chapter.pov_character or "Not specified",
+                content=(
+                    chapter.content[:2000] + "..."
+                    if len(chapter.content) > 2000
+                    else chapter.content
+                ),
+                structural_notes=structural_notes,
+            )
+        )
+
         # Extract sections from the response
         sections = {
             "structural_diagnosis": "",
             "scene_restructuring": "",
             "narrative_flow": "",
             "beginning_and_ending": "",
-            "integration_points": ""
+            "integration_points": "",
         }
-        
+
         current_section = None
-        
+
         for line in response.content.split("\n"):
             if "STRUCTURAL DIAGNOSIS" in line or "1. STRUCTURAL DIAGNOSIS" in line:
                 current_section = "structural_diagnosis"
@@ -200,23 +224,21 @@ Your guidance should be specific and actionable, providing clear direction for r
             elif "INTEGRATION POINTS" in line or "5. INTEGRATION POINTS" in line:
                 current_section = "integration_points"
                 continue
-                
+
             if current_section and line.strip():
                 sections[current_section] += line + "\n"
-        
-        return {
-            "revision_guidance": response.content,
-            "sections": sections
-        }
+
+        return {"revision_guidance": response.content, "sections": sections}
+
 
 class LineEditorAgent:
     """Line Editor Agent that improves sentence flow and language."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "LineEditor"
-    
+
     def edit_chapter(self, chapter: Chapter) -> Chapter:
         """Perform line editing on a chapter."""
         prompt = PromptTemplate(
@@ -256,23 +278,25 @@ Do not change plot elements or character decisions - focus only on the expressio
 
 Provide the complete edited chapter.
 """,
-            input_variables=["title", "chapter_number", "content"]
+            input_variables=["title", "chapter_number", "content"],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            title=chapter.title,
-            chapter_number=chapter.number,
-            content=chapter.content
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                title=chapter.title,
+                chapter_number=chapter.number,
+                content=chapter.content,
+            )
+        )
+
         # Update the chapter
         edited_chapter = chapter.model_copy()
         edited_chapter.content = response.content
         edited_chapter.word_count = len(response.content.split())
         edited_chapter.revision_count += 1
-        
+
         return edited_chapter
-    
+
     def analyze_prose_quality(self, text: str) -> Dict[str, Any]:
         """Analyze the prose quality of a text."""
         prompt = PromptTemplate(
@@ -310,69 +334,83 @@ For each aspect, provide:
 
 Also provide an overall prose quality score and summary of the author's stylistic fingerprint.
 """,
-            input_variables=["text"]
+            input_variables=["text"],
         )
-        
-        response = self.llm.invoke(prompt.format(text=text[:3000]))  # Limit text length for token constraints
-        
+
+        response = self.llm.invoke(
+            prompt.format(text=text[:3000])
+        )  # Limit text length for token constraints
+
         # Extract scores from the response
         scores = {}
-        aspects = ["sentence structure", "language efficiency", "voice and style", 
-                  "showing vs. telling", "dialogue effectiveness"]
-        
+        aspects = [
+            "sentence structure",
+            "language efficiency",
+            "voice and style",
+            "showing vs. telling",
+            "dialogue effectiveness",
+        ]
+
         for aspect in aspects:
             pattern = rf"{aspect}.*?(\d+\.\d+)"
             match = re.search(pattern, response.content, re.IGNORECASE)
             if match:
                 try:
-                    scores[aspect.replace(" ", "_").replace(".", "")] = float(match.group(1))
+                    scores[aspect.replace(" ", "_").replace(".", "")] = float(
+                        match.group(1)
+                    )
                 except:
-                    scores[aspect.replace(" ", "_").replace(".", "")] = 0.5  # Default if parsing fails
+                    scores[aspect.replace(" ", "_").replace(".", "")] = (
+                        0.5  # Default if parsing fails
+                    )
             else:
-                scores[aspect.replace(" ", "_").replace(".", "")] = 0.5  # Default if not found
-        
+                scores[aspect.replace(" ", "_").replace(".", "")] = (
+                    0.5  # Default if not found
+                )
+
         # Calculate overall score
         overall_score = sum(scores.values()) / len(scores) if scores else 0.5
-        
+
         return {
             "analysis": response.content,
             "scores": scores,
-            "overall_score": overall_score
+            "overall_score": overall_score,
         }
+
 
 class DialogueEnhancementAgent:
     """Dialogue Enhancement Agent that refines character voices and subtext."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "DialogueEnhancement"
-    
+
     def enhance_dialogue(self, chapter: Chapter, characters: Dict[str, Any]) -> Chapter:
         """Enhance the dialogue in a chapter."""
         # Prepare character dialogue information
         character_voices = ""
         chapter_characters = self._extract_chapter_characters(chapter.content)
-        
+
         for name in chapter_characters:
             if name in characters:
                 char = characters[name]
                 character_voices += f"CHARACTER: {name}\n"
                 character_voices += f"Role: {char.role}\n"
-                
-                if hasattr(char, 'dialogue_patterns') and char.dialogue_patterns:
+
+                if hasattr(char, "dialogue_patterns") and char.dialogue_patterns:
                     if isinstance(char.dialogue_patterns, dict):
-                        if 'speech_style' in char.dialogue_patterns:
+                        if "speech_style" in char.dialogue_patterns:
                             character_voices += f"Speech style: {char.dialogue_patterns['speech_style']}\n"
-                        if 'verbal_tics' in char.dialogue_patterns:
-                            tics = char.dialogue_patterns['verbal_tics']
+                        if "verbal_tics" in char.dialogue_patterns:
+                            tics = char.dialogue_patterns["verbal_tics"]
                             if isinstance(tics, list):
                                 character_voices += f"Verbal tics: {', '.join(tics)}\n"
                             else:
                                 character_voices += f"Verbal tics: {tics}\n"
-                
+
                 character_voices += "\n"
-        
+
         prompt = PromptTemplate(
             template="""You are a dialogue specialist enhancing dialogue in a novel chapter.
 
@@ -412,55 +450,71 @@ Your enhancements should maintain the existing plot and character decisions whil
 
 Provide the complete enhanced chapter.
 """,
-            input_variables=["title", "chapter_number", "character_voices", "content"]
+            input_variables=["title", "chapter_number", "character_voices", "content"],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            title=chapter.title,
-            chapter_number=chapter.number,
-            character_voices=character_voices,
-            content=chapter.content
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                title=chapter.title,
+                chapter_number=chapter.number,
+                character_voices=character_voices,
+                content=chapter.content,
+            )
+        )
+
         # Update the chapter
         enhanced_chapter = chapter.model_copy()
         enhanced_chapter.content = response.content
         enhanced_chapter.word_count = len(response.content.split())
-        
+
         return enhanced_chapter
-    
+
     def _extract_chapter_characters(self, content: str) -> List[str]:
         """Extract character names mentioned in the chapter."""
         # This is a simplified implementation
         # In a real system, we would use NER or other advanced techniques
         character_names = set()
-        
+
         # Simple pattern matching for dialogue attribution
         dialogue_pattern = r'"[^"]+"\s*,?\s*([A-Z][a-z]+)(?:\s+[a-z]+)?'
         matches = re.finditer(dialogue_pattern, content)
-        
+
         for match in matches:
             name = match.group(1)
-            if name not in ["I", "He", "She", "They", "It", "Then", "But", "And", "The"]:
+            if name not in [
+                "I",
+                "He",
+                "She",
+                "They",
+                "It",
+                "Then",
+                "But",
+                "And",
+                "The",
+            ]:
                 character_names.add(name)
-        
+
         return list(character_names)
-    
-    def analyze_dialogue_quality(self, text: str, characters: Dict[str, Any]) -> Dict[str, Any]:
+
+    def analyze_dialogue_quality(
+        self, text: str, characters: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Analyze the quality of dialogue in a text."""
         # Prepare character dialogue information
         character_voices = ""
         for name, char in characters.items():
             character_voices += f"CHARACTER: {name}\n"
             character_voices += f"Role: {char.role}\n"
-            
-            if hasattr(char, 'dialogue_patterns') and char.dialogue_patterns:
+
+            if hasattr(char, "dialogue_patterns") and char.dialogue_patterns:
                 if isinstance(char.dialogue_patterns, dict):
-                    if 'speech_style' in char.dialogue_patterns:
-                        character_voices += f"Speech style: {char.dialogue_patterns['speech_style']}\n"
-            
+                    if "speech_style" in char.dialogue_patterns:
+                        character_voices += (
+                            f"Speech style: {char.dialogue_patterns['speech_style']}\n"
+                        )
+
             character_voices += "\n"
-        
+
         prompt = PromptTemplate(
             template="""You are a dialogue specialist analyzing dialogue quality in a novel excerpt.
 
@@ -499,19 +553,26 @@ For each aspect, provide:
 
 Also provide an overall dialogue quality score and summary.
 """,
-            input_variables=["character_voices", "text"]
+            input_variables=["character_voices", "text"],
         )
-        
-        response = self.llm.invoke(prompt.format(
-            character_voices=character_voices,
-            text=text[:3000]  # Limit text length for token constraints
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                character_voices=character_voices,
+                text=text[:3000],  # Limit text length for token constraints
+            )
+        )
+
         # Extract scores from the response
         scores = {}
-        aspects = ["character voice distinctiveness", "dialogue authenticity", "subtext effectiveness", 
-                  "dialogue mechanics", "dialogue purpose"]
-        
+        aspects = [
+            "character voice distinctiveness",
+            "dialogue authenticity",
+            "subtext effectiveness",
+            "dialogue mechanics",
+            "dialogue purpose",
+        ]
+
         for aspect in aspects:
             pattern = rf"{aspect}.*?(\d+\.\d+)"
             match = re.search(pattern, response.content, re.IGNORECASE)
@@ -522,24 +583,25 @@ Also provide an overall dialogue quality score and summary.
                     scores[aspect.replace(" ", "_")] = 0.5  # Default if parsing fails
             else:
                 scores[aspect.replace(" ", "_")] = 0.5  # Default if not found
-        
+
         # Calculate overall score
         overall_score = sum(scores.values()) / len(scores) if scores else 0.5
-        
+
         return {
             "analysis": response.content,
             "scores": scores,
-            "overall_score": overall_score
+            "overall_score": overall_score,
         }
+
 
 class TensionOptimizationAgent:
     """Tension Optimization Agent that adjusts pacing and dramatic moments."""
-    
+
     def __init__(self, config: storybookConfig):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "TensionOptimization"
-    
+
     def optimize_tension(self, chapter: Chapter, target_tension: float) -> Chapter:
         """Optimize the tension and pacing in a chapter to match a target tension level."""
         prompt = PromptTemplate(
@@ -578,27 +640,35 @@ The revision should maintain all plot points and character decisions while adjus
 
 Provide the complete revised chapter.
 """,
-            input_variables=["title", "chapter_number", "current_tension", "target_tension", "content"]
+            input_variables=[
+                "title",
+                "chapter_number",
+                "current_tension",
+                "target_tension",
+                "content",
+            ],
         )
-        
+
         # Estimate current tension
         current_tension = self._estimate_tension(chapter.content)
-        
-        response = self.llm.invoke(prompt.format(
-            title=chapter.title,
-            chapter_number=chapter.number,
-            current_tension=current_tension,
-            target_tension=target_tension,
-            content=chapter.content
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                title=chapter.title,
+                chapter_number=chapter.number,
+                current_tension=current_tension,
+                target_tension=target_tension,
+                content=chapter.content,
+            )
+        )
+
         # Update the chapter
         optimized_chapter = chapter.model_copy()
         optimized_chapter.content = response.content
         optimized_chapter.word_count = len(response.content.split())
-        
+
         return optimized_chapter
-    
+
     def _estimate_tension(self, text: str) -> float:
         """Estimate the current tension level in a text."""
         prompt = PromptTemplate(
@@ -622,23 +692,25 @@ Consider factors like:
 
 Provide only a single number between 0.0 and 1.0 representing the estimated tension level.
 """,
-            input_variables=["text"]
+            input_variables=["text"],
         )
-        
-        response = self.llm.invoke(prompt.format(text=text[:3000]))  # Limit text length for token constraints
-        
+
+        response = self.llm.invoke(
+            prompt.format(text=text[:3000])
+        )  # Limit text length for token constraints
+
         # Extract the tension value
         try:
             # Look for a decimal number in the response
-            match = re.search(r'\d+\.\d+', response.content)
+            match = re.search(r"\d+\.\d+", response.content)
             if match:
                 tension = float(match.group(0))
                 return min(max(tension, 0.0), 1.0)  # Ensure it's between 0 and 1
         except:
             pass
-        
+
         return 0.5  # Default if extraction fails
-    
+
     def create_tension_map(self, state: NovelState) -> Dict[str, Any]:
         """Create a tension map for the entire novel, recommending target tension for each chapter."""
         prompt = PromptTemplate(
@@ -668,31 +740,38 @@ Your tension map should:
 
 Also provide a visual representation of the tension curve (using ASCII art if necessary) for the complete novel.
 """,
-            input_variables=["project_name", "genre", "chapter_count", "chapter_summaries"]
+            input_variables=[
+                "project_name",
+                "genre",
+                "chapter_count",
+                "chapter_summaries",
+            ],
         )
-        
+
         # Create chapter summaries
         chapter_summaries = ""
         for num, chapter in sorted(state.chapters.items()):
             chapter_summaries += f"Chapter {num}: {chapter.title}\n"
             chapter_summaries += f"Summary: {chapter.summary}\n\n"
-        
+
         if not chapter_summaries:
             chapter_summaries = "Chapter details not yet available."
-        
-        response = self.llm.invoke(prompt.format(
-            project_name=state.project_name,
-            genre=state.genre,
-            chapter_count=len(state.chapters),
-            chapter_summaries=chapter_summaries
-        ))
-        
+
+        response = self.llm.invoke(
+            prompt.format(
+                project_name=state.project_name,
+                genre=state.genre,
+                chapter_count=len(state.chapters),
+                chapter_summaries=chapter_summaries,
+            )
+        )
+
         # Extract tension recommendations by chapter
         chapter_tensions = {}
         current_chapter = None
         current_text = ""
         in_chapter_section = False
-        
+
         for line in response.content.split("\n"):
             # Check for chapter headers
             chapter_match = re.match(r"Chapter\s+(\d+)[:\s]", line)
@@ -700,7 +779,7 @@ Also provide a visual representation of the tension curve (using ASCII art if ne
                 # Save previous chapter if we have one
                 if current_chapter and current_text:
                     chapter_tensions[current_chapter] = current_text
-                
+
                 current_chapter = int(chapter_match.group(1))
                 current_text = line + "\n"
                 in_chapter_section = True
@@ -713,11 +792,11 @@ Also provide a visual representation of the tension curve (using ASCII art if ne
                     in_chapter_section = False
                     current_chapter = None
                     current_text = ""
-        
+
         # Save the last chapter if we have one
         if current_chapter and current_text:
             chapter_tensions[current_chapter] = current_text
-        
+
         # Extract tension values
         tension_values = {}
         for chapter, text in chapter_tensions.items():
@@ -730,9 +809,9 @@ Also provide a visual representation of the tension curve (using ASCII art if ne
                     tension_values[chapter] = 0.5  # Default if parsing fails
             else:
                 tension_values[chapter] = 0.5  # Default if not found
-        
+
         return {
             "tension_map": response.content,
             "chapter_tensions": chapter_tensions,
-            "tension_values": tension_values
+            "tension_values": tension_values,
         }
