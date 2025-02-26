@@ -5,9 +5,9 @@ import json
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from config import storybookConfig
-from graphs.main_graph import create_main_graph
-from utils.state import NovelState, ProjectStatus
+from storybook.config import storybookConfig
+from storybook.graphs.main_graph import create_main_graph
+from storybook.utils.state import NovelState, ProjectStatus
 
 def save_state(state: Dict[str, Any], output_dir: str) -> None:
     """Save the current state to a file."""
