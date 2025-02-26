@@ -31,6 +31,8 @@ echo "README.md created"
 
 # Set up environment
 echo "Installing dependencies..."
+python3 -m venv ~/.venv &&
+source ~/.venv/bin/activate &&
 pip install -e .
 
 echo "Storybook project initialized successfully!"

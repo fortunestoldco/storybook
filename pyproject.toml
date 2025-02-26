@@ -5,10 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "storybook"
 version = "0.1.0"
-description = "Best-Seller Novel Generation System"
+description = "AI/LM/NLP Research Led  Novel Generation System"
 readme = "README.md"
 authors = [
-    {name = "Storybook Team"}
+    {name = "David James Lennon, david@fortunestold.co"}
 ]
 license = {text = "MIT"}
 classifiers = [
@@ -16,16 +16,16 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
-    "langchain>=0.1.0",
-    "langchain-openai>=0.0.1",
-    "langchain-anthropic>=0.0.1",
-    "langgraph>=0.0.15",
-    "sentence-transformers>=2.2.2",
-    "networkx>=3.0",
-    "numpy>=1.24.0",
-    "pydantic>=2.0.0",
+    "langchain>=0.3.19",
+    "langchain-openai>=0.3.7",
+    "langchain-anthropic>=0.3.8",
+    "langgraph>=0.2.74",
+    "sentence-transformers>=3.4.1",
+    "networkx>=3.4.2",
+    "numpy>=2.2.3",
+    "pydantic>=2.10.6",
 ]
 
 [project.optional-dependencies]
