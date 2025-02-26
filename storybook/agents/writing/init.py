@@ -7,6 +7,7 @@ import re
 
 from storybook.utils.state import NovelState, Chapter
 from storybook.config import Config
+from storybook.agents.writing import ChapterWriterAgent
 
 
 class WritingSupervisorAgent:

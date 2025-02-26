@@ -1,4 +1,4 @@
-storybook.
+Storybook.
 
 A LLM Based Novel Generation Workflow with Consumer Behavioural and Market Trend Analysis Tools - Tasked to Ensure Cohesive Best-Seller Grade Work based on Inference of Consumer Habits, Market Research, Trend Analysis with continuous feedback and review loops measuring standards of Generative Works.
 

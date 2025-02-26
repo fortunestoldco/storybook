@@ -1,3 +1,4 @@
+import uuid
 from typing import Dict, List, Any
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
