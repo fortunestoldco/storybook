@@ -1,0 +1,100 @@
+{
+  "name": "storybook",
+  "description": "Best-Seller Novel Generation System using LangGraph",
+  "entry_point": "storybook.workflows.master_workflow:MasterWorkflow",
+  "config": {
+    "max_revisions": 3,
+    "max_iterations": 10,
+    "workflow_timeout_seconds": 7200
+  },
+  "parameters": {
+    "project_state": {
+      "description": "The current state of the novel project",
+      "type": "object",
+      "required": false
+    },
+    "project_parameters": {
+      "description": "Parameters for the novel project",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title of the novel"
+        },
+        "genre": {
+          "type": "string",
+          "description": "Genre of the novel"
+        },
+        "target_audience": {
+          "type": "string",
+          "description": "Target audience for the novel"
+        },
+        "word_count_target": {
+          "type": "integer",
+          "description": "Target word count for the novel"
+        }
+      },
+      "required": ["genre", "target_audience"]
+    }
+  },
+  "returns": {
+    "project_state": {
+      "description": "The final state of the novel project",
+      "type": "object"
+    },
+    "current_phase": {
+      "description": "The final phase reached in the workflow",
+      "type": "string"
+    },
+    "phase_output": {
+      "description": "Output from the final phase",
+      "type": "object"
+    }
+  },
+  "states": [
+    {
+      "name": "initialization",
+      "description": "Initialize the novel project"
+    },
+    {
+      "name": "research",
+      "description": "Research market trends and audience preferences"
+    },
+    {
+      "name": "planning",
+      "description": "Plan the novel structure and plot"
+    },
+    {
+      "name": "character_development",
+      "description": "Develop characters and their relationships"
+    },
+    {
+      "name": "drafting",
+      "description": "Draft the novel chapters"
+    },
+    {
+      "name": "revision",
+      "description": "Revise and improve the draft"
+    },
+    {
+      "name": "optimization",
+      "description": "Optimize the novel for reader experience"
+    },
+    {
+      "name": "publication",
+      "description": "Prepare the novel for publication"
+    }
+  ],
+  "environment_variables": [
+    {
+      "name": "OPENAI_API_KEY",
+      "description": "API key for OpenAI",
+      "required": true
+    },
+    {
+      "name": "ANTHROPIC_API_KEY",
+      "description": "API key for Anthropic",
+      "required": false
+    }
+  ]
+}

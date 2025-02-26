@@ -1,9 +1,0 @@
-y{
-"llm_model": "gpt-4",
-"temperature": 0.7,
-"project_name": "The Lost Kingdom",
-"genre": "Fantasy",
-"subgenres": ["Epic Fantasy", "Adventure"],
-"target_word_count": 95000,
-"target_audience": "Young Adult"
-}

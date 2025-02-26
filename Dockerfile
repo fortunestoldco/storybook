@@ -1,38 +1,33 @@
-# Dockerfile for Novel Generation System
-FROM python:3.13-slim
+# Dockerfile for Storybook
+FROM python:3.10-slim
 
-# Set working directory
 WORKDIR /app
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    POETRY_VERSION=1.5.1
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
-RUN pip install "poetry==$POETRY_VERSION"
+# Copy requirements file
+COPY requirements.txt .
 
-# Copy pyproject.toml and poetry.lock (if exists)
-COPY pyproject.toml poetry.lock* ./
+# Install Python dependencies
+RUN pip install --no-cache-dir -U pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Configure poetry to not use a virtual environment in the container
-RUN poetry config virtualenvs.create false
-
-# Install dependencies
-RUN poetry install --no-dev --no-interaction --no-ansi
-
-# Copy the rest of the application
+# Copy the application code
 COPY . .
 
-# Create output directory
-RUN mkdir -p /app/output
+# Install the package in development mode
+RUN pip install -e .
 
-# Set volume for output
-VOLUME ["/app/output"]
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
 
-# Entry point
-ENTRYPOINT ["python", "main.py"]
+# Run the application
+ENTRYPOINT ["python", "-m", "storybook.main"]
 
-# Default command (can be overridden)
-CMD ["--output", "/app/output"]
