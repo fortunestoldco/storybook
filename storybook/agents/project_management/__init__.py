@@ -1,10 +1,7 @@
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
-import uuid
-from datetime import datetime
 
 from storybook.utils.state import NovelState, ProjectStatus
 from storybook.config import storybookConfig

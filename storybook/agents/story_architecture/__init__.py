@@ -8,7 +8,7 @@ from storybook.utils.state import NovelState, PlotPoint
 from storybook.config import storybookConfig
 
 
-class SStructure(BaseModel):
+class StoryStructure(BaseModel):
     """Story structure definition."""
 
     structure_type: str = Field(description="The type of story structure being used")
