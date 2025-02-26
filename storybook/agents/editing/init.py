@@ -6,13 +6,13 @@ from pydantic import BaseModel, Field
 import re
 
 from storybook.utils.state import NovelState, Chapter
-from storybook.config import storybookConfig
+from storybook.config import Config
 
 
 class DevelopmentalEditorAgent:
     """Developmental Editor Agent that addresses structural and thematic issues."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "DevelopmentalEditor"
@@ -234,7 +234,7 @@ Your guidance should be specific and actionable, providing clear direction for r
 class LineEditorAgent:
     """Line Editor Agent that improves sentence flow and language."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "LineEditor"
@@ -381,7 +381,7 @@ Also provide an overall prose quality score and summary of the author's stylisti
 class DialogueEnhancementAgent:
     """Dialogue Enhancement Agent that refines character voices and subtext."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "DialogueEnhancement"
@@ -597,7 +597,7 @@ Also provide an overall dialogue quality score and summary.
 class TensionOptimizationAgent:
     """Tension Optimization Agent that adjusts pacing and dramatic moments."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "TensionOptimization"

@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 
 from storybook.utils.state import NovelState, ProjectStatus
-from storybook.config import storybookConfig
+from storybook.config import Config
 from storybook.subgraphs.initialization import create_initialization_graph
 from storybook.subgraphs.research import create_research_graph
 from storybook.subgraphs.character_development import create_character_development_graph
@@ -25,10 +25,10 @@ class NovelGenerationState(TypedDict):
     publication_package: Dict[str, Any]
 
 
-def create_main_graph(config: storybookConfig = None):
+def create_main_graph(config: Config = None):
     """Create the main workflow graph for novel generation."""
     if config is None:
-        config = storybookConfig()
+        config = Config()
 
     # Create subgraphs
     initialization_graph = create_initialization_graph(config)

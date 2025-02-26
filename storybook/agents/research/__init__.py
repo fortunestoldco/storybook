@@ -5,7 +5,7 @@ from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 
 from storybook.utils.state import NovelState, ResearchItem
-from storybook.config import storybookConfig
+from storybook.config import Config
 
 
 class ResearchTopic(BaseModel):
@@ -23,7 +23,7 @@ class ResearchTopic(BaseModel):
 class ResearchSupervisorAgent:
     """Research Supervisor Agent that coordinates the research process."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "ResearchSupervisor"
@@ -201,7 +201,7 @@ Format the document with clear headings, subheadings, and sections for easy refe
 class HistoricalResearchAgent:
     """Historical Research Agent that gathers historical information."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "HistoricalResearch"
@@ -255,7 +255,7 @@ Your research must be factually accurate and detailed enough to support authenti
 class TechnicalDomainAgent:
     """Technical Domain Agent that researches specialized knowledge areas."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "TechnicalDomain"
@@ -305,7 +305,7 @@ Your research should be accurate, accessible to a non-expert, and detailed enoug
 class CulturalAuthenticityAgent:
     """Cultural Authenticity Agent that ensures cultural representations are accurate."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "CulturalAuthenticity"

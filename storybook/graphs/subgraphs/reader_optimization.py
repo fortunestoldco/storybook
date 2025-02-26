@@ -10,7 +10,7 @@ from storybook.agents.reader_experience import (
 )
 from storybook.agents.project_management import ProjectLeadAgent
 from storybook.utils.state import NovelState, ProjectStatus, Chapter
-from storybook.config import storybookConfig
+from storybook.config import Config
 
 
 class ReaderOptimizationState(TypedDict):
@@ -25,7 +25,7 @@ class ReaderOptimizationState(TypedDict):
     page_turner_enhanced_chapters: Dict[int, Chapter]
 
 
-def create_reader_optimization_graph(config: storybookConfig):
+def create_reader_optimization_graph(config: Config):
     """Create the reader optimization phase subgraph."""
     # Initialize agents
     emotional_arc_analyzer = EmotionalArcAnalyzerAgent(config)

@@ -11,7 +11,7 @@ from storybook.agents.editing import (
 from storybook.agents.writing import WritingSupervisorAgent, ChapterWriterAgent
 from storybook.agents.project_management import ProjectLeadAgent
 from storybook.utils.state import NovelState, ProjectStatus, Chapter
-from storybook.config import storybookConfig
+from storybook.config import Config
 
 
 class RevisionState(TypedDict):
@@ -27,7 +27,7 @@ class RevisionState(TypedDict):
     tension_optimized_chapters: Dict[int, Chapter]
 
 
-def create_revision_graph(config: storybookConfig):
+def create_revision_graph(config: Config):
     """Create the revision phase subgraph."""
     # Initialize agents
     developmental_editor = DevelopmentalEditorAgent(config)

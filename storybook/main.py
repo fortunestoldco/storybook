@@ -5,7 +5,7 @@ import json
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from storybook.config import StorybookConfig
+from storybook.config import Config
 from storybook.graphs.main_graph import create_main_graph
 from storybook.utils.state import NovelState, ProjectStatus
 
@@ -175,7 +175,7 @@ def main(
 ):
     """Run the novel generation workflow."""
     # Load configuration
-    config = StorybookConfig()
+    config = Config()
     if config_file:
         # Load custom config if provided
         pass

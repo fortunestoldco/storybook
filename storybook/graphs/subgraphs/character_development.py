@@ -10,7 +10,7 @@ from storybook.agents.character_development import (
 )
 from storybook.agents.project_management import ProjectLeadAgent
 from storubook.utils.state import NovelState, ProjectStatus, Character
-from storubook.config import storybookConfig
+from storubook.config import Config
 
 
 class CharacterDevelopmentState(TypedDict):
@@ -25,7 +25,7 @@ class CharacterDevelopmentState(TypedDict):
     dialogue_examples: Dict[str, Dict[str, str]]
 
 
-def create_character_development_graph(config: storybookConfig):
+def create_character_development_graph(config: Config):
     """Create the character development phase subgraph."""
     # Initialize agents
     character_research = CharacterResearchAgent(config)

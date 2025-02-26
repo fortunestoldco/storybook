@@ -6,13 +6,13 @@ from pydantic import BaseModel, Field
 import re
 
 from storybook.utils.state import NovelState, Chapter
-from storybook.config import storybookConfig
+from storybook.config import Config
 
 
 class WritingSupervisorAgent:
     """Writing Supervisor Agent that coordinates the writing process."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "WritingSupervisor"
@@ -305,7 +305,7 @@ Provide a comprehensive revision strategy that addresses the most critical issue
 class ChapterWriterAgent:
     """Chapter Writer Agent that generates chapter content."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "ChapterWriter"
@@ -537,7 +537,7 @@ Provide a complete, revised version of the chapter that addresses all feedback p
 class ContinuityManagerAgent:
     """Continuity Manager Agent that ensures narrative consistency across chapters."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "ContinuityManager"
@@ -749,7 +749,7 @@ Format this as a reference document that could be used to ensure continuity in f
 class DescriptionSpecialistAgent:
     """Description Specialist Agent that enhances sensory and setting details."""
 
-    def __init__(self, config: storybookConfig):
+    def __init__(self, config: Config):
         self.config = config
         self.llm = ChatOpenAI(**config.get_llm_kwargs())
         self.name = "DescriptionSpecialist"

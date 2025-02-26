@@ -152,7 +152,7 @@ class Config(BaseModel):
         }
     
     @classmethod
-    def from_file(cls, file_path: str) -> "storybookConfig":
+    def from_file(cls, file_path: str) -> "Config":
         """Load configuration from a file (JSON or YAML)."""
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Configuration file not found: {file_path}")
@@ -180,7 +180,7 @@ class Config(BaseModel):
                 raise ValueError("Output file must have .json, .yaml, or .yml extension")
 
 # Default configuration
-default_config = storybookConfig()
+default_config = Config()
 Sample Configuration Files
 Basic JSON Configuration (config.json)
 jsonCopy{
@@ -245,13 +245,13 @@ memory_optimization: "high"
 Usage in Code
 To use the configuration in the main application:
 pythonCopyimport os
-from config import storybookConfig
+from config import Config
 
 # Load from environment variables or defaults
-config = storybookConfig()
+config = Config()
 
 # Or load from a file
-config = storybookConfig.from_file("novel_config.json")
+config = Config.from_file("novel_config.json")
 
 # Override specific settings
 config.target_word_count = 100000

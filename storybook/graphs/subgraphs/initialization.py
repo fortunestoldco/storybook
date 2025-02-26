@@ -10,7 +10,7 @@ from storybook.agents.project_management import (
     ConceptDevelopmentAgent,
 )
 from storybook.utils.state import NovelState, ProjectStatus, ProjectConcept
-from storybook.config import storybookConfig
+from storybook.config import Config
 
 
 class InitializationState(TypedDict):
@@ -24,7 +24,7 @@ class InitializationState(TypedDict):
     evaluation: Dict[str, Any]
 
 
-def create_initialization_graph(config: storybookConfig):
+def create_initialization_graph(config: Config):
     """Create the initialization phase subgraph."""
     # Initialize agents
     project_lead = ProjectLeadAgent(config)

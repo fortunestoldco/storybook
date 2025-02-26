@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional
 from pydantic import BaseModel, Field
 
 
-class storybookConfig(BaseModel):
+class Config(BaseModel):
     """Configuration for the novel generation system."""
 
     # LLM Configuration
@@ -59,4 +59,4 @@ class storybookConfig(BaseModel):
 
 
 # Default configuration
-default_config = storybookConfig()
+default_config = Config()

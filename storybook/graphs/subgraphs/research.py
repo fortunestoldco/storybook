@@ -21,7 +21,7 @@ from storybook.utils.state import (
     ResearchItem,
     StoryStructure,
 )
-from storybook.config import storybookConfig
+from storybook.config import Config
 
 
 class ResearchState(TypedDict):
@@ -39,7 +39,7 @@ class ResearchState(TypedDict):
     setting_bible: Dict[str, Any]
 
 
-def create_research_graph(config: storybookConfig):
+def create_research_graph(config: Config):
     """Create the research phase subgraph."""
     # Initialize agents
     research_supervisor = ResearchSupervisorAgent(config)
