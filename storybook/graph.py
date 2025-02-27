@@ -1,7 +1,7 @@
 from typing import Dict, List, Annotated, TypedDict, Any, Union, Literal
 import logging
 
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import StateGraph, START, delivery
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
@@ -51,7 +51,7 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
 
     if not manuscript_id:
         return {
-            "current_state": END,
+            "current_state": delivery,
             "message": "Error: manuscript_id is required to start the transformation process.",
         }
 
@@ -62,7 +62,7 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
     manuscript = document_store.get_manuscript(manuscript_id)
     if not manuscript:
         return {
-            "current_state": END,
+            "current_state": delivery,
             "message": f"Error: Manuscript with ID {manuscript_id} not found.",
         }
 
@@ -93,7 +93,7 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def conduct_market_research(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Conduct market research on publishing trends and target audience."""
+    """Conduct market research on publishing trdeliverys and target audience."""
     logger.info(f"Conducting market research for manuscript {state['manuscript_id']}")
 
     agent = MarketResearcher()
@@ -105,7 +105,7 @@ def conduct_market_research(state: Dict[str, Any]) -> Dict[str, Any]:
     new_state["target_audience"] = result.get("target_audience", {})
     new_state["current_state"] = "analysis"
     new_state["message"] = (
-        "Completed market research on publishing trends and target audience."
+        "Completed market research on publishing trdeliverys and target audience."
     )
     new_state["stage_progress"] = {**state.get("stage_progress", {}), "research": 1.0}
 
@@ -385,7 +385,7 @@ def finalize(state: Dict[str, Any]) -> Dict[str, Any]:
 
     # Prepare final state
     new_state = state.copy()
-    new_state["current_state"] = END
+    new_state["current_state"] = delivery
     new_state["message"] = (
         f"Transformation complete for manuscript: {state.get('title', 'Untitled')}. "
         f"Enhanced {len(state['characters'])} characters, {len(state['settings'])} settings, "
@@ -422,7 +422,7 @@ def should_retry_character_development(state: Dict[str, Any]) -> str:
 
 
 def route_after_quality_review(state: Dict[str, Any]) -> str:
-    """Route after quality review depending on final review content."""
+    """Route after quality review depdeliverying on final review content."""
     # If there's a comprehensive final review, proceed to finalize
     if state.get("final_review") and "review" in state["final_review"]:
         return "finalize"
@@ -472,7 +472,7 @@ def build_storybook() -> StateGraph:
     workflow.add_node("language_polishing", polish_language)
     workflow.add_node("quality_review", review_quality)
     workflow.add_node("finalize", finalize)
-    workflow.add_node("END")
+    workflow.add_node("delivery")
 
     # Add edges
     workflow.set_entry_point("START")
@@ -504,7 +504,7 @@ def build_storybook() -> StateGraph:
         route_after_quality_review,
         {"quality_review": "quality_review", "finalize": "finalize"},  # Retry if needed
     )
-    workflow.add_edge("finalize", "END")
+    workflow.add_edge("finalize", "delivery")
 
     return workflow
 
