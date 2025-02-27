@@ -14,7 +14,10 @@ REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
 DEFAULT_OPENAI_MODEL = "gpt-4o"
 DEFAULT_REPLICATE_MODEL = "meta/llama-3-70b-instruct:2a30ae62b32ab1f47530ed5fd32fea38ed408255c747684c41749824a771fa12"
 
-def get_llm(model: Optional[str] = None, temperature: float = 0.7, use_replicate: bool = False):
+
+def get_llm(
+    model: Optional[str] = None, temperature: float = 0.7, use_replicate: bool = False
+):
     """Get a configured LLM instance."""
     if use_replicate:
         return Replicate(
@@ -28,6 +31,7 @@ def get_llm(model: Optional[str] = None, temperature: float = 0.7, use_replicate
             temperature=temperature,
             api_key=OPENAI_API_KEY,
         )
+
 
 # MongoDB collections
 COLLECTION_MANUSCRIPTS = "manuscripts"
@@ -52,5 +56,5 @@ STATES = [
     "language_polishing",
     "quality_review",
     "finalize",
-    "END"
+    "END",
 ]

@@ -14,45 +14,47 @@ from storybook.tools.research_tools import ResearchTools
 
 logger = logging.getLogger(__name__)
 
+
 class MarketResearcher:
     """Agent responsible for market research and target audience analysis."""
-    
+
     def __init__(self):
         self.llm = get_llm(temperature=0.7, use_replicate=True)
         self.document_store = DocumentStore()
         self.document_tools = DocumentTools()
         self.research_tools = ResearchTools()
-    
+
     def get_tools(self):
         """Get tools available to this agent."""
         return [
             self.document_tools.get_manuscript_tool(),
             self.document_tools.get_manuscript_search_tool(),
-            self.research_tools.get_research_tool()
+            self.research_tools.get_research_tool(),
         ]
-    
+
     def infer_genre_and_audience(self, manuscript_id: str) -> Dict[str, Any]:
         """Infer the genre and target audience of the manuscript."""
         manuscript = self.document_store.get_manuscript(manuscript_id)
         if not manuscript:
             logger.error(f"Manuscript {manuscript_id} not found")
             return {}
-        
+
         # Extract a representative sample
         content = manuscript.get("content", "")
         title = manuscript.get("title", "Untitled")
-        
+
         # Take beginning, middle samples for analysis
         sample_size = min(5000, len(content) // 3)
         beginning = content[:sample_size]
         middle_start = max(0, (len(content) // 2) - (sample_size // 2))
-        middle = content[middle_start:middle_start + sample_size]
-        
+        middle = content[middle_start : middle_start + sample_size]
+
         # Combine samples
         sample = f"Title: {title}\n\nBEGINNING SAMPLE:\n{beginning}\n\nMIDDLE SAMPLE:\n{middle}"
-        
+
         # Define prompt for genre/audience inference
-        prompt = ChatPromptTemplate.from_template("""
+        prompt = ChatPromptTemplate.from_template(
+            """
         You are a Publishing Market Analyst specializing in identifying the genre, themes, and target audience of manuscripts.
         
         Based on the following manuscript sample, determine:
@@ -68,8 +70,9 @@ class MarketResearcher:
         
         Format your response as a detailed analysis with specific sections for each element.
         Be as precise as possible about the target demographic, as this will guide market research.
-        """)
-        
+        """
+        )
+
         # Create the chain
         chain = (
             {"manuscript_sample": lambda _: sample}
@@ -77,50 +80,58 @@ class MarketResearcher:
             | self.llm
             | StrOutputParser()
         )
-        
+
         # Run the chain
         analysis = chain.invoke("Analyze genre and audience")
-        
+
         # Parse the analysis into sections
-        sections = ["primary genre", "target demographic", "key themes", "similar books", "market positioning"]
-        
+        sections = [
+            "primary genre",
+            "target demographic",
+            "key themes",
+            "similar books",
+            "market positioning",
+        ]
+
         result = {"full_analysis": analysis}
-        
+
         # Extract sections
         for section in sections:
-            pattern = re.compile(f"{section}s?:?(.+?)(?=\n\n|\Z)", re.IGNORECASE | re.DOTALL)
+            pattern = re.compile(
+                f"{section}s?:?(.+?)(?=\n\n|\Z)", re.IGNORECASE | re.DOTALL
+            )
             match = pattern.search(analysis)
             if match:
                 key = section.lower().replace(" ", "_")
                 result[key] = match.group(1).strip()
-        
+
         return result
-    
-    def research_similar_books(self, genre: str, themes: List[str]) -> List[Dict[str, Any]]:
+
+    def research_similar_books(
+        self, genre: str, themes: List[str]
+    ) -> List[Dict[str, Any]]:
         """Research similar books in the market based on genre and themes."""
         # Construct research queries
         queries = [
             f"bestselling {genre} novels published in the last 5 years",
             f"popular {genre} books with themes of {', '.join(themes[:3])}",
             f"{genre} book sales trends",
-            f"reader demographics for {genre} fiction"
+            f"reader demographics for {genre} fiction",
         ]
-        
+
         research_results = []
-        
+
         # Execute each research query
         for query in queries:
             research_tool = self.research_tools.get_research_tool()
             result = research_tool.invoke(query)
-            
+
             # Add to research results
-            research_results.append({
-                "query": query,
-                "results": result
-            })
-        
+            research_results.append({"query": query, "results": result})
+
         # Define prompt to analyze research findings
-        prompt = ChatPromptTemplate.from_template("""
+        prompt = ChatPromptTemplate.from_template(
+            """
         You are a Publishing Market Analyst. Based on the following research findings about similar books 
         and market trends, create a comprehensive analysis of the market landscape.
         
@@ -135,13 +146,14 @@ class MarketResearcher:
         5. Reader preferences and expectations
         
         Provide specific data points where available.
-        """)
-        
+        """
+        )
+
         # Format research findings
-        findings_text = "\n\n".join([
-            f"Query: {r['query']}\nResults: {r['results']}" for r in research_results
-        ])
-        
+        findings_text = "\n\n".join(
+            [f"Query: {r['query']}\nResults: {r['results']}" for r in research_results]
+        )
+
         # Create the chain
         chain = (
             {"research_findings": lambda _: findings_text}
@@ -149,42 +161,39 @@ class MarketResearcher:
             | self.llm
             | StrOutputParser()
         )
-        
+
         # Run the chain
         market_analysis = chain.invoke("Analyze market")
-        
+
         # Add the market analysis to the research results
-        return {
-            "raw_research": research_results,
-            "market_analysis": market_analysis
-        }
-    
-    def analyze_target_demographic(self, demographic_info: str, genre: str) -> Dict[str, Any]:
+        return {"raw_research": research_results, "market_analysis": market_analysis}
+
+    def analyze_target_demographic(
+        self, demographic_info: str, genre: str
+    ) -> Dict[str, Any]:
         """Analyze the target demographic in depth."""
         # Format the research query for the target demographic
         query = f"reading preferences and buying habits of {demographic_info} in {genre} fiction"
-        
+
         # Research the demographic
         research_tool = self.research_tools.get_research_tool()
         demographic_research = research_tool.invoke(query)
-        
+
         # Additional queries to understand the demographic better
         additional_queries = [
             f"entertainment preferences of {demographic_info}",
             f"social media usage among {demographic_info}",
-            f"cultural trends popular with {demographic_info}"
+            f"cultural trends popular with {demographic_info}",
         ]
-        
+
         additional_research = []
         for query in additional_queries:
             result = research_tool.invoke(query)
-            additional_research.append({
-                "query": query,
-                "results": result
-            })
-        
+            additional_research.append({"query": query, "results": result})
+
         # Define prompt to analyze demographic research
-        prompt = ChatPromptTemplate.from_template("""
+        prompt = ChatPromptTemplate.from_template(
+            """
         You are a Consumer Insights Specialist. Based on the following research about a target demographic,
         create a comprehensive profile that would help an author connect with this audience.
         
@@ -207,75 +216,82 @@ class MarketResearcher:
         7. Specific recommendations for appealing to this demographic
         
         Be specific and actionable in your analysis.
-        """)
-        
+        """
+        )
+
         # Format additional research
-        additional_text = "\n\n".join([
-            f"Query: {r['query']}\nResults: {r['results']}" for r in additional_research
-        ])
-        
+        additional_text = "\n\n".join(
+            [
+                f"Query: {r['query']}\nResults: {r['results']}"
+                for r in additional_research
+            ]
+        )
+
         # Create the chain
         chain = (
             {
                 "demographic_info": lambda _: demographic_info,
                 "genre": lambda _: genre,
                 "demographic_research": lambda _: demographic_research,
-                "additional_research": lambda _: additional_text
+                "additional_research": lambda _: additional_text,
             }
             | prompt
             | self.llm
             | StrOutputParser()
         )
-        
+
         # Run the chain
         demographic_profile = chain.invoke("Create demographic profile")
-        
+
         return {
             "demographic_info": demographic_info,
             "genre": genre,
             "raw_research": {
                 "primary": demographic_research,
-                "additional": additional_research
+                "additional": additional_research,
             },
-            "demographic_profile": demographic_profile
+            "demographic_profile": demographic_profile,
         }
-    
+
     def research_market(self, manuscript_id: str, title: str) -> Dict[str, Any]:
         """Conduct comprehensive market research for the manuscript."""
         # Step 1: Infer genre and target audience
         genre_audience = self.infer_genre_and_audience(manuscript_id)
-        
+
         if not genre_audience:
             return {
                 "manuscript_id": manuscript_id,
                 "status": "inference_failed",
-                "message": "Failed to infer genre and target audience."
+                "message": "Failed to infer genre and target audience.",
             }
-        
+
         # Extract key information
         genre = genre_audience.get("primary_genre", "fiction")
         demographic = genre_audience.get("target_demographic", "general readers")
         themes = []
-        
+
         # Extract themes
         themes_text = genre_audience.get("key_themes", "")
-        theme_matches = re.findall(r'["\']([^"\']+)["\']|(\w+(?:\s+\w+){0,2})', themes_text)
+        theme_matches = re.findall(
+            r'["\']([^"\']+)["\']|(\w+(?:\s+\w+){0,2})', themes_text
+        )
         for match in theme_matches:
             theme = match[0] if match[0] else match[1]
             if theme and len(theme) > 3 and theme.lower() not in ["and", "the", "with"]:
                 themes.append(theme)
-        
+
         if not themes:
             themes = ["adventure", "relationships", "personal growth"]  # Default themes
-        
+
         # Step 2: Research similar books
         market_research = self.research_similar_books(genre, themes)
-        
+
         # Step 3: Analyze target demographic
         demographic_analysis = self.analyze_target_demographic(demographic, genre)
-        
+
         # Step 4: Generate comprehensive insights
-        prompt = ChatPromptTemplate.from_template("""
+        prompt = ChatPromptTemplate.from_template(
+            """
         You are a Publishing Consultant preparing a comprehensive market research report for an author.
         
         Manuscript Title: {title}
@@ -301,8 +317,9 @@ class MarketResearcher:
         
         Your report should provide actionable insights that will guide decisions about character development,
         dialogue style, world-building, and language choices to maximize appeal to the target audience.
-        """)
-        
+        """
+        )
+
         # Create the chain
         chain = (
             {
@@ -311,16 +328,18 @@ class MarketResearcher:
                 "demographic": lambda _: demographic,
                 "themes": lambda _: ", ".join(themes),
                 "market_analysis": lambda _: market_research.get("market_analysis", ""),
-                "demographic_profile": lambda _: demographic_analysis.get("demographic_profile", "")
+                "demographic_profile": lambda _: demographic_analysis.get(
+                    "demographic_profile", ""
+                ),
             }
             | prompt
             | self.llm
             | StrOutputParser()
         )
-        
+
         # Run the chain
         comprehensive_report = chain.invoke("Generate market report")
-        
+
         # Store the research in the database
         self.document_store.store_research_document(
             manuscript_id,
@@ -330,10 +349,10 @@ class MarketResearcher:
                 "genre_analysis": genre_audience,
                 "market_research": market_research,
                 "demographic_analysis": demographic_analysis,
-                "comprehensive_report": comprehensive_report
-            }
+                "comprehensive_report": comprehensive_report,
+            },
         )
-        
+
         # Return the complete research package
         return {
             "manuscript_id": manuscript_id,
@@ -343,62 +362,81 @@ class MarketResearcher:
                 "genre": genre,
                 "target_demographic": demographic,
                 "key_themes": themes,
-                "market_analysis_summary": market_research.get("market_analysis", "")[:500] + "...",
-                "comprehensive_report": comprehensive_report
+                "market_analysis_summary": market_research.get("market_analysis", "")[
+                    :500
+                ]
+                + "...",
+                "comprehensive_report": comprehensive_report,
             },
             "target_audience": {
                 "demographic": demographic,
                 "profile": demographic_analysis.get("demographic_profile", ""),
-                "reading_preferences": self._extract_preferences(demographic_analysis.get("demographic_profile", "")),
-                "content_expectations": self._extract_expectations(demographic_analysis.get("demographic_profile", "")),
-                "genre": genre
-            }
+                "reading_preferences": self._extract_preferences(
+                    demographic_analysis.get("demographic_profile", "")
+                ),
+                "content_expectations": self._extract_expectations(
+                    demographic_analysis.get("demographic_profile", "")
+                ),
+                "genre": genre,
+            },
         }
-    
+
     def _extract_preferences(self, profile_text: str) -> Dict[str, Any]:
         """Extract reading preferences from the demographic profile."""
         preferences = {}
-        
+
         # Look for reading preferences
-        reading_pref_pattern = re.compile(r"reading preferences:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL)
+        reading_pref_pattern = re.compile(
+            r"reading preferences:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL
+        )
         match = reading_pref_pattern.search(profile_text)
         if match:
             preferences["reading"] = match.group(1).strip()
-        
+
         # Look for language style preferences
-        language_pattern = re.compile(r"language style:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL)
+        language_pattern = re.compile(
+            r"language style:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL
+        )
         match = language_pattern.search(profile_text)
         if match:
             preferences["language"] = match.group(1).strip()
-        
+
         # Look for character preferences
-        character_pattern = re.compile(r"character traits:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL)
+        character_pattern = re.compile(
+            r"character traits:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL
+        )
         match = character_pattern.search(profile_text)
         if match:
             preferences["characters"] = match.group(1).strip()
-        
+
         return preferences
-    
+
     def _extract_expectations(self, profile_text: str) -> Dict[str, Any]:
         """Extract content expectations from the demographic profile."""
         expectations = {}
-        
+
         # Look for content sensitivities
-        sensitivity_pattern = re.compile(r"content sensitivities:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL)
+        sensitivity_pattern = re.compile(
+            r"content sensitivities:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL
+        )
         match = sensitivity_pattern.search(profile_text)
         if match:
             expectations["sensitivities"] = match.group(1).strip()
-        
+
         # Look for values and interests
-        values_pattern = re.compile(r"values and interests:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL)
+        values_pattern = re.compile(
+            r"values and interests:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL
+        )
         match = values_pattern.search(profile_text)
         if match:
             expectations["values"] = match.group(1).strip()
-        
+
         # Look for recommendations
-        recommendations_pattern = re.compile(r"recommendations:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL)
+        recommendations_pattern = re.compile(
+            r"recommendations:?(.+?)(?=\n\n|\n\d\.|\Z)", re.IGNORECASE | re.DOTALL
+        )
         match = recommendations_pattern.search(profile_text)
         if match:
             expectations["recommendations"] = match.group(1).strip()
-        
+
         return expectations

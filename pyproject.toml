@@ -7,9 +7,9 @@ name = "storybook"
 version = "0.1.0"
 description = "A LangGraph-powered workflow for transforming draft manuscripts into finished novels"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">3.11"
 authors = [
-    {name = "Storybook Team"}
+    {name = "David James Lennon, david@fortunestold.co"}
 ]
 dependencies = [
     "langchain>=0.3.0,<0.4.0",

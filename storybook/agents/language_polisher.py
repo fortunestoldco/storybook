@@ -11,72 +11,71 @@ from storybook.db.document_store import DocumentStore
 
 logger = logging.getLogger(__name__)
 
+
 class LanguagePolisher:
     """Agent responsible for enhancing language, style, and prose quality."""
-    
+
     def __init__(self):
         self.llm = get_llm(temperature=0.5, use_replicate=True)
         self.document_store = DocumentStore()
-    
-    def polish_language(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]] = None,
-                      research_insights: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+
+    def polish_language(
+        self,
+        manuscript_id: str,
+        target_audience: Optional[Dict[str, Any]] = None,
+        research_insights: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Polish the language and prose quality of the manuscript."""
         manuscript = self.document_store.get_manuscript(manuscript_id)
         if not manuscript:
             return {"error": f"Manuscript {manuscript_id} not found"}
-        
+
         # Analyze language and style
         style_analysis = self._analyze_language_style(
-            manuscript["content"],
-            target_audience
+            manuscript["content"], target_audience
         )
-        
+
         # Identify areas for improvement
         improvement_areas = self._identify_improvement_areas(
-            manuscript["content"],
-            style_analysis,
-            target_audience,
-            research_insights
+            manuscript["content"], style_analysis, target_audience, research_insights
         )
-        
+
         # Polish selected sections
         updated_content, improved_sections = self._polish_sections(
-            manuscript["content"],
-            improvement_areas,
-            style_analysis,
-            target_audience
+            manuscript["content"], improvement_areas, style_analysis, target_audience
         )
-        
+
         # Store the updated manuscript
         self.document_store.update_manuscript(
-            manuscript_id,
-            {"content": updated_content}
+            manuscript_id, {"content": updated_content}
         )
-        
+
         # Prepare result
         result = {
             "manuscript_id": manuscript_id,
             "message": f"Enhanced language and style in {len(improved_sections)} sections.",
             "style_analysis": style_analysis,
             "improvement_areas": improvement_areas,
-            "improvements_count": len(improved_sections)
+            "improvements_count": len(improved_sections),
         }
-        
+
         return result
-    
-    def _analyze_language_style(self, content: str, target_audience: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+
+    def _analyze_language_style(
+        self, content: str, target_audience: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Analyze the language and writing style of the manuscript."""
         # Sample representative sections
         sample_size = min(5000, len(content) // 4)
         beginning = content[:sample_size]
         middle_start = max(0, (len(content) // 2) - (sample_size // 2))
-        middle = content[middle_start:middle_start + sample_size]
+        middle = content[middle_start : middle_start + sample_size]
         end_start = max(0, len(content) - sample_size)
         end = content[end_start:]
-        
+
         # Combine samples
         sample = f"BEGINNING:\n{beginning}\n\nMIDDLE:\n{middle}\n\nEND:\n{end}"
-        
+
         # Add audience context if available
         audience_context = ""
         if target_audience:
@@ -87,9 +86,10 @@ class LanguagePolisher:
             
             Consider whether the language style is appropriate for this audience.
             """
-        
+
         # Create prompt for style analysis
-        prompt = ChatPromptTemplate.from_template("""
+        prompt = ChatPromptTemplate.from_template(
+            """
         You are a Literary Style Analyst specializing in prose evaluation. Analyze the writing style and language
         of this manuscript based on the provided excerpts.
         
@@ -113,61 +113,104 @@ class LanguagePolisher:
         11. Audience Appropriateness: How well the style suits the target audience
         
         Provide a detailed analysis with specific examples from the text.
-        """)
-        
+        """
+        )
+
         # Create the chain
         chain = (
             {
                 "manuscript_excerpts": lambda _: sample,
-                "audience_context": lambda _: audience_context
+                "audience_context": lambda _: audience_context,
             }
             | prompt
             | self.llm
             | StrOutputParser()
         )
-        
+
         # Run the chain
         style_analysis = chain.invoke("Analyze writing style")
-        
+
         # Parse the analysis into sections
         import re
-        
+
         # Extract key sections
-        voice_match = re.search(r'Voice and Point of View:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)', style_analysis, re.DOTALL)
-        tone_match = re.search(r'Tone:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)', style_analysis, re.DOTALL)
-        sentence_match = re.search(r'Sentence Structure:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)', style_analysis, re.DOTALL)
-        vocab_match = re.search(r'Vocabulary Level:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)', style_analysis, re.DOTALL)
-        lit_devices_match = re.search(r'Literary Devices:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)', style_analysis, re.DOTALL)
-        dialogue_match = re.search(r'Dialogue Style:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)', style_analysis, re.DOTALL)
-        description_match = re.search(r'Description Quality:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)', style_analysis, re.DOTALL)
-        rhythm_match = re.search(r'Prose Rhythm:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)', style_analysis, re.DOTALL)
-        strengths_match = re.search(r'Strengths:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)', style_analysis, re.DOTALL)
-        weaknesses_match = re.search(r'Weaknesses:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)', style_analysis, re.DOTALL)
-        audience_match = re.search(r'Audience Appropriateness:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)', style_analysis, re.DOTALL)
-        
+        voice_match = re.search(
+            r"Voice and Point of View:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)",
+            style_analysis,
+            re.DOTALL,
+        )
+        tone_match = re.search(
+            r"Tone:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)", style_analysis, re.DOTALL
+        )
+        sentence_match = re.search(
+            r"Sentence Structure:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)",
+            style_analysis,
+            re.DOTALL,
+        )
+        vocab_match = re.search(
+            r"Vocabulary Level:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)", style_analysis, re.DOTALL
+        )
+        lit_devices_match = re.search(
+            r"Literary Devices:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)", style_analysis, re.DOTALL
+        )
+        dialogue_match = re.search(
+            r"Dialogue Style:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)", style_analysis, re.DOTALL
+        )
+        description_match = re.search(
+            r"Description Quality:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)",
+            style_analysis,
+            re.DOTALL,
+        )
+        rhythm_match = re.search(
+            r"Prose Rhythm:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)", style_analysis, re.DOTALL
+        )
+        strengths_match = re.search(
+            r"Strengths:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)", style_analysis, re.DOTALL
+        )
+        weaknesses_match = re.search(
+            r"Weaknesses:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)", style_analysis, re.DOTALL
+        )
+        audience_match = re.search(
+            r"Audience Appropriateness:?\s*(.*?)(?=\n\n|\n\d+\.|\Z)",
+            style_analysis,
+            re.DOTALL,
+        )
+
         # Compile the structured analysis
         return {
             "full_analysis": style_analysis,
             "voice_and_pov": voice_match.group(1).strip() if voice_match else "",
             "tone": tone_match.group(1).strip() if tone_match else "",
-            "sentence_structure": sentence_match.group(1).strip() if sentence_match else "",
+            "sentence_structure": (
+                sentence_match.group(1).strip() if sentence_match else ""
+            ),
             "vocabulary_level": vocab_match.group(1).strip() if vocab_match else "",
-            "literary_devices": lit_devices_match.group(1).strip() if lit_devices_match else "",
+            "literary_devices": (
+                lit_devices_match.group(1).strip() if lit_devices_match else ""
+            ),
             "dialogue_style": dialogue_match.group(1).strip() if dialogue_match else "",
-            "description_quality": description_match.group(1).strip() if description_match else "",
+            "description_quality": (
+                description_match.group(1).strip() if description_match else ""
+            ),
             "prose_rhythm": rhythm_match.group(1).strip() if rhythm_match else "",
             "strengths": strengths_match.group(1).strip() if strengths_match else "",
             "weaknesses": weaknesses_match.group(1).strip() if weaknesses_match else "",
-            "audience_appropriateness": audience_match.group(1).strip() if audience_match else ""
+            "audience_appropriateness": (
+                audience_match.group(1).strip() if audience_match else ""
+            ),
         }
-    
-    def _identify_improvement_areas(self, content: str, style_analysis: Dict[str, Any],
-                                target_audience: Optional[Dict[str, Any]] = None,
-                                research_insights: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+
+    def _identify_improvement_areas(
+        self,
+        content: str,
+        style_analysis: Dict[str, Any],
+        target_audience: Optional[Dict[str, Any]] = None,
+        research_insights: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Identify specific areas for language improvement."""
         # Extract weaknesses from the style analysis
         weaknesses = style_analysis.get("weaknesses", "")
-        
+
         # Add audience context if available
         audience_context = ""
         if target_audience:
@@ -179,7 +222,7 @@ class LanguagePolisher:
             
             Focus on improvements that would make the language more appealing to this audience.
             """
-        
+
         # Add research context if available
         research_context = ""
         if research_insights:
@@ -189,9 +232,10 @@ class LanguagePolisher:
             
             Consider how language improvements could align with successful books in this market.
             """
-        
+
         # Create prompt for identifying improvement areas
-        prompt = ChatPromptTemplate.from_template("""
+        prompt = ChatPromptTemplate.from_template(
+            """
         You are a Literary Style Enhancement Specialist. Based on the style analysis, identify specific 
         aspects of the manuscript's language that could be improved.
         
@@ -224,37 +268,40 @@ class LanguagePolisher:
         
         Focus on improvements that would have the greatest impact on reader experience,
         especially for the target audience.
-        """)
-        
+        """
+        )
+
         # Create the chain
         chain = (
             {
-                "style_strengths": lambda _: style_analysis.get("strengths", "Not specified"),
+                "style_strengths": lambda _: style_analysis.get(
+                    "strengths", "Not specified"
+                ),
                 "style_weaknesses": lambda _: weaknesses,
                 "audience_context": lambda _: audience_context,
-                "research_context": lambda _: research_context
+                "research_context": lambda _: research_context,
             }
             | prompt
             | self.llm
             | StrOutputParser()
         )
-        
+
         # Run the chain
         improvement_areas = chain.invoke("Identify improvement areas")
-        
+
         # Parse the areas into sections
         import re
-        
+
         # Try to extract individual improvement areas
-        area_blocks = re.split(r'(?:\n|^)(\d+\.\s+)', improvement_areas)
-        
+        area_blocks = re.split(r"(?:\n|^)(\d+\.\s+)", improvement_areas)
+
         # Process the blocks
         structured_areas = []
         current_area = {}
-        
+
         for i, block in enumerate(area_blocks):
             # If this is a number marker, start a new area
-            if re.match(r'\d+\.\s+', block):
+            if re.match(r"\d+\.\s+", block):
                 if current_area and "name" in current_area:
                     structured_areas.append(current_area)
                 current_area = {"number": block.strip()}
@@ -262,9 +309,15 @@ class LanguagePolisher:
             elif current_area:
                 # First block after number is the title/name
                 if "name" not in current_area:
-                    current_area["name"] = block.strip().split("\n")[0].strip() if block.strip() else ""
+                    current_area["name"] = (
+                        block.strip().split("\n")[0].strip() if block.strip() else ""
+                    )
                     # Extract the rest of the content
-                    content_lines = block.strip().split("\n")[1:] if len(block.strip().split("\n")) > 1 else []
+                    content_lines = (
+                        block.strip().split("\n")[1:]
+                        if len(block.strip().split("\n")) > 1
+                        else []
+                    )
                     current_area["description"] = "\n".join(content_lines).strip()
                 else:
                     # Append to existing description
@@ -272,59 +325,74 @@ class LanguagePolisher:
                         current_area["description"] += "\n" + block.strip()
                     else:
                         current_area["description"] = block.strip()
-        
+
         # Add the last area if it exists
         if current_area and "name" in current_area:
             structured_areas.append(current_area)
-        
-        return {
-            "full_analysis": improvement_areas,
-            "areas": structured_areas
-        }
-    
-    def _polish_sections(self, content: str, improvement_areas: Dict[str, Any],
-                     style_analysis: Dict[str, Any],
-                     target_audience: Optional[Dict[str, Any]] = None) -> tuple:
+
+        return {"full_analysis": improvement_areas, "areas": structured_areas}
+
+    def _polish_sections(
+        self,
+        content: str,
+        improvement_areas: Dict[str, Any],
+        style_analysis: Dict[str, Any],
+        target_audience: Optional[Dict[str, Any]] = None,
+    ) -> tuple:
         """Polish selected sections of the manuscript based on identified improvement areas."""
         # Break the content into paragraphs
         paragraphs = content.split("\n\n")
-        
+
         # We'll enhance a selection of paragraphs rather than the entire manuscript
         # Select paragraphs for each improvement area
-        improvement_types = [area.get("name", "") for area in improvement_areas.get("areas", [])]
-        
+        improvement_types = [
+            area.get("name", "") for area in improvement_areas.get("areas", [])
+        ]
+
         # Map improvement types to paragraph selection criteria
         selection_criteria = {
             "sentence variety": lambda p: len(p.split(".")) > 4 and len(p) > 200,
             "overused words": lambda p: len(p) > 200,
-            "weak descriptions": lambda p: "saw" in p.lower() or "looked" in p.lower() or "seemed" in p.lower(),
-            "telling": lambda p: "felt" in p.lower() or "thought" in p.lower() or "realized" in p.lower(),
+            "weak descriptions": lambda p: "saw" in p.lower()
+            or "looked" in p.lower()
+            or "seemed" in p.lower(),
+            "telling": lambda p: "felt" in p.lower()
+            or "thought" in p.lower()
+            or "realized" in p.lower(),
             "passive voice": lambda p: " was " in p.lower() and " by " in p.lower(),
             "dialogue": lambda p: '"' in p or "'" in p,
             "tone": lambda p: len(p) > 200,
-            "exposition": lambda p: len(p) > 300
+            "exposition": lambda p: len(p) > 300,
         }
-        
+
         # Select paragraphs for improvement
         paragraphs_to_improve = []
-        
+
         for i, para in enumerate(paragraphs):
             # Skip very short paragraphs
             if len(para) < 50:
                 continue
-                
+
             # Check against our criteria
             for imp_type, criterion in selection_criteria.items():
-                if any(imp_type.lower() in area.lower() for area in improvement_types) and criterion(para):
+                if any(
+                    imp_type.lower() in area.lower() for area in improvement_types
+                ) and criterion(para):
                     paragraphs_to_improve.append((i, para, imp_type))
                     break
-        
+
         # Limit the number of paragraphs to improve
         max_improvements = min(10, len(paragraphs_to_improve))
         # Prioritize by spreading throughout the manuscript
-        step = len(paragraphs_to_improve) // max_improvements if len(paragraphs_to_improve) > max_improvements else 1
-        selected_paragraphs = [paragraphs_to_improve[i] for i in range(0, len(paragraphs_to_improve), step)][:max_improvements]
-        
+        step = (
+            len(paragraphs_to_improve) // max_improvements
+            if len(paragraphs_to_improve) > max_improvements
+            else 1
+        )
+        selected_paragraphs = [
+            paragraphs_to_improve[i] for i in range(0, len(paragraphs_to_improve), step)
+        ][:max_improvements]
+
         # Add audience context if available
         audience_context = ""
         if target_audience:
@@ -334,13 +402,14 @@ class LanguagePolisher:
             
             Ensure the enhancements will appeal to this audience.
             """
-        
+
         # Improve each selected paragraph
         improved_sections = []
-        
+
         for idx, para, imp_type in selected_paragraphs:
             # Create prompt for polishing this paragraph
-            prompt = ChatPromptTemplate.from_template("""
+            prompt = ChatPromptTemplate.from_template(
+                """
             You are a Literary Style Enhancer. Improve the following paragraph from a manuscript,
             focusing particularly on {improvement_type}.
             
@@ -361,37 +430,44 @@ class LanguagePolisher:
             4. Making the language more engaging and vivid
             
             Return ONLY the improved paragraph, with no additional comments.
-            """)
-            
+            """
+            )
+
             # Create the chain
             chain = (
                 {
                     "improvement_type": lambda _: imp_type,
                     "original_paragraph": lambda _: para,
-                    "voice": lambda _: style_analysis.get("voice_and_pov", "Not specified"),
+                    "voice": lambda _: style_analysis.get(
+                        "voice_and_pov", "Not specified"
+                    ),
                     "tone": lambda _: style_analysis.get("tone", "Not specified"),
-                    "vocabulary": lambda _: style_analysis.get("vocabulary_level", "Not specified"),
-                    "audience_context": lambda _: audience_context
+                    "vocabulary": lambda _: style_analysis.get(
+                        "vocabulary_level", "Not specified"
+                    ),
+                    "audience_context": lambda _: audience_context,
                 }
                 | prompt
                 | self.llm
                 | StrOutputParser()
             )
-            
+
             # Run the chain
             improved_para = chain.invoke(f"Improve paragraph with {imp_type} issue")
-            
+
             # Store the improvement
-            improved_sections.append({
-                "original": para,
-                "improved": improved_para,
-                "improvement_type": imp_type
-            })
-            
+            improved_sections.append(
+                {
+                    "original": para,
+                    "improved": improved_para,
+                    "improvement_type": imp_type,
+                }
+            )
+
             # Update the paragraph in the manuscript
             paragraphs[idx] = improved_para
-        
+
         # Recombine the paragraphs
         updated_content = "\n\n".join(paragraphs)
-        
+
         return updated_content, improved_sections
