@@ -6,7 +6,7 @@ from langchain_core.tools import Tool
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langchain_tavily import TavilySearchResults
+from langchain_community.tools import TavilySearchResults
 from langchain_community.utilities import SerpAPIWrapper
 
 from storybook.config import get_llm
