@@ -2,10 +2,10 @@ from typing import Dict, List, Any, Optional
 import logging
 import re
 
-from langchain.tools import Tool
-from langchain.chains import LLMChain
+from langchain_core.tools import Tool
+# Correct import for LLMChain
+from langchain import LLMChain
 from langchain_core.prompts import PromptTemplate
-from langchain_community.llms import Replicate
 
 from storybook.config import get_llm
 

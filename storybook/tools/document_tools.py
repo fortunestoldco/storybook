@@ -1,7 +1,7 @@
 from typing import Dict, List, Any, Optional
 import logging
 
-from langchain.tools import Tool
+from langchain_core.tools import Tool
 
 from storybook.db.document_store import DocumentStore
 
