@@ -1,9 +1,10 @@
-from typing import Dict, List, Optional, Any
 import logging
+from typing import Dict, List, Optional, Any
 
 from langchain_core.documents import Document
 from langchain_community.document_loaders.web_base import WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_mongodb.docstores import MongoDBDocStore
 
 from storybook.db.mongodb_client import MongoDBStore
 from storybook.config import (
@@ -26,6 +27,11 @@ class DocumentStore:
         self.db = MongoDBStore()
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1500, chunk_overlap=150
+        )
+        # Initialize the MongoDBDocStore for vector operations
+        self.mongo_doc_store = MongoDBDocStore(
+            connection_string=self.db.client_details.connection_string,
+            db_name=self.db.client_details.db_name
         )
 
     def store_manuscript(
@@ -94,7 +100,12 @@ class DocumentStore:
 
     def search_research(self, query: str, k: int = 5) -> List[Document]:
         """Search for relevant research documents."""
-        return self.db.similarity_search(COLLECTION_RESEARCH, query, k=k)
+        # Use MongoDBDocStore for similarity search
+        return self.mongo_doc_store.similarity_search(
+            query=query, 
+            k=k,
+            collection_name=COLLECTION_RESEARCH
+        )
 
     def store_research_from_web(
         self, urls: List[str], tags: Optional[List[str]] = None
@@ -118,10 +129,15 @@ class DocumentStore:
         # Split documents
         split_documents = self.text_splitter.split_documents(all_documents)
 
-        # Store in MongoDB with embeddings
-        return self.db.store_documents_with_embeddings(
-            COLLECTION_RESEARCH, split_documents
-        )
+        # Store documents in MongoDBDocStore
+        doc_ids = []
+        for doc in split_documents:
+            doc_id = self.mongo_doc_store.add_document(
+                doc, collection_name=COLLECTION_RESEARCH
+            )
+            doc_ids.append(doc_id)
+        
+        return doc_ids
 
     def store_manuscript_chunks(
         self, manuscript_id: str, title: str, content: str
@@ -132,17 +148,31 @@ class DocumentStore:
             metadata={"manuscript_id": manuscript_id, "title": title},
         )
         chunks = self.text_splitter.split_documents([doc])
-        return self.db.store_documents_with_embeddings(COLLECTION_MANUSCRIPTS, chunks)
+        
+        # Store documents in MongoDBDocStore
+        doc_ids = []
+        for chunk in chunks:
+            doc_id = self.mongo_doc_store.add_document(
+                chunk, collection_name=COLLECTION_MANUSCRIPTS
+            )
+            doc_ids.append(doc_id)
+        
+        return doc_ids
 
     def get_manuscript_relevant_parts(
         self, manuscript_id: str, query: str, k: int = 5
     ) -> List[Document]:
         """Get relevant parts of a manuscript based on a query."""
-        # Get all chunks for this manuscript
-        results = self.db.similarity_search(COLLECTION_MANUSCRIPTS, query, k=k)
-        return [
-            doc for doc in results if doc.metadata.get("manuscript_id") == manuscript_id
-        ]
+        # Use MongoDBDocStore for similarity search with filter
+        filter_dict = {"metadata.manuscript_id": manuscript_id}
+        results = self.mongo_doc_store.similarity_search(
+            query=query,
+            k=k,
+            collection_name=COLLECTION_MANUSCRIPTS,
+            filter=filter_dict
+        )
+        
+        return results
 
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format."""
