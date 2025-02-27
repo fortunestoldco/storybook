@@ -86,7 +86,7 @@ class DialogueEnhancer:
         dialogue_sections = []
         current_section = {"start": 0, "end": 0, "content": "", "dialogue_count": 0}
         
-        dialogue_markers = ['"', '"', '"', ''', "'"]
+        dialogue_markers = ['"', '"', '"', "'", "'"]
         in_section = False
         section_start = 0
         dialogue_count = 0
