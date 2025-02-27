@@ -5,7 +5,6 @@ import re
 from langchain_core.tools import Tool
 from langchain.chains import LLMChain
 from langchain_core.prompts import PromptTemplate
-from tavily import TavilyClient
 from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
 from langchain_community.tools import TavilySearchResults
 from langchain_community.document_loaders.web_base import WebBaseLoader
