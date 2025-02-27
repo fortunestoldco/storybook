@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 
 from storybook.tools.research_tools import ResearchTools
 from langchain_core.tools import Tool
+from langchain_community.document_loaders import FireCrawlLoader
 
 class TestResearchTools:
     
@@ -29,7 +30,7 @@ class TestResearchTools:
             
     @pytest.fixture
     def mock_firecrawl(self):
-        with patch('storybook.tools.research_tools.FireCrawl') as mock_firecrawl:
+        with patch('langchain_community.document_loaders.FireCrawlLoader') as mock_firecrawl:
             mock_crawl = MagicMock()
             mock_firecrawl.return_value = mock_crawl
             yield mock_crawl

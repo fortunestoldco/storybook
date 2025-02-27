@@ -8,7 +8,7 @@ import pymongo
 from pymongo import MongoClient
 from pymongo.collection import Collection
 
-from langchain_mongodb import MongoDBAtlasVectorSearch
+from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
 from langchain_openai import OpenAIEmbeddings
 
 from storybook.config import MONGODB_URI, MONGODB_DB_NAME
@@ -32,7 +32,7 @@ class MongoDBStore:
             connection_string=MONGODB_URI,
             namespace=f"{MONGODB_DB_NAME}.vectors",
             embedding=self.embeddings,
-            index_name="vector_index",
+            index_name="vector_index"
         )
 
         # Initialize the collections if they don't exist

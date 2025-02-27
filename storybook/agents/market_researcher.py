@@ -6,6 +6,8 @@ import json
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+from langchain_community.tools import TavilySearchResults
+from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
 
 from storybook.config import get_llm
 from storybook.db.document_store import DocumentStore
@@ -482,3 +484,7 @@ class MarketResearcher:
             expectations["recommendations"] = match.group(1).strip()
 
         return expectations
+
+class ResearchAgent:
+    def __init__(self):
+        self.search_tool = TavilySearchResults(api_wrapper=TavilySearchAPIWrapper())

@@ -2,8 +2,9 @@
 import logging
 
 from langgraph.graph import StateGraph, START, END
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, BaseMessage
 from langchain_core.documents import Document 
+from langchain_core.callbacks import CallbackManagerForLLMRun
 from pydantic import BaseModel, Field
 
 from storybook.config import STATES

@@ -3,6 +3,12 @@ from typing import Optional
 
 from langchain_openai import ChatOpenAI
 from langchain_community.llms import Replicate
+from langchain_mongodb.docstores import MongoDBDocStore
+from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
+from pymongo import MongoClient
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 # Environment variables
 MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")

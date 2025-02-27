@@ -5,6 +5,7 @@ import re
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough  # Used in chain definitions
+from langchain_mongodb.docstores import MongoDBDocStore
 
 from storybook.config import get_llm
 from storybook.db.document_store import DocumentStore
@@ -16,10 +17,8 @@ class CharacterDeveloper:
     """Agent responsible for developing and enhancing characters."""
 
     def __init__(self):
-        self.llm = get_llm(
-            temperature=0.8, use_replicate=True
-        )  # Higher creativity for character development
-        self.document_store = DocumentStore()
+        self.llm = get_llm(temperature=0.8, use_replicate=True)
+        self.doc_store = MongoDBDocStore(connection_string=MONGODB_URI)
 
     def enhance_characters(
         self,

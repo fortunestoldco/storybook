@@ -12,6 +12,10 @@ from storybook.config import get_llm
 from storybook.db.document_store import DocumentStore
 from storybook.tools.document_tools import DocumentTools
 
+from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
+from pymongo import MongoClient
+from langchain_openai import OpenAIEmbeddings
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,6 +28,13 @@ class ContentAnalyzer:
         )  # Lower temperature for more consistent analysis
         self.document_store = DocumentStore()
         self.document_tools = DocumentTools()
+        self.embeddings = OpenAIEmbeddings()
+        self.vector_store = MongoDBAtlasVectorSearch.from_connection_string(
+            connection_string=MONGODB_URI,
+            namespace=f"{MONGODB_DB_NAME}.vectors",
+            embedding=self.embeddings,
+            index_name="vector_index"
+        )
 
     def get_tools(self):
         """Get tools available to this agent."""

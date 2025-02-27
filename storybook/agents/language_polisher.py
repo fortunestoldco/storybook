@@ -2,12 +2,12 @@ from typing import Dict, List, Any, Optional
 import logging
 import re
 
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+from langchain_community.llms import Replicate
 
 from storybook.config import get_llm
-from storybook.db.document_store import DocumentStore
 
 logger = logging.getLogger(__name__)
 

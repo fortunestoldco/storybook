@@ -8,7 +8,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
 from langchain_community.tools import TavilySearchResults
 from langchain_community.document_loaders.web_base import WebBaseLoader
-from langchain_community.utilities.firecrawl import FireCrawl
+from langchain_community.document_loaders import FireCrawlLoader
 
 from storybook.config import get_llm, TAVILY_API_KEY, FIRECRAWL_API_KEY
 from storybook.db.document_store import DocumentStore
@@ -25,7 +25,7 @@ class ResearchTools:
         
         # Initialize the Tavily search API wrapper
         try:
-            self.tavily_search = TavilySearchAPIWrapper(api_key=TAVILY_API_KEY)
+            self.tavily_search = TavilySearchResults(api_wrapper=TavilySearchAPIWrapper(api_key=TAVILY_API_KEY))
             self.tavily_available = True
         except Exception as e:
             logger.warning(f"Tavily search is not available: {e}")
@@ -33,7 +33,7 @@ class ResearchTools:
             
         # Initialize FireCrawl
         try:
-            self.firecrawl = FireCrawl(api_key=FIRECRAWL_API_KEY)
+            self.firecrawl = FireCrawlLoader(api_key=FIRECRAWL_API_KEY)
             self.firecrawl_available = True
         except Exception as e:
             logger.warning(f"FireCrawl is not available: {e}")
@@ -109,40 +109,37 @@ class ResearchTools:
             return f"Research failed due to an error: {str(e)}"
             
     def _crawl_and_save_webpage(self, url: str) -> str:
-        """Crawl a webpage and save the content to the document store."""
+        """Crawl a webpage and save its content."""
         if not url.startswith(('http://', 'https://')):
-            return f"Invalid URL format: {url}"
+            return "Invalid URL format"
             
         try:
-            # Try to use FireCrawl if available
             if self.firecrawl_available:
-                content = self.firecrawl.load_page(url)
-                
-                # Store the crawled content
-                tag = "web_research"
-                self.document_store.store_research_from_web([url], tags=[tag])
-                
-                return f"Successfully crawled and stored content from {url} with tag '{tag}'"
+                # Using FireCrawlLoader instead of direct API calls
+                documents = self.firecrawl.load(url)
+                if documents:
+                    # Store the crawled content
+                    doc_ids = self.document_store.db.store_documents_with_embeddings(
+                        "research", documents
+                    )
+                    if doc_ids:
+                        return f"Successfully crawled and stored content from {url}"
+                    return f"Failed to store content from {url}"
             
             # Fallback to WebBaseLoader
             loader = WebBaseLoader([url])
             documents = loader.load()
             
-            # Store the documents
-            tag = "web_research"
             doc_ids = self.document_store.db.store_documents_with_embeddings(
-                "research", 
-                documents
+                "research", documents
             )
-            
-            if not doc_ids:
-                return f"Failed to store content from {url}"
+            if doc_ids:
+                return f"Successfully crawled and stored content from {url}"
+            return f"Failed to store content from {url}"
                 
-            return f"Successfully crawled and stored content from {url}"
-            
         except Exception as e:
-            logger.error(f"Error crawling webpage {url}: {e}")
-            return f"Failed to crawl webpage {url}: {str(e)}"
+            logger.error(f"Error crawling {url}: {e}")
+            return f"Failed to crawl {url}: {str(e)}"
 
     def _clean_research_output(self, output: str) -> str:
         """Clean up the research output to remove any metacommentary."""

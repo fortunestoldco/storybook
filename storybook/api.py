@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langserve import add_routes
 from pydantic import BaseModel, Field
+from langchain_mongodb.docstores import MongoDBDocStore
 
 from storybook.graph import storybook
 from storybook.db.document_store import DocumentStore

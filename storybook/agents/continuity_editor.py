@@ -2,6 +2,8 @@ from typing import Dict, List, Any, Optional
 import logging
 import re
 
+from langchain_community.llms import Replicate
+from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
