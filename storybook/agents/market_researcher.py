@@ -1,7 +1,7 @@
-from typing import Dict, List, Any, Optional
+﻿from typing import Dict, List, Any, Optional
 import logging
-import json
 import re
+import json
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -30,6 +30,7 @@ class MarketResearcher:
             self.document_tools.get_manuscript_tool(),
             self.document_tools.get_manuscript_search_tool(),
             self.research_tools.get_research_tool(),
+            self.research_tools.get_web_crawl_tool(),
         ]
 
     def infer_genre_and_audience(self, manuscript_id: str) -> Dict[str, Any]:
@@ -109,7 +110,7 @@ class MarketResearcher:
 
     def research_similar_books(
         self, genre: str, themes: List[str]
-    ) -> List[Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         """Research similar books in the market based on genre and themes."""
         # Construct research queries
         queries = [
@@ -128,6 +129,19 @@ class MarketResearcher:
 
             # Add to research results
             research_results.append({"query": query, "results": result})
+            
+            # For each result, try to crawl one main URL for more in-depth information
+            crawler = self.research_tools.get_web_crawl_tool()
+            
+            # Extract URLs from the result
+            urls = re.findall(r'https?://\S+', result)
+            if urls:
+                # Limit to first URL to avoid excessive crawling
+                try:
+                    crawl_result = crawler.invoke(urls[0])
+                    research_results.append({"query": f"Crawling {urls[0]}", "results": crawl_result})
+                except Exception as e:
+                    logger.error(f"Error crawling URL: {e}")
 
         # Define prompt to analyze research findings
         prompt = ChatPromptTemplate.from_template(
@@ -190,6 +204,17 @@ class MarketResearcher:
         for query in additional_queries:
             result = research_tool.invoke(query)
             additional_research.append({"query": query, "results": result})
+            
+            # For key insights, crawl relevant URLs for more detailed information
+            urls = re.findall(r'https?://\S+', result)
+            if urls:
+                crawler = self.research_tools.get_web_crawl_tool()
+                try:
+                    # Limit to first URL to avoid excessive crawling
+                    crawl_result = crawler.invoke(urls[0])
+                    additional_research.append({"query": f"Detailed analysis from {urls[0]}", "results": crawl_result})
+                except Exception as e:
+                    logger.error(f"Error crawling URL: {e}")
 
         # Define prompt to analyze demographic research
         prompt = ChatPromptTemplate.from_template(
@@ -341,17 +366,34 @@ class MarketResearcher:
         comprehensive_report = chain.invoke("Generate market report")
 
         # Store the research in the database
+        research_data = {
+            "title": f"Market Research Report for '{title}'",
+            "genre_analysis": genre_audience,
+            "market_research": market_research,
+            "demographic_analysis": demographic_analysis,
+            "comprehensive_report": comprehensive_report,
+        }
+        
         self.document_store.store_research_document(
             manuscript_id,
             "market_research",
-            {
-                "title": f"Market Research Report for '{title}'",
-                "genre_analysis": genre_audience,
-                "market_research": market_research,
-                "demographic_analysis": demographic_analysis,
-                "comprehensive_report": comprehensive_report,
-            },
+            research_data
         )
+        
+        # Store in MongoDB Atlas Vector store for future reference and search
+        doc = Document(
+            page_content=comprehensive_report,
+            metadata={
+                "type": "market_research",
+                "manuscript_id": manuscript_id,
+                "title": title,
+                "genre": genre,
+                "demographic": demographic,
+                "themes": ", ".join(themes)
+            }
+        )
+        
+        self.document_store.db.store_documents_with_embeddings("research", [doc])
 
         # Return the complete research package
         return {

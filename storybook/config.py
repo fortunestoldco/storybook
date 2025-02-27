@@ -1,4 +1,4 @@
-import os
+﻿import os
 from typing import Optional
 
 from langchain_openai import ChatOpenAI
@@ -9,6 +9,8 @@ MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_DB_NAME = os.environ.get("MONGODB_DB_NAME", "storybook")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
+TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
+FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
 
 # LLM configuration
 DEFAULT_OPENAI_MODEL = "gpt-4o"

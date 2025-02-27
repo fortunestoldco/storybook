@@ -1,14 +1,9 @@
-from typing import Dict, List, Annotated, TypedDict, Any, Union, Literal
+﻿from typing import Dict, List, Annotated, TypedDict, Any, Union, Literal
 import logging
 
-from langgraph.graph import StateGraph, START  # Removed 'delivery' from import
-
-logger = logging.getLogger(__name__)
-
-# Define delivery as a constant string instead
-DELIVERY = "delivery"
-
+from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import HumanMessage
+from langchain_core.documents import Document 
 from pydantic import BaseModel, Field
 
 from storybook.config import STATES
@@ -57,7 +52,7 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
 
     if not manuscript_id:
         return {
-            "current_state": DELIVERY,  # Changed to use constant
+            "current_state": END,
             "message": "Error: manuscript_id is required to start the transformation process.",
         }
 
@@ -68,7 +63,7 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
     manuscript = document_store.get_manuscript(manuscript_id)
     if not manuscript:
         return {
-            "current_state": DELIVERY,  # Changed to use constant
+            "current_state": END,
             "message": f"Error: Manuscript with ID {manuscript_id} not found.",
         }
 
@@ -99,7 +94,7 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def conduct_market_research(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Conduct market research on publishing trdeliverys and target audience."""
+    """Conduct market research on publishing trends and target audience."""
     logger.info(f"Conducting market research for manuscript {state['manuscript_id']}")
 
     agent = MarketResearcher()
@@ -111,9 +106,21 @@ def conduct_market_research(state: Dict[str, Any]) -> Dict[str, Any]:
     new_state["target_audience"] = result.get("target_audience", {})
     new_state["current_state"] = "analysis"
     new_state["message"] = (
-        "Completed market research on publishing trdeliverys and target audience."
+        "Completed market research on publishing trends and target audience."
     )
     new_state["stage_progress"] = {**state.get("stage_progress", {}), "research": 1.0}
+    
+    # Store the research insights in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    doc = Document(
+        page_content=str(result.get("research_insights", {})),
+        metadata={
+            "type": "market_research",
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"]
+        }
+    )
+    document_store.db.store_documents_with_embeddings("research", [doc])
 
     return new_state
 
@@ -131,6 +138,18 @@ def analyze_manuscript(state: Dict[str, Any]) -> Dict[str, Any]:
     new_state["current_state"] = "initialize"
     new_state["message"] = "Completed NLP analysis of manuscript content."
     new_state["stage_progress"] = {**state.get("stage_progress", {}), "analysis": 1.0}
+    
+    # Store the analysis results in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    doc = Document(
+        page_content=str(result.get("analysis", {})),
+        metadata={
+            "type": "content_analysis",
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"]
+        }
+    )
+    document_store.db.store_documents_with_embeddings("analysis", [doc])
 
     return new_state
 
@@ -173,6 +192,20 @@ def develop_characters(state: Dict[str, Any]) -> Dict[str, Any]:
         **state.get("stage_progress", {}),
         "character_development": 1.0,
     }
+    
+    # Store the character development results in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    for character in result.get("characters", []):
+        doc = Document(
+            page_content=str(character),
+            metadata={
+                "type": "character_development",
+                "character_name": character.get("name", "Unknown"),
+                "manuscript_id": state["manuscript_id"],
+                "title": state["title"]
+            }
+        )
+        document_store.db.store_documents_with_embeddings("characters", [doc])
 
     return new_state
 
@@ -197,6 +230,18 @@ def enhance_dialogue(state: Dict[str, Any]) -> Dict[str, Any]:
         **state.get("stage_progress", {}),
         "dialogue_enhancement": 1.0,
     }
+    
+    # Store the dialogue enhancement results in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    doc = Document(
+        page_content=str(result),
+        metadata={
+            "type": "dialogue_enhancement",
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"]
+        }
+    )
+    document_store.db.store_documents_with_embeddings("analysis", [doc])
 
     return new_state
 
@@ -223,6 +268,20 @@ def build_world(state: Dict[str, Any]) -> Dict[str, Any]:
         **state.get("stage_progress", {}),
         "world_building": 1.0,
     }
+    
+    # Store the world building results in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    for setting in result.get("settings", []):
+        doc = Document(
+            page_content=str(setting),
+            metadata={
+                "type": "world_building",
+                "setting_name": setting.get("name", "Unknown"),
+                "manuscript_id": state["manuscript_id"],
+                "title": state["title"]
+            }
+        )
+        document_store.db.store_documents_with_embeddings("worlds", [doc])
 
     return new_state
 
@@ -248,6 +307,20 @@ def integrate_subplots(state: Dict[str, Any]) -> Dict[str, Any]:
         **state.get("stage_progress", {}),
         "subplot_integration": 1.0,
     }
+    
+    # Store the subplot integration results in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    for subplot in result.get("developed_subplots", []):
+        doc = Document(
+            page_content=str(subplot),
+            metadata={
+                "type": "subplot_integration",
+                "subplot_title": subplot.get("title", "Unknown"),
+                "manuscript_id": state["manuscript_id"],
+                "title": state["title"]
+            }
+        )
+        document_store.db.store_documents_with_embeddings("subplots", [doc])
 
     return new_state
 
@@ -284,6 +357,30 @@ def evaluate_story_arcs(state: Dict[str, Any]) -> Dict[str, Any]:
         **new_state.get("analysis_results", {}),
         **progress_analysis,
     }
+    
+    # Store the story arc analysis results in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    doc = Document(
+        page_content=str(result.get("analysis", {})),
+        metadata={
+            "type": "story_arc_evaluation",
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"]
+        }
+    )
+    document_store.db.store_documents_with_embeddings("analysis", [doc])
+    
+    # Also store the progress analysis
+    doc = Document(
+        page_content=str(progress_analysis),
+        metadata={
+            "type": "progress_analysis",
+            "stage": "story_arc",
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"]
+        }
+    )
+    document_store.db.store_documents_with_embeddings("analysis", [doc])
 
     return new_state
 
@@ -304,6 +401,19 @@ def check_continuity(state: Dict[str, Any]) -> Dict[str, Any]:
         **state.get("stage_progress", {}),
         "continuity_check": 1.0,
     }
+    
+    # Store the continuity check results in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    doc = Document(
+        page_content=str(result),
+        metadata={
+            "type": "continuity_check",
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"],
+            "issues_fixed": len(result.get("issues", []))
+        }
+    )
+    document_store.db.store_documents_with_embeddings("analysis", [doc])
 
     return new_state
 
@@ -338,6 +448,30 @@ def polish_language(state: Dict[str, Any]) -> Dict[str, Any]:
         **new_state.get("analysis_results", {}),
         **progress_analysis,
     }
+    
+    # Store the language polishing results in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    doc = Document(
+        page_content=str(result),
+        metadata={
+            "type": "language_polishing",
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"]
+        }
+    )
+    document_store.db.store_documents_with_embeddings("analysis", [doc])
+    
+    # Also store the progress analysis
+    doc = Document(
+        page_content=str(progress_analysis),
+        metadata={
+            "type": "progress_analysis",
+            "stage": "language",
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"]
+        }
+    )
+    document_store.db.store_documents_with_embeddings("analysis", [doc])
 
     return new_state
 
@@ -376,6 +510,30 @@ def review_quality(state: Dict[str, Any]) -> Dict[str, Any]:
         **new_state.get("analysis_results", {}),
         **final_analysis,
     }
+    
+    # Store the quality review results in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    doc = Document(
+        page_content=result.get("final_report", ""),
+        metadata={
+            "type": "quality_review",
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"]
+        }
+    )
+    document_store.db.store_documents_with_embeddings("analysis", [doc])
+    
+    # Also store the final analysis
+    doc = Document(
+        page_content=str(final_analysis),
+        metadata={
+            "type": "progress_analysis",
+            "stage": "complete",
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"]
+        }
+    )
+    document_store.db.store_documents_with_embeddings("analysis", [doc])
 
     return new_state
 
@@ -391,7 +549,7 @@ def finalize(state: Dict[str, Any]) -> Dict[str, Any]:
 
     # Prepare final state
     new_state = state.copy()
-    new_state["current_state"] = DELIVERY  # Changed to use constant
+    new_state["current_state"] = END
     new_state["message"] = (
         f"Transformation complete for manuscript: {state.get('title', 'Untitled')}. "
         f"Enhanced {len(state['characters'])} characters, {len(state['settings'])} settings, "
@@ -400,23 +558,41 @@ def finalize(state: Dict[str, Any]) -> Dict[str, Any]:
         f"Final report available in the final_review field."
     )
     new_state["stage_progress"] = {**state.get("stage_progress", {}), "finalize": 1.0}
+    
+    # Create a final summary document and store it in MongoDB Atlas Vector
+    final_report = state.get("final_review", {}).get("final_report", "")
+    
+    improvement_metrics = {
+        "characters_enhanced": len(state.get("characters", [])),
+        "settings_developed": len(state.get("settings", [])),
+        "subplots_integrated": len(state.get("subplots", [])),
+        "continuity_issues_fixed": len(state.get("continuity_issues", [])),
+        "language_improvements": state.get("style_analysis", {}).get(
+            "improvements_count", 0
+        ),
+    }
+    
+    # Store the comprehensive final report in MongoDB Atlas Vector
+    doc = Document(
+        page_content=final_report,
+        metadata={
+            "type": "final_report",
+            "manuscript_id": manuscript_id,
+            "title": state.get("title", "Untitled"),
+            "improvement_metrics": str(improvement_metrics),
+            "completion_status": "complete"
+        }
+    )
+    document_store.db.store_documents_with_embeddings("analysis", [doc])
 
     # Create the output
     return {
         "manuscript_id": manuscript_id,
         "status": "complete",
-        "final_report": state.get("final_review", {}).get("final_report", ""),
+        "final_report": final_report,
         "research_insights": state.get("research_insights", {}),
         "analysis_results": state.get("analysis_results", {}),
-        "improvement_metrics": {
-            "characters_enhanced": len(state.get("characters", [])),
-            "settings_developed": len(state.get("settings", [])),
-            "subplots_integrated": len(state.get("subplots", [])),
-            "continuity_issues_fixed": len(state.get("continuity_issues", [])),
-            "language_improvements": state.get("style_analysis", {}).get(
-                "improvements_count", 0
-            ),
-        },
+        "improvement_metrics": improvement_metrics,
     }
 
 
@@ -428,7 +604,7 @@ def should_retry_character_development(state: Dict[str, Any]) -> str:
 
 
 def route_after_quality_review(state: Dict[str, Any]) -> str:
-    """Route after quality review depdeliverying on final review content."""
+    """Route after quality review depending on final review content."""
     # If there's a comprehensive final review, proceed to finalize
     if state.get("final_review") and "review" in state["final_review"]:
         return "finalize"
@@ -478,7 +654,7 @@ def build_storybook() -> StateGraph:
     workflow.add_node("language_polishing", polish_language)
     workflow.add_node("quality_review", review_quality)
     workflow.add_node("finalize", finalize)
-    workflow.add_node(DELIVERY)  # Changed to use constant
+    workflow.add_node("END")
 
     # Add edges
     workflow.set_entry_point("START")
@@ -510,7 +686,7 @@ def build_storybook() -> StateGraph:
         route_after_quality_review,
         {"quality_review": "quality_review", "finalize": "finalize"},  # Retry if needed
     )
-    workflow.add_edge("finalize", DELIVERY)  # Changed to use constant
+    workflow.add_edge("finalize", "END")
 
     return workflow
 
