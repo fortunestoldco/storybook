@@ -1,7 +1,13 @@
 from typing import Dict, List, Annotated, TypedDict, Any, Union, Literal
 import logging
 
-from langgraph.graph import StateGraph, START, delivery
+from langgraph.graph import StateGraph, START  # Removed 'delivery' from import
+
+logger = logging.getLogger(__name__)
+
+# Define delivery as a constant string instead
+DELIVERY = "delivery"
+
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
@@ -51,7 +57,7 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
 
     if not manuscript_id:
         return {
-            "current_state": delivery,
+            "current_state": DELIVERY,  # Changed to use constant
             "message": "Error: manuscript_id is required to start the transformation process.",
         }
 
@@ -62,7 +68,7 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
     manuscript = document_store.get_manuscript(manuscript_id)
     if not manuscript:
         return {
-            "current_state": delivery,
+            "current_state": DELIVERY,  # Changed to use constant
             "message": f"Error: Manuscript with ID {manuscript_id} not found.",
         }
 
@@ -385,7 +391,7 @@ def finalize(state: Dict[str, Any]) -> Dict[str, Any]:
 
     # Prepare final state
     new_state = state.copy()
-    new_state["current_state"] = delivery
+    new_state["current_state"] = DELIVERY  # Changed to use constant
     new_state["message"] = (
         f"Transformation complete for manuscript: {state.get('title', 'Untitled')}. "
         f"Enhanced {len(state['characters'])} characters, {len(state['settings'])} settings, "
@@ -472,7 +478,7 @@ def build_storybook() -> StateGraph:
     workflow.add_node("language_polishing", polish_language)
     workflow.add_node("quality_review", review_quality)
     workflow.add_node("finalize", finalize)
-    workflow.add_node("delivery")
+    workflow.add_node(DELIVERY)  # Changed to use constant
 
     # Add edges
     workflow.set_entry_point("START")
@@ -504,7 +510,7 @@ def build_storybook() -> StateGraph:
         route_after_quality_review,
         {"quality_review": "quality_review", "finalize": "finalize"},  # Retry if needed
     )
-    workflow.add_edge("finalize", "delivery")
+    workflow.add_edge("finalize", DELIVERY)  # Changed to use constant
 
     return workflow
 
