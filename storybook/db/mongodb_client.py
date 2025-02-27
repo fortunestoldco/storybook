@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Any
 import logging
 import os
+import re
 from bson.objectid import ObjectId
 
 from langchain_core.documents import Document
@@ -8,7 +9,6 @@ import pymongo
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from langchain_mongodb import MongoDBAtlasVectorSearch
-from langchain_mongodb.vectorstores import MongoDBVectorStore
 from langchain_openai import OpenAIEmbeddings
 
 from storybook.config import MONGODB_URI, MONGODB_DB_NAME
@@ -24,17 +24,21 @@ class MongoDBStore:
         self.client = MongoClient(MONGODB_URI)
         self.db = self.client[MONGODB_DB_NAME]
         
-        # Initialize vector store for semantic search capabilities
+        # Initialize embeddings for semantic search capabilities
         self.embeddings = OpenAIEmbeddings()
-        self.vector_store = MongoDBVectorStore(
-            collection=self.db["vectors"],
-            index_name="vector_index",
-            embedding=self.embeddings,
-            text_key="content",
-        )
-
-        # Initialize the collections if they don't exist
+        
+        # Initialize collections if they don't exist
         self._ensure_collections_exist()
+        
+        # Initialize vector store
+        self.vector_store = MongoDBAtlasVectorSearch.from_connection_string(
+            connection_string=MONGODB_URI,
+            namespace=f"{MONGODB_DB_NAME}.vectors",
+            embedding=self.embeddings,
+            index_name="vector_index",
+            text_key="text",
+            embedding_key="embedding"
+        )
         
     def _ensure_collections_exist(self):
         """Create collections if they don't exist."""
@@ -126,10 +130,11 @@ class MongoDBStore:
                 collection = self.get_collection(collection_name)
                 regular_ids = []
                 
-                for doc in documents:
+                for i, doc in enumerate(documents):
                     content = doc.page_content
                     metadata = doc.metadata.copy()
-                    metadata["vector_id"] = ids[len(regular_ids)]  # Link to vector ID
+                    if i < len(ids):
+                        metadata["vector_id"] = ids[i]  # Link to vector ID
                     
                     document = {
                         "content": content,
