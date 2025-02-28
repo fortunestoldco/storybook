@@ -8,7 +8,6 @@ from pathlib import Path
 from langchain.schema import Document
 from langgraph.graph import Graph
 from langgraph.channels import LastValue
-from langgraph.pregel import channels
 from langchain_core.tools import BaseTool
 
 from storybook.agents import (

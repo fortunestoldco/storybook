@@ -37,8 +37,10 @@ class StoryArcAnalyst(BaseAgent):
     ) -> Dict[str, Any]:
         """Analyze the story arc and provide improvement suggestions."""
         try:
+            if not self.validate_input(manuscript_id=manuscript_id):  # Add this validation
+                return {"error": "Invalid manuscript_id"}
             if llm_config:
-                self.update_llm(llm_config)  # Missing this
+                self.update_llm(llm_config)
 
             manuscript = self.document_store.get_manuscript(manuscript_id)
             if not manuscript:

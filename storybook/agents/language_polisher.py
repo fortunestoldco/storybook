@@ -493,27 +493,13 @@ class LanguagePolisher(BaseAgent):
 
     def _extract_patterns(self, text: str) -> Dict[str, List[str]]:
         try:
-            # Extract patterns using regex
-            words = re.findall(r'\b\w+\b', text.lower())
-            word_freq = {}
-            for word in words:
-                word_freq[word] = word_freq.get(word, 0) + 1
-            
-            # Find repetitive words
             patterns = {
-                "repetitive_words": [
-                    word for word, count in word_freq.items()
-                    if count > 3 and len(word) > 3
-                ],
-                "complex_phrases": [],
-                "weak_constructions": []
+                "sentence_structures": [],
+                "word_patterns": [],
+                "stylistic_elements": []
             }
-
+            # Add implementation
             return patterns
         except Exception as e:
             logger.error(f"Error extracting patterns: {str(e)}")
-            return {
-                "repetitive_words": [],
-                "complex_phrases": [],
-                "weak_constructions": []
-            }
+            return {}

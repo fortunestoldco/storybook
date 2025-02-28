@@ -29,11 +29,11 @@ class WorldBuilder(BaseAgent):
         """Identify and enhance settings and world-building elements."""
         try:
             if llm_config:
-                self.update_llm(llm_config)  # Missing this
+                self.update_llm(llm_config)  # Add this line
                 
             manuscript = self.document_store.get_manuscript(manuscript_id)
             if not manuscript:
-                return {"error": f"Manuscript {manuscript_id} not found"}
+                return {"error": f"Manuscript {manuscript_id} not found"}  # Add this check
 
             # Extract settings and locations
             settings = self._extract_settings(

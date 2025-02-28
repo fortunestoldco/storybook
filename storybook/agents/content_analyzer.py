@@ -168,21 +168,8 @@ class ContentAnalyzer(BaseAgent):
     def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """Process manuscript for content analysis."""
         try:
-            manuscript = self.document_store.get_manuscript(manuscript_id)
-            if not manuscript:
-                return {"error": f"Manuscript {manuscript_id} not found"}
-
-            analysis = self._analyze_content(
-                manuscript["content"],
-                target_audience,
-                research_insights
-            )
-
-            return {
-                "manuscript_id": manuscript_id,
-                "analysis": analysis,
-                "status": "success"
-            }
+            # Update LLM if new config provided at runtime
+            return self.analyze_content(manuscript_id)
         except Exception as e:
             logger.error(f"Error in content analysis: {str(e)}")
             return self.handle_error(e)
@@ -368,7 +355,7 @@ class ContentAnalyzer(BaseAgent):
 
     def _calculate_metric_change(self, initial: Dict[str, Any], final: Dict[str, Any]) -> float:
         if not initial or not final:
-            return 0.0
+            return 0.0  # Add this return
         total_fields = 0
         changed_fields = 0
         for key in initial:
