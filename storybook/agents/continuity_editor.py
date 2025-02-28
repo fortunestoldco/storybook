@@ -12,7 +12,7 @@ from langchain_core.runnables import RunnablePassthrough
 
 from storybook.agents.base import BaseAgent  # Fix typo in BaseAgentnt
 from storybook.config import create_llm, get_llm
-from storybook.db.mongodb_store import MongoDBStore  # Add missing import
+from storybook.db.document_store import DocumentStore  # Change from mongodb_store
 from storybook.tools.document_tools import DocumentTools
 
 logger = logging.getLogger(__name__)

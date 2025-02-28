@@ -298,7 +298,7 @@ class MarketResearcher(BaseAgent):
             for item in research:
                 text = item["results"].lower()
                 
-                # Extract format preferences
+                # Extract format preferences using raw string
                 if "format" in text:
                     formats = re.findall(r"prefer\s+(ebook|audiobook|print|hardcover|paperback)", text)
                     preferences["format"].extend(formats)

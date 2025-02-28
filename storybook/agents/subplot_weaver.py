@@ -680,11 +680,10 @@ class SubplotWeaver(BaseAgent):
 
         # Try to extract other sections
         for section in sections[2:]:  # Skip Title and Characters which we handled above
-            pattern = re.compile(f"{section}:?\s*(.*?)(?=\n\n|\n[A-Z]|\Z)", re.DOTALL)
-            match = pattern.search(subplot_text)
-            if match:
+            content = self._parse_section(section, subplot_text)
+            if content:
                 key = section.lower().replace(" ", "_")
-                result[key] = match.group(1).strip()
+                result[key] = content
 
         # Store in the database
         subplot_id = self.document_store.store_subplot(
@@ -695,6 +694,12 @@ class SubplotWeaver(BaseAgent):
         result["id"] = subplot_id
 
         return result
+
+    def _parse_section(self, section: str, text: str) -> str:
+        """Extract section content using raw string for regex pattern."""
+        pattern = re.compile(fr"{section}:?\s*(.*?)(?=\n\n|\n[A-Z]|\Z)", re.DOTALL)
+        match = pattern.search(text)
+        return match.group(1).strip() if match else ""
 
     def _integrate_subplots(
         self,

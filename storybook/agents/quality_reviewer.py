@@ -22,8 +22,7 @@ class QualityReviewer(BaseAgent):  # Add inheritance
 
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
         """Initialize with optional LLM configuration."""
-        super().__init__(llm_config)  # Add super call
-        self.llm = get_llm(temperature=0.5, use_replicate=True)
+        super().__init__(llm_config)
         self.document_store = DocumentStore()
 
     def finalize_manuscript(
