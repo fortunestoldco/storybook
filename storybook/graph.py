@@ -28,47 +28,38 @@ logger = logging.getLogger(__name__)
 
 class StorybookState(TypedDict):
     """State definition for the Storybook workflow."""
-    manuscript_id: str
+    manuscript: Dict[str, Any]  # The input manuscript with its content and metadata
+    manuscript_id: Optional[str]  # Generated after storing the manuscript
     target_audience: Optional[Dict[str, Any]]
     research_insights: Optional[Dict[str, Any]]
-    analysis_results: Dict[str, Any]
-    improvements: Dict[str, Any]
-    status: str
+    analysis_results: Optional[Dict[str, Any]]  # Made optional since it's generated during process
+    improvements: Optional[Dict[str, Any]]  # Made optional since it's generated during process
+    status: Optional[str]  # Made optional since it's set during process
 
 
 def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
     """Start the workflow with a new manuscript."""
     logger.info("Starting workflow")
 
-    # Extract input parameters
-    manuscript_id = state.get("manuscript_id")
-    title = state.get("title")
-
-    if not manuscript_id:
+    # Extract manuscript from input
+    manuscript = state.get("manuscript")
+    if not manuscript:
         return {
             "current_state": END,
-            "message": "Error: manuscript_id is required to start the transformation process.",
+            "message": "Error: manuscript is required to start the transformation process.",
         }
 
     # Initialize the document store
     document_store = DocumentStore()
 
-    # Check if manuscript exists
-    manuscript = document_store.get_manuscript(manuscript_id)
-    if not manuscript:
-        return {
-            "current_state": END,
-            "message": f"Error: Manuscript with ID {manuscript_id} not found.",
-        }
+    # Store the manuscript and get ID
+    manuscript_id = document_store.store_manuscript(manuscript)
 
-    # Get title if not provided
-    if not title:
-        title = manuscript.get("title", "Untitled")
-
-    # Initialize state with manuscript ID
+    # Initialize state
     new_state = StorybookState(
+        manuscript=manuscript,
         manuscript_id=manuscript_id,
-        title=title,
+        title=manuscript.get("title", "Untitled"),
         current_state="research",
         characters=[],
         settings=[],
@@ -80,7 +71,9 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
         research_insights={},
         analysis_results={},
         target_audience={},
-        message=f"Starting transformation process for manuscript: {title}",
+        improvements={},
+        status="started",
+        message=f"Starting transformation process for manuscript: {manuscript.get('title', 'Untitled')}",
         stage_progress={},
     )
 
@@ -628,70 +621,233 @@ def check_analysis_progress(
     return "initialize"
 
 
+def manage_project(state: Dict[str, Any]) -> Dict[str, Any]:
+    """Project Supervisor: Oversee entire manuscript transformation process."""
+    new_state = state.copy()
+    new_state["project_status"] = {
+        "phase": "research" if not state.get("research_complete") else "writing",
+        "progress": state.get("stage_progress", {}),
+        "current_team": "research" if not state.get("research_complete") else "writing"
+    }
+    return new_state
+
+def manage_research(state: Dict[str, Any]) -> Dict[str, Any]:
+    """Research Supervisor: Manage market research and analysis teams."""
+    new_state = state.copy()
+    new_state["research_status"] = {
+        "market_research_complete": state.get("research_insights") is not None,
+        "content_analysis_complete": state.get("analysis_results") is not None,
+        "audience_analysis_complete": state.get("target_audience") is not None
+    }
+    return new_state
+
+def manage_writing(state: Dict[str, Any]) -> Dict[str, Any]:
+    """Writing Supervisor: Manage creative writing and development teams."""
+    new_state = state.copy()
+    new_state["writing_status"] = {
+        "world_building_complete": len(state.get("settings", [])) > 0,
+        "character_development_complete": len(state.get("characters", [])) > 0,
+        "subplot_integration_complete": len(state.get("subplots", [])) > 0,
+        "dialogue_enhancement_complete": state.get("dialogue_enhanced", False),
+        "draft_complete": state.get("draft_version", 0) > 0
+    }
+    return new_state
+
+def manage_editorial(state: Dict[str, Any]) -> Dict[str, Any]:
+    """Editorial Supervisor: Manage quality control and review teams."""
+    new_state = state.copy()
+    new_state["editorial_status"] = {
+        "story_arc_reviewed": state.get("story_analysis") is not None,
+        "continuity_checked": state.get("continuity_issues") is not None,
+        "language_polished": state.get("style_analysis") is not None,
+        "quality_reviewed": state.get("final_review") is not None
+    }
+    return new_state
+
+
+def research_complete_check(state: Dict[str, Any]) -> str:
+    """Check if research phase is complete and route accordingly."""
+    research_status = state.get("research_status", {})
+    
+    # Check if all research tasks are complete
+    if all([
+        research_status.get("market_research_complete", False),
+        research_status.get("content_analysis_complete", False),
+        research_status.get("audience_analysis_complete", False)
+    ]):
+        return "project_supervisor"  # Report completion
+    
+    # If not started, begin with market research
+    if not research_status:
+        return "market_research"
+        
+    # Continue with next research task
+    if not research_status.get("market_research_complete"):
+        return "market_research"
+    if not research_status.get("content_analysis_complete"):
+        return "content_analysis"
+    return "audience_analysis"
+
+def start_writing_check(state: Dict[str, Any]) -> str:
+    """Determine whether to start writing or move to editorial."""
+    project_status = state.get("project_status", {})
+    
+    if project_status.get("phase") == "writing":
+        return "writing_supervisor"
+    if project_status.get("phase") == "editorial":
+        return "editorial_supervisor"
+    return "writing_supervisor"  # Default to writing phase
+
+def assign_writing_task(state: Dict[str, Any]) -> str:
+    """Assign next writing task based on completion status."""
+    writing_status = state.get("writing_status", {})
+    
+    # Check completion status
+    if writing_status.get("world_building_complete", False) and \
+       writing_status.get("character_development_complete", False) and \
+       writing_status.get("subplot_integration_complete", False) and \
+       writing_status.get("dialogue_enhancement_complete", False) and \
+       writing_status.get("draft_complete", False):
+        return "project_supervisor"  # All tasks complete
+    
+    # Assign tasks in sequence
+    if not writing_status.get("world_building_complete"):
+        return "world_building"
+    if not writing_status.get("character_development_complete"):
+        return "character_development"
+    if not writing_status.get("subplot_integration_complete"):
+        return "subplot_integration"
+    if not writing_status.get("dialogue_enhancement_complete"):
+        return "dialogue_enhancement"
+    return "draft_writing"
+
+def assign_editorial_task(state: Dict[str, Any]) -> str:
+    """Assign next editorial task based on completion status."""
+    editorial_status = state.get("editorial_status", {})
+    
+    # Check if all editorial tasks are complete
+    if all([
+        editorial_status.get("story_arc_reviewed", False),
+        editorial_status.get("continuity_checked", False),
+        editorial_status.get("language_polished", False),
+        editorial_status.get("quality_reviewed", False)
+    ]):
+        return "project_supervisor"  # Report completion
+    
+    # Assign tasks in sequence
+    if not editorial_status.get("story_arc_reviewed"):
+        return "story_arc_evaluation"
+    if not editorial_status.get("continuity_checked"):
+        return "continuity_check"
+    if not editorial_status.get("language_polished"):
+        return "language_polishing"
+    return "quality_review"
+
+def final_quality_check(state: Dict[str, Any]) -> str:
+    """Determine if manuscript needs revisions or can be finalized."""
+    final_review = state.get("final_review", {})
+    quality_score = final_review.get("quality_score", 0)
+    
+    if quality_score >= 0.9:
+        return "finalize"
+    return "writing_supervisor"  # Return for revisions
+
+
 def build_storybook() -> StateGraph:
-    """Build the storybook workflow graph."""
+    """Build the storybook workflow graph with team-based structure."""
     workflow = StateGraph(StorybookState)
 
-    # Add nodes
-    workflow.add_node("start", start_workflow)
-    workflow.add_node("research", conduct_market_research)
-    workflow.add_node("analysis", analyze_manuscript)
-    workflow.add_node("initialize", initialize_graph)
-    workflow.add_node("character_development", develop_characters)
-    workflow.add_node("dialogue_enhancement", enhance_dialogue)
+    # Add supervisor nodes
+    workflow.add_node("project_supervisor", manage_project)
+    workflow.add_node("research_supervisor", manage_research)
+    workflow.add_node("writing_supervisor", manage_writing)
+    workflow.add_node("editorial_supervisor", manage_editorial)
+
+    # Research Team Nodes
+    workflow.add_node("market_research", conduct_market_research)
+    workflow.add_node("content_analysis", analyze_manuscript)
+    workflow.add_node("audience_analysis", analyze_audience)
+
+    # Writing Team Nodes
     workflow.add_node("world_building", build_world)
+    workflow.add_node("character_development", develop_characters)
     workflow.add_node("subplot_integration", integrate_subplots)
+    workflow.add_node("dialogue_enhancement", enhance_dialogue)
+    workflow.add_node("draft_writing", write_draft)
+
+    # Editorial Team Nodes
     workflow.add_node("story_arc_evaluation", evaluate_story_arcs)
     workflow.add_node("continuity_check", check_continuity)
     workflow.add_node("language_polishing", polish_language)
     workflow.add_node("quality_review", review_quality)
     workflow.add_node("finalize", finalize)
 
-    # Set entry point and add edges
-    workflow.set_entry_point("start")
+    # Set entry point to project supervisor
+    workflow.set_entry_point("project_supervisor")
     
-    # Define workflow edges
-    workflow.add_edge("start", "research")
-    workflow.add_edge("research", "analysis")
-    
-    # Add conditional edges
+    # Define supervisor hierarchy
+    workflow.add_edge("project_supervisor", "research_supervisor")
     workflow.add_conditional_edges(
-        "analysis",
-        check_analysis_progress,
+        "research_supervisor",
+        research_complete_check,
         {
-            "analysis": "analysis",
-            "initialize": "initialize"
+            "project_supervisor": "project_supervisor",  # Report back to supervisor
+            "market_research": "market_research"  # Start research if needed
         }
     )
     
-    # Add remaining sequential edges
-    workflow.add_edge("initialize", "character_development")
+    # Research Team Workflow
+    workflow.add_edge("market_research", "content_analysis")
+    workflow.add_edge("content_analysis", "audience_analysis")
+    workflow.add_edge("audience_analysis", "research_supervisor")  # Report back
+    
+    # Writing Team Workflow
     workflow.add_conditional_edges(
-        "character_development",
-        should_retry_character_development,
+        "project_supervisor",
+        start_writing_check,
         {
+            "writing_supervisor": "writing_supervisor",
+            "editorial_supervisor": "editorial_supervisor"
+        }
+    )
+    
+    # Writing Team Internal Workflow
+    workflow.add_conditional_edges(
+        "writing_supervisor",
+        assign_writing_task,
+        {
+            "world_building": "world_building",
             "character_development": "character_development",
-            "dialogue_enhancement": "dialogue_enhancement"
+            "subplot_integration": "subplot_integration",
+            "dialogue_enhancement": "dialogue_enhancement",
+            "draft_writing": "draft_writing",
+            "project_supervisor": "project_supervisor"  # Report completion
         }
     )
-    workflow.add_edge("dialogue_enhancement", "world_building")
-    workflow.add_edge("world_building", "subplot_integration")
-    workflow.add_edge("subplot_integration", "story_arc_evaluation")
-    workflow.add_edge("story_arc_evaluation", "continuity_check")
-    workflow.add_edge("continuity_check", "language_polishing")
-    workflow.add_edge("language_polishing", "quality_review")
     
-    # Add final conditional routing
+    # Editorial Team Workflow
     workflow.add_conditional_edges(
-        "quality_review",
-        route_after_quality_review,
+        "editorial_supervisor",
+        assign_editorial_task,
         {
+            "story_arc_evaluation": "story_arc_evaluation",
+            "continuity_check": "continuity_check",
+            "language_polishing": "language_polishing",
             "quality_review": "quality_review",
-            "finalize": "finalize"
+            "project_supervisor": "project_supervisor"  # Report completion
         }
     )
     
-    # Add final edge to END
+    # Final Quality Gate
+    workflow.add_conditional_edges(
+        "project_supervisor",
+        final_quality_check,
+        {
+            "writing_supervisor": "writing_supervisor",  # Return for revisions
+            "finalize": "finalize"  # Proceed to completion
+        }
+    )
+    
     workflow.add_edge("finalize", END)
 
     return workflow
