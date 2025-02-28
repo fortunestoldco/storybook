@@ -7,7 +7,7 @@ from pathlib import Path
 
 from langchain.schema import Document
 from langgraph.graph import StateGraph
-from langgraph.channels import Channel, LastValue
+from langgraph.channels import LastValue
 from langchain_core.tools import BaseTool
 
 from storybook.agents import (
