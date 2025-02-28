@@ -83,15 +83,14 @@ def build_storybook(config: RunnableConfig) -> StateGraph:
     builder.add_edge("research_team", "creative_team")
     builder.add_edge("creative_team", "quality_team")
 
-    def should_revise(state: State) -> Literal["creative_team", "__end__"]:
+    def should_revise(state: State) -> str:
         """Strongly typed conditional routing"""
         return "creative_team" if state.quality_review.content.get("needs_revision", False) else "__end__"
 
     # Add conditional edges with proper parameter name
     builder.add_conditional_edges(
         "quality_team",
-        path=should_revise,  # Changed from condition_function to path
-        edge_cases=["creative_team", "__end__"]
+        path=should_revise  # Ensure the path function handles the logic
     )
 
     # Configure graph properties
