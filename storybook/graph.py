@@ -22,10 +22,7 @@ from storybook.db.document_store import DocumentStore
 
 logger = logging.getLogger(__name__)
 
-
 class NovelGraphState(TypedDict):
-    """Type definition for the graph state."""
-
     manuscript_id: str
     title: str
     current_state: str
@@ -41,7 +38,6 @@ class NovelGraphState(TypedDict):
     target_audience: Dict[str, Any]
     message: str
     stage_progress: Dict[str, float]
-
 
 def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
     """Start the workflow with a new manuscript."""
@@ -634,11 +630,7 @@ def check_analysis_progress(
     # If all required data is present, move to initialization
     return "initialize"
 
-
-# Build the graph
 def build_storybook() -> StateGraph:
-    """Build the novel transformation workflow graph."""
-
     workflow = StateGraph(NovelGraphState)
 
     # Add nodes
@@ -659,7 +651,6 @@ def build_storybook() -> StateGraph:
 
     # Add edges
     workflow.set_entry_point("START")
-
     workflow.add_edge("START", "research")
     workflow.add_edge("research", "analysis")
     workflow.add_conditional_edges(
@@ -685,12 +676,11 @@ def build_storybook() -> StateGraph:
     workflow.add_conditional_edges(
         "quality_review",
         route_after_quality_review,
-        {"quality_review": "quality_review", "finalize": "finalize"},  # Retry if needed
+        {"quality_review": "quality_review", "finalize": "finalize"},
     )
     workflow.add_edge("finalize", "END")
 
     return workflow
-
 
 # Create the novel transformation graph
 storybook = build_storybook().compile()

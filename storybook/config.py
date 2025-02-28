@@ -2,73 +2,75 @@
 
 from importlib.metadata import version
 from typing import Any, Generator, Iterable, Iterator, List, Optional, Sequence, Union
+import os  # Add this importimport os  # Add this import
 
-from langchain_core.documents import Document
-from langchain_core.stores import BaseStore
+from langchain_core.documents import Documentnt
+from langchain_core.stores import BaseStorert BaseStore
 from pymongo import MongoClient
 from pymongo.collection import Collection
-from pymongo.driver_info import DriverInfo
+from pymongo.driver_info import DriverInfofrom pymongo.driver_info import DriverInfo
 
 from langchain_mongodb.utils import make_serializable
-from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearchctorSearch
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI ChatOpenAI
 from langchain_community.llms import Replicate
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+from langchain_core.output_parsers import StrOutputParserfrom langchain_core.output_parsers import StrOutputParser
 
 # Environment variables
-MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
-MONGODB_DB_NAME = os.environ.get("MONGODB_DB_NAME", "storybook")
+MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017"):27017")
+MONGODB_DB_NAME = os.environ.get("MONGODB_DB_NAME", "storybook")", "storybook")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
+REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN")PI_TOKEN")
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
-FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
+FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
 
 # LLM configuration
 DEFAULT_OPENAI_MODEL = "gpt-4o"
-DEFAULT_REPLICATE_MODEL = "meta/llama-3-70b-instruct:2a30ae62b32ab1f47530ed5fd32fea38ed408255c747684c41749824a771fa12"
+DEFAULT_REPLICATE_MODEL = "meta/llama-3-70b-instruct:2a30ae62b32ab1f47530ed5fd32fea38ed408255c747684c41749824a771fa12"DEFAULT_REPLICATE_MODEL = "meta/llama-3-70b-instruct:2a30ae62b32ab1f47530ed5fd32fea38ed408255c747684c41749824a771fa12"
 
 
 def get_llm(
-    model: Optional[str] = None, temperature: float = 0.7, use_replicate: bool = False
+    model: Optional[str] = None, temperature: float = 0.7, use_replicate: bool = False  model: Optional[str] = None, temperature: float = 0.7, use_replicate: bool = False
 ):
-    """Get a configured LLM instance."""
+    """Get a configured LLM instance."""ed LLM instance."""
     if use_replicate:
         return Replicate(
-            model=model or DEFAULT_REPLICATE_MODEL,
+            model=model or DEFAULT_REPLICATE_MODEL,EPLICATE_MODEL,
             temperature=temperature,
-            api_key=REPLICATE_API_TOKEN,
+            api_key=REPLICATE_API_TOKEN,   api_key=REPLICATE_API_TOKEN,
         )
     else:
         return ChatOpenAI(
-            model=model or DEFAULT_OPENAI_MODEL,
-            temperature=temperature,
-            api_key=OPENAI_API_KEY,
-        )
+            model=model or DEFAULT_OPENAI_MODEL,PENAI_MODEL,
+            temperature=temperature,,
+            api_key=OPENAI_API_KEY,   api_key=OPENAI_API_KEY,
+        )        )
 
 
 # MongoDB collections
-COLLECTION_MANUSCRIPTS = "manuscripts"
-COLLECTION_CHARACTERS = "characters"
+COLLECTION_MANUSCRIPTS = "manuscripts"s"
+COLLECTION_CHARACTERS = "characters"racters"
 COLLECTION_WORLDS = "worlds"
 COLLECTION_SUBPLOTS = "subplots"
 COLLECTION_RESEARCH = "research"
-COLLECTION_ANALYSIS = "analysis"
+COLLECTION_ANALYSIS = "analysis"COLLECTION_ANALYSIS = "analysis"
 
-# Define the states for our state machine
-STATES = [
-    "START",
-    "research",
-    "analysis",
-    "initialize",
-    "character_development",
-    "dialogue_enhancement",
-    "world_building",
-    "subplot_integration",
-    "story_arc_evaluation",
-    "continuity_check",
-    "language_polishing",
-    "quality_review",
-    "finalize",
-    "END",
-]
+# Define the states for our state machinehe states for our state machine
+STATES = {
+    "START": "start",tart",
+    "RESEARCH": "research", "research",
+    "ANALYSIS": "analysis",analysis",
+    "INITIALIZE": "initialize",e",
+    "CHARACTER_DEVELOPMENT": "character_development",: "character_development",
+    "DIALOGUE_ENHANCEMENT": "dialogue_enhancement",MENT": "dialogue_enhancement",
+    "WORLD_BUILDING": "world_building",ld_building",
+    "SUBPLOT_INTEGRATION": "subplot_integration","subplot_integration",
+    "STORY_ARC_EVALUATION": "story_arc_evaluation",ON": "story_arc_evaluation",
+    "CONTINUITY_CHECK": "continuity_check",continuity_check",
+    "LANGUAGE_POLISHING": "language_polishing",NG": "language_polishing",
+    "QUALITY_REVIEW": "quality_review",VIEW": "quality_review",
+    "FINALIZE": "finalize",IZE": "finalize",
+    "END": "end",   "END": "end",
+}}
+
