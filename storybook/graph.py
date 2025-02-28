@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 # Standard library imports
-from typing import Dict, List, Any, Optional, Union, Literal
+from typing import Dict, List, Any, Optional, Union, Literal, TypedDict
 import logging
 
 # Third-party imports
@@ -629,7 +629,7 @@ def check_analysis_progress(
     ]
 
     for analysis_type in required_analysis_types:
-        if analysis_type not in analysis_results:
+        if (analysis_type not in analysis_results) or (not analysis_results[analysis_type]):
             return "analysis"  # Retry analysis
 
     # If all required data is present, move to initialization
