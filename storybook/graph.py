@@ -7,7 +7,6 @@ from langchain_core.documents import Document
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from pydantic import BaseModel, Field
 
-from storybook.config import STATES
 from storybook.agents.character_developer import CharacterDeveloper
 from storybook.agents.dialogue_enhancer import DialogueEnhancer
 from storybook.agents.world_builder import WorldBuilder
