@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 # Standard library imports
 from typing import Any, Optional
@@ -11,18 +11,27 @@ from langchain_community.llms import Replicate
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-# Environment variables
-MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
-MONGODB_DB_NAME = os.environ.get("MONGODB_DB_NAME", "storybook")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
-TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
-FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
+# MongoDB Configuration
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "storybook")
+
+# API Configuration
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", "8080"))
+
+# LLM Configuration
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4")
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+
+# Research Tools
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
 
 # LLM configuration
 DEFAULT_OPENAI_MODEL = "gpt-4"
 DEFAULT_REPLICATE_MODEL = "meta/llama-3-70b-instruct:2a30ae62b32ab1f47530ed5fd32fea38ed408255c747684c41749824a771fa12"
-
 
 def get_llm(
     model: Optional[str] = None,
@@ -43,14 +52,13 @@ def get_llm(
             api_key=OPENAI_API_KEY,
         )
 
-
-# MongoDB collections
-COLLECTION_MANUSCRIPTS = "manuscripts"
-COLLECTION_CHARACTERS = "characters"
-COLLECTION_WORLDS = "worlds"
-COLLECTION_SUBPLOTS = "subplots"
-COLLECTION_RESEARCH = "research"
-COLLECTION_ANALYSIS = "analysis"
+# Collection Names
+COLLECTION_MANUSCRIPTS = os.getenv("COLLECTION_MANUSCRIPTS", "manuscripts")
+COLLECTION_CHARACTERS = os.getenv("COLLECTION_CHARACTERS", "characters")
+COLLECTION_WORLDS = os.getenv("COLLECTION_WORLDS", "worlds")
+COLLECTION_SUBPLOTS = os.getenv("COLLECTION_SUBPLOTS", "subplots")
+COLLECTION_RESEARCH = os.getenv("COLLECTION_RESEARCH", "research")
+COLLECTION_ANALYSIS = os.getenv("COLLECTION_ANALYSIS", "analysis")
 
 # Define the states for our state machine
 STATES = {

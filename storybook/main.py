@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 # Local imports
 from storybook.graph import storybook, build_storybook
 from storybook.db.document_store import DocumentStore
+from storybook.config import HOST, PORT, DEBUG
 
 # Configure logging
 logging.basicConfig(
@@ -182,5 +183,9 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(
+        app, 
+        host=HOST, 
+        port=PORT, 
+        log_level="debug" if DEBUG else "info"
+    )
