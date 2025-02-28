@@ -178,3 +178,14 @@ cython_debug/
 # Model files
 models/
 *.gguf
+
+# Build artifacts
+build/
+dist/
+*.so
+*.pyd
+*.dll
+*.dylib
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
