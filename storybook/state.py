@@ -4,12 +4,24 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 class LLMProvider(str, Enum):
-    """Available LLM providers and their default models."""
+    """Available LLM providers and their models."""
+    # OpenAI Models
     GPT4 = "openai/gpt-4"
+    GPT4_TURBO = "openai/gpt-4-turbo-preview"
     GPT35 = "openai/gpt-3.5-turbo"
+    
+    # Anthropic Models
     CLAUDE = "anthropic/claude-3-sonnet"
+    CLAUDE_OPUS = "anthropic/claude-3-opus"
+    CLAUDE_HAIKU = "anthropic/claude-3-haiku"
+    
+    # Hugging Face Models (require model name)
     HUGGINGFACE = "huggingface"
+    
+    # Replicate Models (require model name)
     REPLICATE = "replicate"
+    
+    # Local Models (require model name)
     OLLAMA = "ollama"
     LLAMACPP = "llamacpp"
 
@@ -27,6 +39,11 @@ class LLMProvider(str, Enum):
             LLMProvider.OLLAMA,
             LLMProvider.LLAMACPP
         ]
+
+    @property
+    def get_default_model(self) -> Optional[str]:
+        """Get default model name if available."""
+        return self.value.split('/')[1] if '/' in self.value else None
 
 class ManuscriptState(BaseModel):
     """Core manuscript state."""
