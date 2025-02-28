@@ -753,6 +753,42 @@ def final_quality_check(state: Dict[str, Any]) -> str:
     return "writing_supervisor"  # Return for revisions
 
 
+def analyze_audience(state: Dict[str, Any]) -> Dict[str, Any]:
+    """Analyze and refine target audience information."""
+    logger.info(f"Analyzing target audience for manuscript {state['manuscript_id']}")
+
+    agent = ContentAnalyzer()
+    result = agent.analyze_audience(
+        state["manuscript_id"],
+        research_insights=state.get("research_insights", {}),
+        analysis_results=state.get("analysis_results", {})
+    )
+
+    # Update state with audience analysis
+    new_state = state.copy()
+    new_state["target_audience"] = result.get("target_audience", {})
+    new_state["current_state"] = "research_supervisor"
+    new_state["message"] = "Completed target audience analysis."
+    new_state["stage_progress"] = {
+        **state.get("stage_progress", {}),
+        "audience_analysis": 1.0
+    }
+
+    # Store the audience analysis in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    doc = Document(
+        page_content=str(result.get("target_audience", {})),
+        metadata={
+            "type": "audience_analysis",
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"],
+        },
+    )
+    document_store.db.store_documents_with_embeddings("analysis", [doc])
+
+    return new_state
+
+
 def build_storybook() -> StateGraph:
     """Build the storybook workflow graph with team-based structure."""
     workflow = StateGraph(StorybookState)
