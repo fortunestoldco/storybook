@@ -150,14 +150,14 @@ class DocumentStore:
         # Get all chunks for this manuscript
         filter_dict = {"metadata.manuscript_id": manuscript_id}
         results = self.db.similarity_search(COLLECTION_MANUSCRIPTS, query, k=k)
-        
+
         # If we don't find enough results with the filter, try a broader search
         if len(results) < k:
             # Get any documents for this manuscript
             manuscript_docs = self.db.query_documents(
                 COLLECTION_MANUSCRIPTS, {"manuscript_id": manuscript_id}
             )
-            
+
             if manuscript_docs:
                 # Create basic text chunks if no vectorized chunks exist
                 content = manuscript_docs[0].get("content", "")
@@ -166,32 +166,39 @@ class DocumentStore:
                     results = [
                         Document(
                             page_content=chunk,
-                            metadata={"manuscript_id": manuscript_id, "title": manuscript_docs[0].get("title", "")},
+                            metadata={
+                                "manuscript_id": manuscript_id,
+                                "title": manuscript_docs[0].get("title", ""),
+                            },
                         )
                         for chunk in chunks
                     ]
-                    
+
                     # Try to match query terms in chunks
                     query_terms = set(query.lower().split())
                     scored_chunks = []
-                    
+
                     for doc in results:
-                        score = sum(1 for term in query_terms if term in doc.page_content.lower())
+                        score = sum(
+                            1
+                            for term in query_terms
+                            if term in doc.page_content.lower()
+                        )
                         scored_chunks.append((doc, score))
-                    
+
                     # Sort by score and take top k
                     scored_chunks.sort(key=lambda x: x[1], reverse=True)
                     results = [doc for doc, _ in scored_chunks[:k]]
-        
+
         return [
             doc for doc in results if doc.metadata.get("manuscript_id") == manuscript_id
         ]
-    
+
     def _simple_chunk_text(self, text: str, chunk_size: int, overlap: int) -> List[str]:
         """Simple text chunking as fallback."""
         chunks = []
         start = 0
-        
+
         while start < len(text):
             end = min(start + chunk_size, len(text))
             # Try to end at a sentence boundary
@@ -199,14 +206,14 @@ class DocumentStore:
                 sentence_end = text.rfind(". ", start, end) + 1
                 if sentence_end > start:
                     end = sentence_end
-            
+
             chunks.append(text[start:end])
             start = end - overlap
-            
+
             # Make sure we make progress
             if start >= end:
                 start = end
-        
+
         return chunks
 
     def _get_timestamp(self) -> str:

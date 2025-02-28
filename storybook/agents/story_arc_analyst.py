@@ -411,12 +411,12 @@ class StoryArcAnalyst:
         target_audience: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Analyze the pacing of the story.
-        
+
         Args:
             content: The manuscript content to analyze
             structure_analysis: Dictionary containing structural analysis results
             target_audience: Optional dictionary containing target audience information
-            
+
         Returns:
             Dict containing pacing analysis results
         """
@@ -513,7 +513,7 @@ class StoryArcAnalyst:
         low_intensity_match = re.search(
             r"Low-Intensity Sections:?\s*(.*?)(?=\n\n|\n\d\.|\Z)",
             pacing_analysis,
-            re.DOTALL
+            re.DOTALL,
         )  # Fix indentation
         balance_match = re.search(
             r"Pacing Balance:?\s*(.*?)(?=\n\n|\n\d\.|\Z)", pacing_analysis, re.DOTALL
@@ -727,7 +727,7 @@ class StoryArcAnalyst:
         self,
         content: str,
         improvement_plan: Dict[str, Any],
-        target_audience: Optional[Dict[str, Any]] = None
+        target_audience: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Apply story arc refinements to the manuscript."""
         # Extract key scene changes from the improvement plan

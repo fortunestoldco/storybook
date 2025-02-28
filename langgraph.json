@@ -6,11 +6,9 @@
         "uvicorn",
         "pydantic",
         "langserve",
-        "."
+        ".",
     ],
-    "graphs": {
-        "storybook": "./storybook/graph.py:storybook"
-    },
+    "graphs": {"storybook": "./storybook/graph.py:storybook"},
     "env": "./.env",
-    "python_version": "3.12"
+    "python_version": "3.12",
 }

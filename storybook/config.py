@@ -23,6 +23,7 @@ FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
 DEFAULT_OPENAI_MODEL = "gpt-4"
 DEFAULT_REPLICATE_MODEL = "meta/llama-3-70b-instruct:2a30ae62b32ab1f47530ed5fd32fea38ed408255c747684c41749824a771fa12"
 
+
 def get_llm(
     model: Optional[str] = None,
     temperature: float = 0.7,
@@ -41,6 +42,7 @@ def get_llm(
             temperature=temperature,
             api_key=OPENAI_API_KEY,
         )
+
 
 # MongoDB collections
 COLLECTION_MANUSCRIPTS = "manuscripts"
@@ -67,4 +69,3 @@ STATES = {
     "FINALIZE": "finalize",
     "END": "end",
 }
-

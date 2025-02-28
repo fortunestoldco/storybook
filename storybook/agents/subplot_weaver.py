@@ -149,7 +149,6 @@ class SubplotWeaver:
 
         # Parse the subplots
 
-
         try:
             subplots_list = json.loads(subplots_str)
             if isinstance(subplots_list, list):

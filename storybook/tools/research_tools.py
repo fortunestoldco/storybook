@@ -22,15 +22,17 @@ class ResearchTools:
     def __init__(self):
         self.llm = get_llm(temperature=0.7, use_replicate=True)
         self.document_store = DocumentStore()
-        
+
         # Initialize the Tavily search API wrapper
         try:
-            self.tavily_search = TavilySearchResults(api_wrapper=TavilySearchAPIWrapper(api_key=TAVILY_API_KEY))
+            self.tavily_search = TavilySearchResults(
+                api_wrapper=TavilySearchAPIWrapper(api_key=TAVILY_API_KEY)
+            )
             self.tavily_available = True
         except Exception as e:
             logger.warning(f"Tavily search is not available: {e}")
             self.tavily_available = False
-            
+
         # Initialize FireCrawl
         try:
             self.firecrawl = FireCrawlLoader(api_key=FIRECRAWL_API_KEY)
@@ -45,17 +47,17 @@ class ResearchTools:
         if self.tavily_available:
             return TavilySearchResults(
                 api_key=TAVILY_API_KEY,
-                max_results=5, 
-                description="Performs web research on a given topic related to publishing, literature, or writing."
+                max_results=5,
+                description="Performs web research on a given topic related to publishing, literature, or writing.",
             )
-        
+
         # Otherwise, use the simulated research
         return Tool(
             name="WebResearch",
             description="Performs web research on a given topic related to publishing, literature, or writing.",
             func=self._simulate_web_research,
         )
-        
+
     def get_web_crawl_tool(self):
         """Create a tool to crawl web pages for more detailed information."""
         return Tool(
@@ -71,12 +73,14 @@ class ResearchTools:
             try:
                 results = self.tavily_search.results(query)
                 if results:
-                    formatted_results = "\n\n".join([
-                        f"Title: {result.get('title', 'No title')}\n"
-                        f"Content: {result.get('content', 'No content')}\n"
-                        f"URL: {result.get('url', 'No URL')}"
-                        for result in results
-                    ])
+                    formatted_results = "\n\n".join(
+                        [
+                            f"Title: {result.get('title', 'No title')}\n"
+                            f"Content: {result.get('content', 'No content')}\n"
+                            f"URL: {result.get('url', 'No URL')}"
+                            for result in results
+                        ]
+                    )
                     return formatted_results
             except Exception as e:
                 logger.error(f"Error with Tavily search: {e}")
@@ -107,12 +111,12 @@ class ResearchTools:
         except Exception as e:
             logger.error(f"Error in web research simulation: {e}")
             return f"Research failed due to an error: {str(e)}"
-            
+
     def _crawl_and_save_webpage(self, url: str) -> str:
         """Crawl a webpage and save its content."""
-        if not url.startswith(('http://', 'https://')):
+        if not url.startswith(("http://", "https://")):
             return "Invalid URL format"
-            
+
         try:
             if self.firecrawl_available:
                 # Using FireCrawlLoader instead of direct API calls
@@ -125,18 +129,18 @@ class ResearchTools:
                     if doc_ids:
                         return f"Successfully crawled and stored content from {url}"
                     return f"Failed to store content from {url}"
-            
+
             # Fallback to WebBaseLoader
             loader = WebBaseLoader([url])
             documents = loader.load()
-            
+
             doc_ids = self.document_store.db.store_documents_with_embeddings(
                 "research", documents
             )
             if doc_ids:
                 return f"Successfully crawled and stored content from {url}"
             return f"Failed to store content from {url}"
-                
+
         except Exception as e:
             logger.error(f"Error crawling {url}: {e}")
             return f"Failed to crawl {url}: {str(e)}"

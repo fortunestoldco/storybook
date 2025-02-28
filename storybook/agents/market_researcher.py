@@ -112,9 +112,7 @@ class MarketResearcher:
 
         return result
 
-    def research_similar_books(
-        self, genre: str, themes: List[str]
-    ) -> Dict[str, Any]:
+    def research_similar_books(self, genre: str, themes: List[str]) -> Dict[str, Any]:
         """Research similar books in the market based on genre and themes."""
         # Construct research queries
         queries = [
@@ -133,17 +131,19 @@ class MarketResearcher:
 
             # Add to research results
             research_results.append({"query": query, "results": result})
-            
+
             # For each result, try to crawl one main URL for more in-depth information
             crawler = self.research_tools.get_web_crawl_tool()
-            
+
             # Extract URLs from the result
-            urls = re.findall(r'https?://\S+', result)
+            urls = re.findall(r"https?://\S+", result)
             if urls:
                 # Limit to first URL to avoid excessive crawling
                 try:
                     crawl_result = crawler.invoke(urls[0])
-                    research_results.append({"query": f"Crawling {urls[0]}", "results": crawl_result})
+                    research_results.append(
+                        {"query": f"Crawling {urls[0]}", "results": crawl_result}
+                    )
                 except Exception as e:
                     logger.error(f"Error crawling URL: {e}")
 
@@ -208,15 +208,20 @@ class MarketResearcher:
         for query in additional_queries:
             result = research_tool.invoke(query)
             additional_research.append({"query": query, "results": result})
-            
+
             # For key insights, crawl relevant URLs for more detailed information
-            urls = re.findall(r'https?://\S+', result)
+            urls = re.findall(r"https?://\S+", result)
             if urls:
                 crawler = self.research_tools.get_web_crawl_tool()
                 try:
                     # Limit to first URL to avoid excessive crawling
                     crawl_result = crawler.invoke(urls[0])
-                    additional_research.append({"query": f"Detailed analysis from {urls[0]}", "results": crawl_result})
+                    additional_research.append(
+                        {
+                            "query": f"Detailed analysis from {urls[0]}",
+                            "results": crawl_result,
+                        }
+                    )
                 except Exception as e:
                     logger.error(f"Error crawling URL: {e}")
 
@@ -377,13 +382,11 @@ class MarketResearcher:
             "demographic_analysis": demographic_analysis,
             "comprehensive_report": comprehensive_report,
         }
-        
+
         self.document_store.store_research_document(
-            manuscript_id,
-            "market_research",
-            research_data
+            manuscript_id, "market_research", research_data
         )
-        
+
         # Store in MongoDB Atlas Vector store for future reference and search
         doc = Document(
             page_content=comprehensive_report,
@@ -393,10 +396,10 @@ class MarketResearcher:
                 "title": title,
                 "genre": genre,
                 "demographic": demographic,
-                "themes": ", ".join(themes)
-            }
+                "themes": ", ".join(themes),
+            },
         )
-        
+
         self.document_store.db.store_documents_with_embeddings("research", [doc])
 
         # Return the complete research package
@@ -486,6 +489,7 @@ class MarketResearcher:
             expectations["recommendations"] = match.group(1).strip()
 
         return expectations
+
 
 class ResearchAgent:
     def __init__(self):

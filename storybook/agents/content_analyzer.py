@@ -75,18 +75,18 @@ class ContentAnalyzer:
         analysis_doc_id = self.document_store.store_analysis_document(
             manuscript_id, "initial_content_analysis", complete_analysis
         )
-        
+
         # Store the analysis in MongoDB Atlas Vector store for future reference
         doc = Document(
             page_content=json.dumps(complete_analysis, indent=2),
             metadata={
-                "type": "content_analysis", 
+                "type": "content_analysis",
                 "manuscript_id": manuscript_id,
                 "title": title,
-                "analysis_id": analysis_doc_id
-            }
+                "analysis_id": analysis_doc_id,
+            },
         )
-        
+
         self.document_store.db.store_documents_with_embeddings("analysis", [doc])
 
         return {
@@ -173,7 +173,7 @@ class ContentAnalyzer:
         analysis_doc_id = self.document_store.store_analysis_document(
             manuscript_id, f"{stage}_progress_analysis", progress_analysis
         )
-        
+
         # Store in MongoDB Atlas Vector for easy searching
         doc = Document(
             page_content=json.dumps(progress_analysis, indent=2),
@@ -181,10 +181,10 @@ class ContentAnalyzer:
                 "type": "progress_analysis",
                 "stage": stage,
                 "manuscript_id": manuscript_id,
-                "analysis_id": analysis_doc_id
-            }
+                "analysis_id": analysis_doc_id,
+            },
         )
-        
+
         self.document_store.db.store_documents_with_embeddings("analysis", [doc])
 
         return progress_analysis
