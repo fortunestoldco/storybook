@@ -6,7 +6,8 @@ import logging
 from pathlib import Path
 
 from langchain.schema import Document
-from langgraph.graph import Graph, StateType
+from langgraph.graph import Graph
+from langgraph.pregel import StateType  # Changed import
 from langgraph.prebuilt.tool_executor import ToolExecutor
 from langchain_core.tools import BaseTool
 
