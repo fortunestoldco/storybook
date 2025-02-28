@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
+from langchain_core.documents import Document
 
 from storybook.agents.world_builder import WorldBuilder
 

@@ -1,5 +1,7 @@
-﻿import pytest
+﻿# test_*.py files need pytest and MagicMock imports
+import pytest
 from unittest.mock import patch, MagicMock
+from langchain_core.documents import Document
 
 from storybook.graph import (
     start_workflow, conduct_market_research, analyze_manuscript, initialize_graph,

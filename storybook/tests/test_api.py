@@ -1,5 +1,7 @@
-﻿import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+﻿# test_*.py files need pytest and MagicMock imports
+import pytest
+from unittest.mock import patch, MagicMock
+from langchain_core.documents import Document
 from fastapi.testclient import TestClient
 
 from storybook.api import app, DocumentStore, storybook
