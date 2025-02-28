@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Dict, Any
 from langgraph.graph import StateGraph
 from langchain_core.runnables import RunnableConfig
+from pydantic import BaseModel  # Updated import
 
 from storybook.state import State, InputState, AgentOutput
 from storybook.agents import (
@@ -11,7 +12,8 @@ from storybook.agents import (
 )
 from storybook.config import Configuration
 
-async def market_research(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
+# Node functions
+async def research_market(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
     """Market research node."""
     agent = MarketResearcher(config)
     result = await agent.process_manuscript(state.manuscript)
@@ -24,7 +26,7 @@ async def market_research(state: State, *, config: RunnableConfig) -> Dict[str, 
         "current_step": "market_analyzed"
     }
 
-async def content_analysis(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
+async def analyze_content(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
     """Content analysis node."""
     agent = ContentAnalyzer(config)
     result = await agent.process_manuscript(state.manuscript)
@@ -37,7 +39,7 @@ async def content_analysis(state: State, *, config: RunnableConfig) -> Dict[str,
         "current_step": "content_analyzed"
     }
 
-async def creative_development(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
+async def develop_creative(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
     """Creative development node."""
     char_agent = CharacterDeveloper(config)
     dialog_agent = DialogueEnhancer(config)
@@ -50,8 +52,6 @@ async def creative_development(state: State, *, config: RunnableConfig) -> Dict[
     subplot_result = await subplot_agent.process_manuscript(state.manuscript)
     
     return {
-        "characters": AgentOutput(content=char_result, timestamp=datetime.now(), agent_id="character_developer"),
-        "dialogue": AgentOutput(content=dialog_result, timestamp=datetime.now(), agent_id="dialogue_enhancer"),
         "world_building": AgentOutput(content=world_result, timestamp=datetime.now(), agent_id="world_builder"),
         "subplots": AgentOutput(content=subplot_result, timestamp=datetime.now(), agent_id="subplot_weaver"),
         "current_step": "creative_complete"
