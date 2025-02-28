@@ -1154,4 +1154,3 @@ def save_graph_visualization(output_path: str = "graph.png") -> None:
 # Generate visualization when module is run directly
 if __name__ == "__main__":
     save_graph_visualization("docs/storybook_graph.png")
-`````
