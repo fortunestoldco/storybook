@@ -1,14 +1,20 @@
+from __future__ import annotations
+
+# Standard library imports
 from typing import Dict, List, Any, Optional
 import logging
 import json
 import re
 
+# Third-party imports
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langchain_core.documents import Document  # Add for document operations
+from langchain_core.documents import Document
 
-from storybook.config import get_llm
+# Local imports
+from storybook.agents.base import BaseAgent
+from storybook.config import create_llm, get_llm
 from storybook.db.document_store import DocumentStore
 
 logger = logging.getLogger(__name__)
@@ -18,6 +24,7 @@ class SubplotWeaver(BaseAgent):
     """Agent responsible for subplot integration and development."""
 
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        """Initialize with optional LLM configuration."""
         super().__init__(llm_config)
         self.document_store = DocumentStore()
 
@@ -81,7 +88,7 @@ class SubplotWeaver(BaseAgent):
         content: str,
         characters: List[Dict[str, Any]],
         target_audience: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]]: 
         """Identify existing subplots in the manuscript."""
         # Prepare character information
         character_names = [character["name"] for character in characters]
@@ -313,7 +320,7 @@ class SubplotWeaver(BaseAgent):
         characters: List[Dict[str, Any]],
         target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]]: 
         """Develop and enhance subplots based on the analysis."""
         # Format characters for reference
         character_dict = {character["name"]: character for character in characters}
@@ -380,7 +387,7 @@ class SubplotWeaver(BaseAgent):
         character_dict: Dict[str, Dict[str, Any]],
         target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any]: 
         """Enhance an existing underdeveloped subplot."""
         subplot_title = subplot.get("title", "Untitled Subplot")
 
@@ -516,7 +523,7 @@ class SubplotWeaver(BaseAgent):
         character_dict: Dict[str, Dict[str, Any]],
         target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]]: 
         """Create new subplots based on the potential analysis."""
         # Format existing subplot information
         existing_subplot_titles = [
@@ -528,7 +535,7 @@ class SubplotWeaver(BaseAgent):
 
         # Format character information
         character_info = []
-        for char_name, char_data in list(character_dict.items())[
+        for char_name, char_data in list(character_dict.items())[ 
             :5
         ]:  # Limit to top 5 characters
             info = f"Character: {char_name}\n"
@@ -636,7 +643,7 @@ class SubplotWeaver(BaseAgent):
 
     def _parse_new_subplot(
         self, subplot_text: str, manuscript_id: str
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]]: 
         """Parse a new subplot from text."""
         # Define the sections we expect to find
         sections = [
@@ -691,7 +698,7 @@ class SubplotWeaver(BaseAgent):
         developed_subplots: List[Dict[str, Any]],
         characters: List[Dict[str, Any]],
         target_audience: Optional[Dict[str, Any]] = None,
-    ) -> str:
+    ) -> str: 
         """Integrate subplot elements into the manuscript."""
         # We'll focus on integrating a few crucial scenes from each subplot
         # rather than trying to completely rewrite the manuscript
