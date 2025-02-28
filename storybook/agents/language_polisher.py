@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 class LanguagePolisher(BaseAgent):
-    """Agent responsible for enhancing language, style, and prose quality."""
+    """Agent responsible for polishing language and style."""
 
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        """Initialize with optional LLM configuration."""
         super().__init__(llm_config)
         self.document_store = DocumentStore()
 
@@ -29,41 +30,80 @@ class LanguagePolisher(BaseAgent):
         research_insights: Optional[Dict[str, Any]] = None,
         llm_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """Polish the language and prose quality of the manuscript."""
-        manuscript = self.document_store.get_manuscript(manuscript_id)
-        if not manuscript:
-            return {"error": f"Manuscript {manuscript_id} not found"}
+        """Polish language and style in the manuscript."""
+        try:
+            # Update LLM if new config provided
+            if llm_config:
+                self.llm = create_llm(llm_config)
 
-        # Analyze language and style
-        style_analysis = self._analyze_language_style(
-            manuscript["content"], target_audience
-        )
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
 
-        # Identify areas for improvement
-        improvement_areas = self._identify_improvement_areas(
-            manuscript["content"], style_analysis, target_audience, research_insights
-        )
+            # Add audience context if available
+            audience_context = ""
+            if target_audience:
+                audience_context = f"""
+                Target Audience: {target_audience.get('demographic', 'General readers')}
+                Reading Level: {target_audience.get('reading_level', 'Standard')}
+                Style Preferences: {target_audience.get('style_preferences', 'Not specified')}
+                """
 
-        # Polish selected sections
-        updated_content, improved_sections = self._polish_sections(
-            manuscript["content"], improvement_areas, style_analysis, target_audience
-        )
+            # Create prompt for language polishing
+            prompt = ChatPromptTemplate.from_template(
+                """
+                You are an expert Language Polisher. Review and enhance the following manuscript text,
+                focusing on clarity, style, and engagement.
 
-        # Store the updated manuscript
-        self.document_store.update_manuscript(
-            manuscript_id, {"content": updated_content}
-        )
+                {audience_context}
 
-        # Prepare result
-        result = {
-            "manuscript_id": manuscript_id,
-            "message": f"Enhanced language and style in {len(improved_sections)} sections.",
-            "style_analysis": style_analysis,
-            "improvement_areas": improvement_areas,
-            "improvements_count": len(improved_sections),
-        }
+                Original Text:
+                {manuscript_text}
 
-        return result
+                Please polish the language focusing on:
+                1. Clarity and readability
+                2. Sentence structure and flow
+                3. Word choice and vocabulary
+                4. Style consistency
+                5. Grammar and punctuation
+                6. Voice and tone
+
+                Provide:
+                1. The polished text
+                2. A summary of changes made
+                3. Style recommendations
+                """
+            )
+
+            # Create the chain
+            chain = (
+                {
+                    "manuscript_text": lambda _: manuscript["content"],
+                    "audience_context": lambda _: audience_context,
+                }
+                | prompt
+                | self.llm
+                | StrOutputParser()
+            )
+
+            # Run the chain
+            result = chain.invoke("Polish manuscript language")
+
+            # Update manuscript with polished content
+            self.document_store.update_manuscript(
+                manuscript_id,
+                {"content": result}
+            )
+
+            return {
+                "manuscript_id": manuscript_id,
+                "message": "Language polishing complete",
+                "polished_content": result
+            }
+
+        except Exception as e:
+            logger.error(f"Error in polish_language: {str(e)}")
+            return {"error": f"Failed to polish manuscript: {str(e)}"}
 
     def _analyze_language_style(
         self, content: str, target_audience: Optional[Dict[str, Any]] = None
@@ -475,6 +515,20 @@ class LanguagePolisher(BaseAgent):
         updated_content = "\n\n".join(paragraphs)
 
         return updated_content, improved_sections
+
+    def _extract_style_patterns(self, content: str) -> Dict[str, List[str]]:
+        """Extract common style patterns from the text."""
+        # Implementation for style pattern extraction
+        pass
+
+    def _apply_style_rules(
+        self,
+        content: str,
+        style_rules: Dict[str, Any]
+    ) -> str:
+        """Apply predefined style rules to the text."""
+        # Implementation for applying style rules
+        pass
 
     def method_name(
         self,
