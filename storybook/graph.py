@@ -34,8 +34,9 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
         manuscript: Dict[str, Any]
         characters: Annotated[List[Dict[str, Any]], "characters"]
         research: Annotated[Dict[str, Any], "research"]
-        analysis: Annotated[Dict[str, Any]], "analysis"]
+        analysis: Annotated[Dict[str, Any], "analysis"]  # Fixed extra bracket
         improvements: Annotated[List[Dict[str, Any]], "improvements"]
+        status: str  # Added status field
 
     # Initialize tools and agents
     agents = {
@@ -55,38 +56,48 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
     workflow = Graph()
 
     # Add nodes with proper state handling
-    def init_state(state):
-        return {"state": STATES["START"], "manuscript": state["manuscript"]}
+    def init_state(state: Dict[str, Any]) -> Dict[str, Any]:
+        """Initialize the graph state."""
+        return {
+            "manuscript": state.get("manuscript", {}),
+            "characters": [],
+            "research": {},
+            "analysis": {},
+            "improvements": [],
+            "status": STATES["START"]
+        }
 
     workflow.add_node("start", init_state)
 
     # Add agent nodes with proper state updates
-    for state in STATES.values():
-        if state not in ["start", "end"]:
-            agent = agents[state.lower().replace("_", "")]
-            workflow.add_node(state, lambda x, agent=agent: agent.process(x))
+    for state_name in STATES:
+        if state_name not in ["START", "END"]:
+            agent_name = state_name.lower().replace("_", "")
+            if agent_name in agents:
+                workflow.add_node(
+                    state_name,
+                    lambda x, agent=agents[agent_name]: agent.process(x)
+                )
 
-    workflow.add_node("end", lambda x: {"state": STATES["END"], **x})
+    workflow.add_node("end", lambda x: {**x, "status": STATES["END"]})
 
     # Define edges with conditional routing
     edges = [
-        ("start", "research"),
-        ("research", "analysis"),
-        ("analysis", "initialize"),
-        ("initialize", "character_development"),
-        ("character_development", "dialogue_enhancement"),
-        ("dialogue_enhancement", "world_building"),
-        ("world_building", "subplot_integration"),
-        ("subplot_integration", "story_arc_evaluation"),
-        ("story_arc_evaluation", "continuity_check"),
-        ("continuity_check", "language_polishing"),
-        ("language_polishing", "quality_review"),
-        ("quality_review", "finalize"),
-        ("finalize", "end")
+        ("start", "RESEARCH"),
+        ("RESEARCH", "ANALYSIS"),
+        ("ANALYSIS", "CHARACTER_DEVELOPMENT"),
+        ("CHARACTER_DEVELOPMENT", "DIALOGUE_ENHANCEMENT"),
+        ("DIALOGUE_ENHANCEMENT", "WORLD_BUILDING"),
+        ("WORLD_BUILDING", "SUBPLOT_INTEGRATION"),
+        ("SUBPLOT_INTEGRATION", "STORY_ARC_EVALUATION"),
+        ("STORY_ARC_EVALUATION", "CONTINUITY_CHECK"),
+        ("CONTINUITY_CHECK", "LANGUAGE_POLISHING"),
+        ("LANGUAGE_POLISHING", "QUALITY_REVIEW"),
+        ("QUALITY_REVIEW", "end")
     ]
 
-    # Add edges with conditions
-    for edge in edges:
-        workflow.add_edge(edge[0], edge[1])
+    # Add edges to graph
+    for start, end in edges:
+        workflow.add_edge(start, end)
 
     return workflow
