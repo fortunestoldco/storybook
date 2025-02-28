@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Dict, Any, List, Optional, Literal
+from typing import Dict, Any, List, Optional
+from enum import Enum
 from pydantic import BaseModel, Field
 
-class LLMProvider(str, Literal):
+class LLMProvider(str, Enum):
     """Available LLM providers."""
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
