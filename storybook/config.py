@@ -67,13 +67,42 @@ DEFAULT_OPENAI_MODEL = "gpt-4o"
 DEFAULT_REPLICATE_MODEL = "anthropic/claude-3.7-sonnet"
 
 class LLMProvider(str, Enum):
-    """Supported LLM providers."""
-    OPENAI = "openai"
-    ANTHROPIC = "anthropic"
+    """Available LLM providers and their models."""
+    # OpenAI Models
+    GPT4 = "openai/gpt-4"
+    GPT4_TURBO = "openai/gpt-4-turbo-preview"
+    GPT35 = "openai/gpt-3.5-turbo"
+    
+    # Anthropic Models
+    CLAUDE = "anthropic/claude-3-sonnet"
+    CLAUDE_OPUS = "anthropic/claude-3-opus"
+    CLAUDE_HAIKU = "anthropic/claude-3-haiku"
+    
+    # Other Providers
     HUGGINGFACE = "huggingface"
     REPLICATE = "replicate"
     OLLAMA = "ollama"
     LLAMACPP = "llamacpp"
+
+    @property
+    def provider(self) -> str:
+        """Get the provider name without model."""
+        return self.value.split('/')[0] if '/' in self.value else self.value
+
+    @property
+    def requires_model(self) -> bool:
+        """Check if this provider requires explicit model specification."""
+        return self in [
+            LLMProvider.HUGGINGFACE,
+            LLMProvider.REPLICATE,
+            LLMProvider.OLLAMA,
+            LLMProvider.LLAMACPP
+        ]
+
+    @property
+    def get_default_model(self) -> Optional[str]:
+        """Get default model name if available."""
+        return self.value.split('/')[1] if '/' in self.value else None
 
 def get_llm(config: Optional[Dict[str, Any]] = None):
     """Get default LLM configuration."""
