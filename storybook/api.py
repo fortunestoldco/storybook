@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 # Standard library imports
 from typing import Dict, List, Any, Optional
