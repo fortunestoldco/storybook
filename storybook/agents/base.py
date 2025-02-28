@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 # Standard library imports
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import logging
+import json
+import re
+from datetime import datetime
 
 # Third-party imports
 from langchain_core.language_models import BaseChatModel
@@ -35,8 +38,6 @@ class BaseAgent:
     def validate_input(self, **kwargs) -> bool:
         """Validate input parameters. Override in subclasses."""
         return True
-
-    def handle_error(self, error: Exception) -> Dict[str, Any]:
         """Handle errors in agent execution."""
         logger.error(f"Agent error: {str(error)}")
         return {

@@ -108,7 +108,7 @@ class LanguagePolisher(BaseAgent):
 
         except Exception as e:
             logger.error(f"Error in polish_language: {str(e)}")
-            return {"error": f"Failed to polish manuscript: {str(e)}"}  # Fixed syntax error here
+            return {"error": f"Failed to polish manuscript: {str(e)}"}
 
     def _analyze_language_style(
         self, content: str, target_audience: Optional[Dict[str, Any]] = None
@@ -364,7 +364,7 @@ class LanguagePolisher(BaseAgent):
                     # Extract the rest of the content
                     content_lines = (
                         block.strip().split("\n")[1:]
-                        if len(block.strip().split("\n")) > 1
+                        if len(block.strip().split("\n())) > 1
                         else []
                     )
                     current_area["description"] = "\n".join(content_lines).strip()
@@ -534,17 +534,3 @@ class LanguagePolisher(BaseAgent):
         """Apply predefined style rules to the text.""" 
         # Implementation for applying style rules
         pass
-
-    def method_name(
-        self,
-        manuscript_id: str,
-        other_params: Any,
-        llm_config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Method docstring.""" 
-        try:
-            # Update LLM if new config provided at runtime
-            if llm_config:
-                self.llm = create_llm(llm_config)
-                
-            # ... rest of method implementation ...
