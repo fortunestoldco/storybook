@@ -60,7 +60,8 @@ COLLECTION_WORLDS = os.getenv("COLLECTION_WORLDS", "worlds")
 COLLECTION_SUBPLOTS = os.getenv("COLLECTION_SUBPLOTS", "subplots")
 COLLECTION_RESEARCH = os.getenv("COLLECTION_RESEARCH", "research")
 COLLECTION_ANALYSIS = os.getenv("COLLECTION_ANALYSIS", "analysis")
-
+mkdir -p docs
+python -m storybook.graph
 # Vector Store Configuration
 VECTOR_NAMESPACE = f"{MONGODB_DB_NAME}.{MONGODB_VECTOR_COLLECTION}"
 VECTOR_INDEX_NAME = os.getenv("VECTOR_INDEX_NAME", "vector_index")
