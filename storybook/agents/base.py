@@ -65,5 +65,23 @@ class BaseAgent:
             return self.handle_error(e)
 
     def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-        """Abstract method to be implemented by each agent."""
-        raise NotImplementedError("Each agent must implement process_manuscript")
+        """Process manuscript for [agent specific task]."""
+        try:
+            if not self.validate_input(manuscript_id=manuscript_id):
+                return {"error": "Invalid manuscript_id"}
+                
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
+
+            # Agent-specific processing...
+            result = self._agent_specific_processing(manuscript["content"])
+
+            return {
+                "manuscript_id": manuscript_id,
+                "result": result,
+                "status": "success"
+            }
+        except Exception as e:
+            logger.error(f"Error in {self.__class__.__name__}: {str(e)}")
+            return self.handle_error(e)

@@ -22,10 +22,9 @@ logger = logging.getLogger(__name__)
 
 
 class SubplotWeaver(BaseAgent):
-    """Agent responsible for subplot integration and development."""
+    """Agent responsible for identifying and developing subplots."""
 
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
-        """Initialize with optional LLM configuration."""
         super().__init__(llm_config)
         self.document_store = DocumentStore()
 
@@ -51,7 +50,6 @@ class SubplotWeaver(BaseAgent):
             subplot_potential = self._analyze_subplot_potential(
                 manuscript["content"],
                 characters,
-                existing_subplots,
                 target_audience,
                 research_insights,
             )
@@ -212,8 +210,55 @@ class SubplotWeaver(BaseAgent):
 
             return subplots
 
-    def _analyze_subplot_potential(self, content: str, characters: List[Dict[str, Any]], ...) -> Dict[str, Any]:
-        # Should use self.llm but doesn't
+    def _analyze_subplot_potential(
+        self, 
+        content: str, 
+        characters: List[Dict[str, Any]],
+        target_audience: Optional[Dict[str, Any]] = None,
+        research_insights: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Analyze potential subplot opportunities."""
+        try:
+            prompt = ChatPromptTemplate.from_template(
+                """
+                You are a Subplot Development Specialist analyzing potential subplots.
+                
+                Content to analyze:
+                {content}
+                
+                Characters:
+                {characters}
+                
+                Target Audience:
+                {audience_context}
+                
+                Research Insights:
+                {research_context}
+                
+                Please analyze and provide:
+                1. Potential subplot opportunities
+                2. Character intersections
+                3. Thematic connections
+                4. Pacing suggestions
+                5. Target audience appeal assessment
+                
+                Format your response as a valid JSON object.
+                """
+            )
+
+            chain = prompt | self.llm | StrOutputParser()
+            
+            result = chain.invoke({
+                "content": content,
+                "characters": json.dumps(characters, indent=2),
+                "audience_context": self._format_audience_context(target_audience),
+                "research_context": self._format_research_context(research_insights)
+            })
+
+            return json.loads(result)
+        except Exception as e:
+            logger.error(f"Error analyzing subplot potential: {str(e)}")
+            return {"error": str(e)}
 
     def _develop_subplots(
         self,
@@ -719,24 +764,38 @@ class SubplotWeaver(BaseAgent):
 
         return updated_content
 
-    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-        """Process manuscript for subplot integration."""
+    def process_manuscript(
+        self,
+        manuscript_id: str,
+        target_audience: Optional[Dict[str, Any]] = None,
+        research_insights: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Process manuscript for subplot development."""
         try:
+            if not self.validate_input(manuscript_id=manuscript_id):
+                return {"error": "Invalid manuscript_id"}
+
             manuscript = self.document_store.get_manuscript(manuscript_id)
             if not manuscript:
                 return {"error": f"Manuscript {manuscript_id} not found"}
 
-            subplots = self._identify_subplots(manuscript["content"])
-            enhanced_subplots = self._enhance_subplots(
+            # Get existing character analysis
+            characters = self.document_store.get_analysis(
                 manuscript_id,
-                subplots,
+                analysis_type="character_development"
+            )
+
+            # Analyze subplot potential
+            subplot_analysis = self._analyze_subplot_potential(
+                manuscript["content"],
+                characters.get("results", []),
                 target_audience,
                 research_insights
             )
 
             return {
                 "manuscript_id": manuscript_id,
-                "subplots": enhanced_subplots,
+                "subplots": subplot_analysis,
                 "status": "success"
             }
         except Exception as e:
