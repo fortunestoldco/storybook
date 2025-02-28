@@ -18,7 +18,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParserfrom langchain_core.output_parsers import StrOutputParser
 
 # Environment variables
-MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017"):27017")
+MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_DB_NAME = os.environ.get("MONGODB_DB_NAME", "storybook")", "storybook")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN")PI_TOKEN")
