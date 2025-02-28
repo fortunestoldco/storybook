@@ -181,38 +181,104 @@ class ContentAnalyzer(BaseAgent):
 
     def _analyze_readability(self, content: str) -> Dict[str, Any]:
         """Analyze readability metrics."""
-        # Implementation using LLM
-        return {}
+        prompt = ChatPromptTemplate.from_template(
+            """
+            You are a readability expert. Analyze the following text for readability.
+            Provide metrics such as Flesch-Kincaid grade level, Flesch reading ease score,
+            and any other relevant readability scores. Also, provide a brief summary of
+            the readability of the text.
+
+            Text:
+            {content}
+            """
+        )
+        chain = prompt | self.llm | StrOutputParser()
+        return chain.invoke({"content": content})
 
     def _analyze_structure(self, content: str) -> Dict[str, Any]:
         """Analyze narrative structure."""
-        # Implementation using LLM
-        return {}
+        prompt = ChatPromptTemplate.from_template(
+            """
+            You are a narrative structure analyst. Analyze the following text for its narrative structure.
+            Identify key structural elements such as exposition, rising action, climax, falling action, and resolution.
+            Provide a brief summary of the structure and any notable observations.
+
+            Text:
+            {content}
+            """
+        )
+        chain = prompt | self.llm | StrOutputParser()
+        return chain.invoke({"content": content})
 
     def _analyze_genre(self, content: str) -> Dict[str, Any]:
         """Determine genre characteristics."""
-        # Implementation using LLM
-        return {}
+        prompt = ChatPromptTemplate.from_template(
+            """
+            You are a genre expert. Analyze the following text and determine its primary genre and any subgenres.
+            Provide a brief summary of the genre characteristics and any notable observations.
+
+            Text:
+            {content}
+            """
+        )
+        chain = prompt | self.llm | StrOutputParser()
+        return chain.invoke({"content": content})
 
     def _identify_themes(self, content: str) -> List[str]:
         """Extract major themes from the content."""
-        # Implementation using LLM
-        return []
+        prompt = ChatPromptTemplate.from_template(
+            """
+            You are a literary analyst. Analyze the following text and identify its major themes.
+            Provide a list of themes and a brief summary of each theme.
+
+            Text:
+            {content}
+            """
+        )
+        chain = prompt | self.llm | StrOutputParser()
+        return chain.invoke({"content": content})
 
     def _extract_plot_points(self, content: str) -> List[Dict[str, Any]]:
         """Extract major plot points."""
-        # Implementation using LLM
-        return []
+        prompt = ChatPromptTemplate.from_template(
+            """
+            You are a plot analyst. Analyze the following text and extract its major plot points.
+            Provide a list of plot points and a brief summary of each plot point.
+
+            Text:
+            {content}
+            """
+        )
+        chain = prompt | self.llm | StrOutputParser()
+        return chain.invoke({"content": content})
 
     def _extract_characters(self, content: str) -> List[Dict[str, Any]]:
         """Extract character mentions and descriptions."""
-        # Implementation using LLM
-        return []
+        prompt = ChatPromptTemplate.from_template(
+            """
+            You are a character analyst. Analyze the following text and extract its major characters.
+            Provide a list of characters and a brief description of each character.
+
+            Text:
+            {content}
+            """
+        )
+        chain = prompt | self.llm | StrOutputParser()
+        return chain.invoke({"content": content})
 
     def _extract_settings(self, content: str) -> List[Dict[str, Any]]:
         """Extract setting descriptions."""
-        # Implementation using LLM
-        return []
+        prompt = ChatPromptTemplate.from_template(
+            """
+            You are a setting analyst. Analyze the following text and extract its major settings.
+            Provide a list of settings and a brief description of each setting.
+
+            Text:
+            {content}
+            """
+        )
+        chain = prompt | self.llm | StrOutputParser()
+        return chain.invoke({"content": content})
 
     def _compare_analysis(
         self, previous: Dict[str, Any], current: Dict[str, Any]

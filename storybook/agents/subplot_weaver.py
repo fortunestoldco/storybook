@@ -801,3 +801,17 @@ class SubplotWeaver(BaseAgent):
         except Exception as e:
             logger.error(f"Error in subplot weaving: {str(e)}")
             return self.handle_error(e)
+
+    def _extract_settings(self, content: str) -> List[Dict[str, Any]]:
+        """Extract setting descriptions."""
+        prompt = ChatPromptTemplate.from_template(
+            """
+            You are a setting analyst. Analyze the following text and extract its major settings.
+            Provide a list of settings and a brief description of each setting.
+
+            Text:
+            {content}
+            """
+        )
+        chain = prompt | self.llm | StrOutputParser()
+        return chain.invoke({"content": content})

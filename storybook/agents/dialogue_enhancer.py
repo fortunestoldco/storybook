@@ -53,11 +53,26 @@ class DialogueEnhancer(BaseAgent):
             if not manuscript:
                 return {"error": f"Manuscript {manuscript_id} not found"}
 
-            # ... rest of implementation ...
+            # Extract dialogue sections
+            dialogue_sections = self._extract_dialogue_sections(manuscript["content"])
+
+            # Enhance each dialogue section
+            enhanced_dialogue = []
+            for section in dialogue_sections:
+                enhanced_section = self._enhance_section(
+                    section, target_audience, research_insights
+                )
+                enhanced_dialogue.append(enhanced_section)
+
+            # Combine enhanced sections back into the manuscript
+            enhanced_content = self._combine_enhanced_sections(
+                manuscript["content"], enhanced_dialogue
+            )
+
             return {
                 "manuscript_id": manuscript_id,
                 "message": "Dialogue enhancement complete",
-                "enhanced_content": "enhanced content here"
+                "enhanced_content": enhanced_content
             }
 
         except Exception as e:
@@ -75,3 +90,63 @@ class DialogueEnhancer(BaseAgent):
         except Exception as e:
             logger.error(f"Error in dialogue enhancement: {str(e)}")
             return self.handle_error(e)
+
+    def _extract_dialogue_sections(self, content: str) -> List[str]:
+        """Extract dialogue sections from the manuscript."""
+        dialogue_sections = re.findall(r'\"(.*?)\"', content, re.DOTALL)
+        return dialogue_sections
+
+    def _enhance_section(
+        self,
+        section: str,
+        target_audience: Optional[Dict[str, Any]] = None,
+        research_insights: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """Enhance a single dialogue section."""
+        # Add audience context if available
+        audience_context = ""
+        if target_audience:
+            audience_context = f"""
+            Target Audience Information:
+            - Demographic: {target_audience.get('demographic', 'General readers')}
+            - Reading Preferences: {target_audience.get('reading_preferences', {}).get('dialogue', 'Various preferences')}
+            
+            Consider the target audience preferences when enhancing the dialogue.
+            """
+
+        # Define the prompt
+        prompt = ChatPromptTemplate.from_template(
+            """
+        You are a Dialogue Enhancement Specialist. Enhance the following dialogue section to make it more engaging and natural.
+        
+        Original Dialogue:
+        {dialogue_section}
+        
+        {audience_context}
+        
+        Enhance the dialogue while maintaining the original meaning and context. Focus on improving the flow, adding character-specific nuances, and making it more engaging for the target audience.
+        """
+        )
+
+        # Create the chain
+        chain = (
+            {
+                "dialogue_section": lambda _: section,
+                "audience_context": lambda _: audience_context,
+            }
+            | prompt
+            | self.llm
+            | StrOutputParser()
+        )
+
+        # Run the chain
+        enhanced_section = chain.invoke(section)
+
+        return enhanced_section
+
+    def _combine_enhanced_sections(self, original_content: str, enhanced_sections: List[str]) -> str:
+        """Combine enhanced dialogue sections back into the manuscript."""
+        enhanced_content = original_content
+        for original, enhanced in zip(self._extract_dialogue_sections(original_content), enhanced_sections):
+            enhanced_content = enhanced_content.replace(original, enhanced, 1)
+        return enhanced_content
