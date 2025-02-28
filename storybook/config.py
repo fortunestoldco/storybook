@@ -63,8 +63,8 @@ TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
 
 # LLM configuration
-DEFAULT_OPENAI_MODEL = "gpt-4"
-DEFAULT_REPLICATE_MODEL = "meta/llama-3-70b-instruct:2a30ae62b32ab1f47530ed5fd32fea38ed408255c747684c41749824a771fa12"
+DEFAULT_OPENAI_MODEL = "gpt-4o"
+DEFAULT_REPLICATE_MODEL = "anthropic/claude-3.7-sonnet"
 
 class LLMProvider(str, Enum):
     """Supported LLM providers."""
@@ -90,23 +90,25 @@ def create_llm(llm_config: Dict[str, Any]) -> BaseChatModel:
     provider = llm_config.get("provider")
     config = llm_config.get("config", {})
 
-    if provider == LLMProvider.OPENAI:
+    if provider == LLMProvider.GPT4 or provider == LLMProvider.GPT4_TURBO or provider == LLMProvider.GPT35:
         return ChatOpenAI(
-            model_name=config.get("model_name", "gpt-4"),
+            model_name=config.get("model_name", provider.get_default_model),
             temperature=config.get("temperature", 0.7),
             max_tokens=config.get("max_tokens"),
             streaming=config.get("streaming", False),
         )
 
-    elif provider == LLMProvider.ANTHROPIC:
+    elif provider == LLMProvider.CLAUDE or provider == LLMProvider.CLAUDE_OPUS or provider == LLMProvider.CLAUDE_HAIKU:
         return ChatAnthropic(
-            model_name=config.get("model_name", "claude-3-sonnet"),
+            model_name=config.get("model_name", provider.get_default_model),
             temperature=config.get("temperature", 0.7),
             max_tokens=config.get("max_tokens"),
             streaming=config.get("streaming", False),
         )
 
     elif provider == LLMProvider.REPLICATE:
+        if not config.get("model_name"):
+            raise ValueError("Model name required for Replicate")
         return Replicate(
             model=config.get("model_name"),
             temperature=config.get("temperature", 0.7),
@@ -133,20 +135,14 @@ def create_llm(llm_config: Dict[str, Any]) -> BaseChatModel:
         )
 
     elif provider == LLMProvider.HUGGINGFACE:
+        if not config.get("model_name"):
+            raise ValueError("Model name required for HuggingFace")
         return HuggingFacePipeline(
             model_id=config.get("model_name"),
             task="text-generation",
             temperature=config.get("temperature", 0.7),
             max_new_tokens=config.get("max_new_tokens"),
             trust_remote_code=config.get("trust_remote_code", True),
-        )
-
-    elif provider == LLMProvider.CUSTOM:
-        return CustomLLM(
-            model_path=config.get("model_path"),
-            temperature=config.get("temperature", 0.7),
-            max_tokens=config.get("max_tokens"),
-            streaming=config.get("streaming", False),
         )
 
     raise ValueError(f"Unsupported LLM provider: {provider}")
