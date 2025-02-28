@@ -6,8 +6,9 @@ import logging
 from pathlib import Path
 
 from langchain.schema import Document
-from langgraph.graph import Graph, END, StateType
-from langgraph.prebuilt.tool_executor import ToolExecutor
+from langgraph.graph import Graph
+from langgraph.channels import LastValue
+from langgraph_core.state import StateGraph
 from langchain_core.tools import BaseTool
 
 from storybook.agents import (
@@ -35,9 +36,12 @@ class GraphState(TypedDict):
     improvements: List[Dict[str, Any]]
     status: str
 
-def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
+def build_storybook(config: Optional[Dict[str, Any]] = None) -> StateGraph:
     """Build the storybook workflow graph."""
     
+    # Create state graph with defined state type
+    workflow = StateGraph(GraphState)
+
     # Initialize tools and agents
     agents = {
         "character_developer": CharacterDeveloper(config),
@@ -52,24 +56,22 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
         "content_analyzer": ContentAnalyzer(config)
     }
 
-    # Create the workflow graph
-    workflow = Graph()
-
     # Add nodes with proper state handling
-    def init_state(state: Dict[str, Any]) -> Dict[str, Any]:
+    def init_state(state: Dict[str, Any]) -> GraphState:
         """Initialize the graph state."""
-        return {
-            "manuscript": state.get("manuscript", {}),
-            "characters": [],
-            "research": {},
-            "analysis": {},
-            "improvements": [],
-            "status": STATES["START"]
-        }
+        return GraphState(
+            manuscript=state.get("manuscript", {}),
+            characters=[],
+            research={},
+            analysis={},
+            improvements=[],
+            status=STATES["START"]
+        )
 
+    # Add start node
     workflow.add_node("start", init_state)
 
-    # Add agent nodes with proper state updates
+    # Add agent nodes
     for state_name in STATES:
         if state_name not in ["START", "END"]:
             agent_name = state_name.lower().replace("_", "")
@@ -79,9 +81,10 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
                     lambda x, agent=agents[agent_name]: agent.process(x)
                 )
 
-    workflow.add_node("end", lambda x: {**x, "status": STATES["END"]})
+    # Add end node
+    workflow.add_node("end", lambda x: GraphState(**{**x, "status": STATES["END"]}))
 
-    # Define edges with conditional routing
+    # Define edges
     edges = [
         ("start", "RESEARCH"),
         ("RESEARCH", "ANALYSIS"),
@@ -96,8 +99,9 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
         ("QUALITY_REVIEW", "end")
     ]
 
-    # Add edges to graph
+    # Add edges
     for start, end in edges:
         workflow.add_edge(start, end)
 
-    return workflow
+    # Compile the graph
+    return workflow.compile()
