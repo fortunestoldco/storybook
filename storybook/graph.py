@@ -1,9 +1,11 @@
 from datetime import datetime 
 import asyncio
-from typing import Dict, Any
-from langgraph.graph import StateGraph
+from typing import Dict, Any, Literal, Union, Optional
+from langgraph.graph import StateGraph, END
 from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel
+from langgraph.checkpoint import MemorySaver
+from langgraph.prebuilt import create_agent_supervisor
 
 from storybook.state import State, InputState, AgentOutput
 from storybook.agents import (
@@ -13,15 +15,22 @@ from storybook.agents import (
 )
 from storybook.config import Configuration
 
-async def research_team_supervisor(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
-    """Coordinates and combines market and content analysis."""
+async def research_team_supervisor(state: State, *, config: RunnableConfig, writer=None) -> Dict[str, Any]:
+    """Coordinates and combines market and content analysis with streaming support."""
     agents = [MarketResearcher(config), ContentAnalyzer(config)]
+    
+    if writer:
+        writer({"status": "Starting research team analysis"})
+    
     results = await asyncio.gather(*[agent.process_manuscript(state.manuscript) for agent in agents])
+    
+    if writer:
+        writer({"status": "Research team analysis complete"})
     
     return {
         "market_analysis": AgentOutput(content=results[0], timestamp=datetime.now(), agent_id="market_researcher"),
         "content_analysis": AgentOutput(content=results[1], timestamp=datetime.now(), agent_id="content_analyzer"),
-        "current_step": "research_complete" 
+        "current_step": "research_complete"
     }
 
 async def creative_team_supervisor(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
@@ -65,26 +74,36 @@ async def quality_team_supervisor(state: State, *, config: RunnableConfig) -> Di
 def build_storybook(config: RunnableConfig) -> StateGraph:
     """Build and return the hierarchical storybook processing graph."""
     builder = StateGraph(State, input=InputState, config_schema=Configuration)
-
-    # Add supervisor nodes and edges
+    
+    # Add supervisor nodes with stream support
     for node in ["research_team", "creative_team", "quality_team"]:
         builder.add_node(node, globals()[f"{node}_supervisor"])
 
+    # Add stream-enabled edges
     builder.add_edge("__start__", "research_team")
-    builder.add_edge("research_team", "creative_team") 
+    builder.add_edge("research_team", "creative_team")
     builder.add_edge("creative_team", "quality_team")
 
-    def should_revise(state: State) -> str:
+    def should_revise(state: State) -> Literal["creative_team", "__end__"]:
+        """Strongly typed conditional routing"""
         return "creative_team" if state.quality_review.content.get("needs_revision", False) else "__end__"
 
+    # Add conditional edges with proper typing
     builder.add_conditional_edges(
         "quality_team",
         condition_function=should_revise,
         edge_cases=["creative_team", "__end__"]
     )
 
-    graph = builder.compile()
+    # Configure graph properties
+    graph = builder.compile(
+        checkpointer=MemorySaver(),
+        debug=config.get("debug", False),
+        interrupt_after=["research_team", "creative_team", "quality_team"]
+    )
+    
     graph.name = "HierarchicalStoryBookGraph"
+    graph.stream_mode = "updates"  # Enable progress streaming
     return graph
 
 __all__ = ["build_storybook"]
