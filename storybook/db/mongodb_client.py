@@ -51,7 +51,9 @@ def get_mongodb_client() -> MongoClient:
                 _client_instance = MongoClient(
                     mongodb_uri,
                     serverSelectionTimeoutMS=5000,
-                    connectTimeoutMS=5000
+                    connectTimeoutMS=5000,
+                    maxPoolSize=50,  # Optimize max pool size
+                    socketTimeoutMS=5000  # Optimize socket timeout
                 )
                 # Test connection
                 _client_instance.server_info()
