@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 class ContentAnalyzer(BaseAgent):
     """Agent responsible for analyzing manuscript content."""
-    """Agent responsible for maintaining narrative continuity."""
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
         """Initialize with optional LLM configuration."""
         super().__init__(llm_config)
@@ -371,3 +370,12 @@ class ContentAnalyzer(BaseAgent):
         except Exception as e:
             logger.error(f"Error storing analysis: {e}")
             return None
+
+class ContinuityEditor(BaseAgent):
+    """Agent responsible for maintaining narrative continuity."""
+    
+    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        """Initialize with optional LLM configuration."""
+        super().__init__(llm_config)
+        self.document_store = DocumentStore()
+        self.document_tools = DocumentTools()

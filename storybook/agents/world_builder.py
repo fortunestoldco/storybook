@@ -228,6 +228,8 @@ class WorldBuilder(BaseAgent):
         target_audience: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Analyze the consistency of the world-building elements."""
+        if not match:
+            return None  # Add missing return
         # Prepare settings summary
         settings_summary = []
         for setting in settings:
