@@ -135,6 +135,55 @@ Storybook supports multiple LLM providers:
 }
 ```
 
+## Development Setup
+
+### Prerequisites
+
+- Python 3.9 or higher
+- C++ compiler (Visual Studio 2019 Build Tools on Windows, GCC on Linux)
+- CMake 3.21 or higher
+
+### Windows Setup
+
+1. Install Visual Studio Build Tools 2019 or later with C++ workload:
+   - Download from [Visual Studio Downloads](https://visualstudio.microsoft.com/downloads/)
+   - Select "Desktop development with C++"
+
+2. Create and activate virtual environment:
+```cmd
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+3. Install dependencies:
+```cmd
+pip install -r requirements-dev.txt
+```
+
+### Linux Setup
+
+1. Install build dependencies:
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install build-essential cmake gcc g++
+
+# Fedora/RHEL
+sudo dnf groupinstall "Development Tools"
+sudo dnf install cmake gcc gcc-c++
+```
+
+2. Create and activate virtual environment:
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements-dev.txt
+```
+
 ## License
 
 MIT

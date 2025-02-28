@@ -1,0 +1,7 @@
+# Base requirements
+-r requirements.txt
+
+# Development dependencies
+cmake>=3.21.0
+ninja
+scikit-build-core>=0.5.0
