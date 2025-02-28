@@ -12,7 +12,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import Document
-from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
+from langchain_community.tools import TavilySearchResults
 
 # Local imports
 from storybook.agents.base import BaseAgent
@@ -23,14 +23,24 @@ from storybook.tools.research_tools import ResearchTools
 logger = logging.getLogger(__name__)
 
 class MarketResearcher(BaseAgent):
-    """Agent responsible for market research and audience analysis."""
+    """Agent for market research and trend analysis."""
 
-    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
-        """Initialize with optional LLM configuration."""
+    def __init__(self, llm_config: Dict[str, Any]):
+        """Initialize the market researcher agent."""
         super().__init__(llm_config)
-        self.document_store = DocumentStore()
-        self.search_tool = TavilySearchAPIWrapper(api_key=TAVILY_API_KEY)
-        self.research_tools = ResearchTools()
+        self.search_tool = TavilySearchResults(max_results=3)
+
+    async def process_manuscript(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Process manuscript for market analysis."""
+        # Implementation
+        search_results = await self.search_tool.ainvoke({
+            "query": f"market trends for {state['manuscript_text'][:100]}"
+        })
+        
+        return {
+            "market_trends": search_results,
+            "analysis": "Market analysis results"  # Placeholder
+        }
 
     def research_market(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -79,18 +89,6 @@ class MarketResearcher(BaseAgent):
 
         except Exception as e:
             logger.error(f"Error in research_market: {str(e)}")
-            return self.handle_error(e)
-
-    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-        """Process manuscript for market research."""
-        try:
-            return self.research_market(
-                manuscript_id,
-                target_audience,
-                research_insights
-            )
-        except Exception as e:
-            logger.error(f"Error in market research: {str(e)}")
             return self.handle_error(e)
 
     def _infer_genre_and_audience(self, content: str) -> Dict[str, Any]:
@@ -314,34 +312,34 @@ class MarketResearcher(BaseAgent):
             "content": [],
             "pricing": []
         }
-        
+
         try:
             for item in research:
                 text = item["results"].lower()
-                
+
                 # Extract format preferences using raw string
                 formats = re.findall(fr"prefer\s+(ebook|audiobook|print|hardcover|paperback)", text)
                 preferences["format"].extend(formats)
-                
+
                 # Extract genre preferences
                 genres = re.findall(fr"prefer\s+(\w+)\s+(?:books|fiction|novels)", text)
                 preferences["genre"].extend(genres)
-                
+
                 # Extract content preferences
                 content = re.findall(fr"prefer\s+([\w\s]+)\s+content", text)
                 preferences["content"].extend(content)
-                
+
                 # Extract pricing preferences
                 if "price" in text or "pricing" in text:
                     pricing = re.findall(r"\$\d+(?:\.\d{2})?", text)
                     preferences["pricing"].extend(pricing)
-            
+
             # Remove duplicates and sort
             for key in preferences:
                 preferences[key] = sorted(list(set(preferences[key])))
-            
+
             return preferences
-            
+
         except Exception as e:
             logger.error(f"Error extracting preferences: {str(e)}")
             return preferences
@@ -354,12 +352,12 @@ class MarketResearcher(BaseAgent):
                 r"(?:recommend|suggest|advise)\s*(.*?)(?=\.|$)",
                 re.IGNORECASE
             )
-            
+
             matches = recommendation_pattern.findall(text)
             recommendations.extend([m.strip() for m in matches if m.strip()])
-            
+
             return list(set(recommendations))
-            
+
         except Exception as e:
             logger.error(f"Error extracting recommendations: {str(e)}")
             return []

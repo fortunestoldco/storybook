@@ -6,6 +6,10 @@ import os
 import logging
 from pathlib import Path
 from enum import Enum
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Third-party imports
 from langchain_core.language_models import BaseChatModel
@@ -73,7 +77,7 @@ class LLMProvider(str, Enum):
 def get_llm(config: Optional[Dict[str, Any]] = None):
     """Get default LLM configuration."""
     use_replicate = config.get("use_replicate", False) if config else False
-    
+
     return {
         "provider": LLMProvider.REPLICATE if use_replicate else LLMProvider.OPENAI,
         "model": "meta/llama-2-70b-chat" if use_replicate else "gpt-4-turbo-preview",
@@ -173,12 +177,12 @@ def validate_agent_config(config: Optional[Dict[str, Any]] = None) -> bool:
     """Validate agent configuration."""
     if not config:
         return True  # Default config is valid
-        
+
     required_fields = ["provider"]
     if not all(field in config for field in required_fields):
         logger.error(f"Missing required fields in agent config: {required_fields}")
         return False
-        
+
     provider = config.get("provider", "").lower()
     provider_configs = {
         "openai": ["api_key", "model_name"],
@@ -187,18 +191,18 @@ def validate_agent_config(config: Optional[Dict[str, Any]] = None) -> bool:
         "llamacpp": ["model_path"],
         "ollama": ["model_name"]
     }
-    
+
     if provider not in provider_configs:
         logger.error(f"Invalid provider: {provider}")
         return False
-        
+
     provider_required = provider_configs[provider]
     provider_config = config.get("config", {})
-    
+
     if not all(field in provider_config for field in provider_required):
         logger.error(f"Missing required fields for {provider}: {provider_required}")
         return False
-        
+
     return True
 
 # Collection Names
@@ -322,3 +326,8 @@ class CustomLLM(BaseChatModel):
     def stream_generate(self, prompt: str):
         # Implement the logic to stream generate text using the custom LLM
         pass
+
+# Verify configuration loading
+if __name__ == "__main__":
+    print(f"MongoDB URI: {MONGODB_URI}")
+    print(f"MongoDB Database: {MONGODB_DB_NAME}")
