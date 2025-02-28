@@ -1,14 +1,18 @@
 from __future__ import annotations
+
+# Standard library imports
 from typing import Dict, List, Any, Optional
 import logging
 import json
 import re
 
+# Third-party imports
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import Document
 
+# Local imports
 from storybook.agents.base import BaseAgent
 from storybook.config import create_llm, get_llm
 from storybook.db.document_store import DocumentStore
@@ -17,45 +21,67 @@ logger = logging.getLogger(__name__)
 
 
 class ContinuityEditor(BaseAgent):
-    """Agent responsible for identifying and fixing continuity issues."""
+    """Agent responsible for maintaining narrative continuity."""
 
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        """Initialize with optional LLM configuration."""
         super().__init__(llm_config)
         self.document_store = DocumentStore()
 
-    def check_and_fix_continuity(self, manuscript_id: str, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Identify and fix continuity issues in the manuscript."""
-        manuscript = self.document_store.get_manuscript(manuscript_id)
-        if not manuscript:
-            return {"error": f"Manuscript {manuscript_id} not found"}
+    def check_continuity(
+        self,
+        manuscript_id: str,
+        target_audience: Optional[Dict[str, Any]] = None,
+        research_insights: Optional[Dict[str, Any]] = None,
+        llm_config: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Check and maintain narrative continuity."""
+        try:
+            # Update LLM if new config provided
+            if llm_config:
+                self.llm = create_llm(llm_config)
 
-        # Identify continuity issues
-        continuity_issues = self._identify_continuity_issues(manuscript["content"])
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
 
-        # If no issues found, return early
-        if not continuity_issues.get("issues", []):
+            # Identify continuity issues
+            issues = self._identify_continuity_issues(
+                manuscript["content"],
+                target_audience=target_audience
+            )
+
+            # If issues found, attempt to fix them
+            if issues["issues"]:
+                fixed_content = self._fix_continuity_issues(
+                    manuscript["content"],
+                    issues,
+                    target_audience=target_audience
+                )
+                
+                # Update manuscript with fixed content
+                self.document_store.update_manuscript(
+                    manuscript_id,
+                    {"content": fixed_content}
+                )
+
+                return {
+                    "manuscript_id": manuscript_id,
+                    "issues_found": len(issues["issues"]),
+                    "issues_fixed": True,
+                    "continuity_analysis": issues
+                }
+            
             return {
                 "manuscript_id": manuscript_id,
-                "message": "No significant continuity issues identified.",
-                "issues": [],
+                "issues_found": 0,
+                "issues_fixed": False,
+                "continuity_analysis": issues
             }
 
-        # Fix continuity issues
-        updated_content, fixed_issues = self._fix_continuity_issues(
-            manuscript["content"], continuity_issues
-        )
-
-        # Store the updated manuscript
-        self.document_store.update_manuscript(
-            manuscript_id, {"content": updated_content}
-        )
-
-        return {
-            "manuscript_id": manuscript_id,
-            "message": f"Identified and fixed {len(fixed_issues)} continuity issues.",
-            "issues": fixed_issues,
-            "original_issues": continuity_issues.get("issues", []),
-        }
+        except Exception as e:
+            logger.error(f"Error in check_continuity: {str(e)}")
+            return self.handle_error(e)
 
     def _identify_continuity_issues(self, content: str) -> Dict[str, Any]:
         """Identify continuity issues in the manuscript."""
