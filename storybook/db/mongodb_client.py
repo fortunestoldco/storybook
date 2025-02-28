@@ -5,19 +5,19 @@ from typing import Any, Dict, List, Optional
 import logging
 
 # Third-party imports
-from pymongo import MongoClient, ObjectId
+from pymongo import MongoClient
+from bson.objectid import ObjectId  # Changed import location
 from pymongo.collection import Collection
 from pymongo.errors import CollectionInvalid, OperationFailure
-import pymongo
 
 from langchain_core.documents import Document
 from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
-from langchain_openai import OpenAIEmbeddings
 
 # Local imports
 from storybook.config import MONGODB_URI, MONGODB_DB_NAME
 
 logger = logging.getLogger(__name__)
+
 
 
 class MongoDBStore:
