@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 # Standard library imports
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, Literal
 import os
 import logging
 from pathlib import Path
@@ -18,6 +18,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_community.llms import Replicate, LlamaCpp
 from langchain_community.chat_models import ChatOllama
 from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
+from pydantic import BaseModel
 
 __all__ = [
     'LLMProvider',
@@ -326,6 +327,17 @@ class CustomLLM(BaseChatModel):
     def stream_generate(self, prompt: str):
         # Implement the logic to stream generate text using the custom LLM
         pass
+
+class Configuration(BaseModel):
+    """Configuration schema for the storybook graph."""
+    retriever_provider: Literal["mongodb", "elastic", "pinecone"] = "mongodb"
+    embedding_model: str = "openai/text-embedding-ada-002"
+    user_id: str
+    search_kwargs: Dict[str, Any] = {}
+    query_model: str = "gpt-4"
+    response_model: str = "gpt-4"
+    query_system_prompt: str = "Generate a search query based on the conversation."
+    response_system_prompt: str = "Provide a response based on the retrieved documents."
 
 # Verify configuration loading
 if __name__ == "__main__":
