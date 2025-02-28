@@ -339,17 +339,3 @@ class ContinuityEditor(BaseAgent):
 
         # Extract the paragraph
         return content[para_start:para_end].strip()
-
-    def method_name(
-        self,
-        manuscript_id: str,
-        other_params: Any,
-        llm_config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Method docstring."""
-        try:
-            # Update LLM if new config provided at runtime
-            if llm_config:
-                self.llm = create_llm(llm_config)
-                
-            # ... rest of method implementation ...
