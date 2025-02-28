@@ -28,15 +28,10 @@ class LanguagePolisher(BaseAgent):
         super().__init__(llm_config)
         self.document_store = DocumentStore()
 
-    def polish_language(
-        self,
-        manuscript_id: str,
-        target_audience: Optional[Dict[str, Any]] = None,
-        research_insights: Optional[Dict[str, Any]] = None,
-        llm_config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    def polish_language(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]] = None, research_insights: Optional[Dict[str, Any]] = None, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Polish language and style in the manuscript."""
         try:
+            # Update LLM if new config provided
             if llm_config:
                 self.llm = create_llm(llm_config)
 

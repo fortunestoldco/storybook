@@ -488,26 +488,10 @@ class DialogueEnhancer(BaseAgent):
         # Join the paragraphs back into content
         return "\n\n".join(paragraphs)
 
-    def _extract_character_names(
-        self, text: str, known_characters: List[str]
-    ) -> List[str]:
+    def _extract_character_names(self, text: str, known_characters: List[str]) -> List[str]:
         """Extract character names mentioned in the text."""
         # Check for exact matches of known characters
-        mentioned_characters = []
-        for character in known_characters:
-            if character in text:
-                mentioned_characters.append(character)
-
-        # If no exact matches, try to find partial matches
-        if not mentioned_characters:
-            for character in known_characters:
-                # Try first name only
-                first_name = character.split()[0]
-                if len(first_name) > 1 and re.search(
-                    r"\b" + re.escape(first_name) + r"\b", text
-                ):
-                    mentioned_characters.append(character)
-
+        mentioned_characters = [char for char in known_characters if char.lower() in text.lower()]
         return mentioned_characters
 
     def _extract_sentences(self, text: str) -> List[str]:

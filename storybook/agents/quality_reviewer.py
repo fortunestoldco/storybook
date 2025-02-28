@@ -31,49 +31,52 @@ class QualityReviewer(BaseAgent):  # Add inheritance
         research_insights: Optional[Dict[str, Any]] = None,
         llm_config: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """Perform final quality review and finalize the manuscript."""
-        manuscript = self.document_store.get_manuscript(manuscript_id)
-        if not manuscript:
-            return {"error": f"Manuscript {manuscript_id} not found"}
+        try:
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
 
-        # Perform quality review
-        quality_review = self._review_quality(
-            manuscript["content"], target_audience, research_insights
-        )
-
-        # Identify remaining improvement opportunities
-        improvement_opportunities = self._identify_improvement_opportunities(
-            manuscript["content"], quality_review, target_audience
-        )
-
-        # Generate final report
-        final_report = self._generate_final_report(
-            manuscript_id,
-            manuscript["title"],
-            quality_review,
-            improvement_opportunities,
-            target_audience,
-            research_insights,
-        )
-
-        # Optionally make final tweaks
-        if improvement_opportunities.get("critical_issues", []):
-            updated_content = self._make_final_improvements(
-                manuscript["content"], improvement_opportunities, target_audience
+            # Perform quality review
+            quality_review = self._review_quality(
+                manuscript["content"], target_audience, research_insights
             )
 
-            # Store the updated manuscript
-            self.document_store.update_manuscript(
-                manuscript_id, {"content": updated_content}
+            # Identify remaining improvement opportunities
+            improvement_opportunities = self._identify_improvement_opportunities(
+                manuscript["content"], quality_review, target_audience
             )
 
-        return {
-            "manuscript_id": manuscript_id,
-            "message": "Completed final quality review and manuscript finalization.",
-            "review": quality_review,
-            "improvements": improvement_opportunities,
-            "final_report": final_report,
-        }
+            # Generate final report
+            final_report = self._generate_final_report(
+                manuscript_id,
+                manuscript["title"],
+                quality_review,
+                improvement_opportunities,
+                target_audience,
+                research_insights,
+            )
+
+            # Optionally make final tweaks
+            if improvement_opportunities.get("critical_issues", []):
+                updated_content = self._make_final_improvements(
+                    manuscript["content"], improvement_opportunities, target_audience
+                )
+
+                # Store the updated manuscript
+                self.document_store.update_manuscript(
+                    manuscript_id, {"content": updated_content}
+                )
+
+            return {
+                "manuscript_id": manuscript_id,
+                "message": "Completed final quality review and manuscript finalization.",
+                "review": quality_review,
+                "improvements": improvement_opportunities,
+                "final_report": final_report,
+            }
+        except Exception as e:
+            logger.error(f"Error in finalize_manuscript: {str(e)}")
+            return self.handle_error(e)
 
     def _review_quality(
         self,

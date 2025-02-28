@@ -355,9 +355,10 @@ class ContentAnalyzer(BaseAgent):
         changed_fields = 0
 
         for key in initial:
-            if key in final and initial[key] != final[key]:
-                changed_fields += 1
-            total_fields += 1
+            if key in final:
+                total_fields += 1
+                if initial[key] != final[key]:
+                    changed_fields += 1
 
         return changed_fields / max(total_fields, 1)
 
