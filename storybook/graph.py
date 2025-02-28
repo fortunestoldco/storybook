@@ -40,73 +40,62 @@ from .agents.research.research_supervisor_agent import ResearchSupervisorAgent
 # Creative Coordinator
 from .agents.creative.creative_coordinator import CreativeCoordinator
 
-class StoryState(TypedDict):
-    """Type definition for story state."""
-    manuscript: Dict[str, Any]
-    market_analysis: Dict[str, Any]
-    cultural_analysis: Dict[str, Any]
-    research_findings: Dict[str, Any]  # Added for research
-    characters: List[Dict[str, Any]]
-    structure: Dict[str, Any]
-    subplots: List[Dict[str, Any]]
-    world_building: Dict[str, Any]
-    chapters: List[Dict[str, Any]]
-    state: str
+from .models.schema import StoryInput, StoryState, AgentConfig
+from .llm.provider import LLMProvider
 
-def build_storybook(config: Optional[Dict[str, Any]] = None) -> StateGraph:
+def build_storybook(manuscript_text: str, config: Optional[Dict[str, Any]] = None) -> StateGraph:
     """Build the storybook processing graph."""
-    
     workflow = StateGraph()
     
-    # Initialize all agents with config
-    agents = {
-        # Project Management Team
-        "project_lead": ProjectLeadAgent(config),
-        "market_research": MarketResearchAgent(config),
-        "novel_identity": NovelIdentityAgent(config),
-        
-        # Cultural Team
-        "zeitgeist": ZeitgeistAnalysisAgent(config),
-        "trend_forecaster": TrendForecastingAgent(config),
-        "cultural_conversation": CulturalConversationAgent(config),
-        
-        # Story Architecture Team
-        "structure_specialist": StructureSpecialistAgent(config),
-        "plot_development": PlotDevelopmentAgent(config),
-        "genre_innovation": GenreInnovationAgent(config),
-        "architecture_coordinator": ArchitectureCoordinator(config),
-        
-        # Core Creative Team
-        "character_analyst": CharacterAnalyst(config),
-        "world_builder": WorldBuilder(config),
-        "subplot_weaver": SubplotWeaver(config),
-        
-        # Writing Team
-        "chapter_writer": ChapterWriterAgent(config),
-        "continuity_manager": ContinuityManager(config),
-        "description_specialist": DescriptionSpecialist(config),
-
-        # Research Team
-        "historical_research": HistoricalResearchAgent(config),
-        "technical_research": TechnicalDomainAgent(config),
-        "cultural_research": CulturalAuthenticityAgent(config),
-        "research_supervisor": ResearchSupervisorAgent(config),
-
-        # Creative Coordinator
-        "creative_coordinator": CreativeCoordinator(config)
+    # Create story input with only manuscript text required
+    story_input = StoryInput(
+        manuscript_text=manuscript_text,
+        **(config or {})
+    )
+    
+    # Generate unique ID for the manuscript
+    manuscript_id = story_input.generate_id()
+    
+    # Initialize state with manuscript text and generated ID
+    initial_state: StoryState = {
+        "manuscript": {
+            "id": manuscript_id,
+            "text": story_input.manuscript_text
+        },
+        "market_analysis": {},
+        "cultural_analysis": {},
+        "research_findings": {},
+        "characters": [],
+        "structure": {},
+        "subplots": [],
+        "world_building": {},
+        "chapters": [],
+        "state": "start"
     }
     
-    # Add channels
-    workflow.add_channel("manuscript", LastValue(Dict[str, Any]))
-    workflow.add_channel("market_analysis", LastValue(Dict[str, Any]))
-    workflow.add_channel("cultural_analysis", LastValue(Dict[str, Any]))
-    workflow.add_channel("research_findings", LastValue(Dict[str, Any]))
-    workflow.add_channel("characters", LastValue(List[Dict[str, Any]]))
-    workflow.add_channel("structure", LastValue(Dict[str, Any]))
-    workflow.add_channel("subplots", LastValue(List[Dict[str, Any]]))
-    workflow.add_channel("world_building", LastValue(Dict[str, Any]))
-    workflow.add_channel("chapters", LastValue(List[Dict[str, Any]]))
-    workflow.add_channel("state", LastValue(str))
+    # Validate input configuration
+    story_config = StoryInput(**config) if config else StoryInput()
+    
+    # Initialize agents with configured LLMs
+    agents = {}
+    for agent_name, agent_config in story_config.agent_configuration.items():
+        llm = LLMProvider.initialize_llm(agent_config.llm)
+        agents[agent_name] = agent_class_map[agent_name](
+            llm=llm,
+            config=agent_config
+        )
+    
+    # Add channels with proper typing
+    workflow.add_channel("manuscript", LastValue[Dict[str, Any]])
+    workflow.add_channel("market_analysis", LastValue[Dict[str, Any]])
+    workflow.add_channel("cultural_analysis", LastValue[Dict[str, Any]])
+    workflow.add_channel("research_findings", LastValue[Dict[str, Any]])
+    workflow.add_channel("characters", LastValue[List[Dict[str, Any]]])
+    workflow.add_channel("structure", LastValue[Dict[str, Any]])
+    workflow.add_channel("subplots", LastValue[List[Dict[str, Any]]])
+    workflow.add_channel("world_building", LastValue[Dict[str, Any]])
+    workflow.add_channel("chapters", LastValue[List[Dict[str, Any]]])
+    workflow.add_channel("state", LastValue[str])
 
     @workflow.node
     def project_setup(state):
@@ -334,18 +323,6 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> StateGraph:
         }.get(state["state"], "end")
     )
     
-    # Initialize state
-    workflow.set_initial_state({
-        "manuscript": {},
-        "market_analysis": {},
-        "cultural_analysis": {},
-        "research_findings": {},  # Add research findings
-        "structure": {},
-        "characters": [],
-        "subplots": [],
-        "world_building": {},
-        "chapters": [],
-        "state": "start"
-    })
-
+    workflow.set_initial_state(initial_state)
+    
     return workflow
