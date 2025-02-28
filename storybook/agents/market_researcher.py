@@ -1,4 +1,5 @@
-﻿from typing import Dict, List, Any, Optional
+﻿from __future__ import annotations
+from typing import Dict, List, Any, Optional
 import logging
 import re
 import json
@@ -7,9 +8,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_community.tools import TavilySearchResults
-from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
+from langchain_community.utilities import TavilySearchAPIWrapper  # Missing import
+from langchain_core.documents import Document
 
-from storybook.config import get_llm
+from storybook.config import get_llm, TAVILY_API_KEY
 from storybook.db.document_store import DocumentStore
 from storybook.tools.document_tools import DocumentTools
 from storybook.tools.research_tools import ResearchTools

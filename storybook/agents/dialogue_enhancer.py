@@ -1,12 +1,13 @@
+from __future__ import annotations
 from typing import Dict, List, Any, Optional
 import logging
+import json
 import re
 
 from langchain_community.llms import Replicate
-from langchain_core.prompts import PromptTemplate
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough  # Missing import
 
 from storybook.config import get_llm
 from storybook.db.document_store import DocumentStore

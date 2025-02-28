@@ -1,20 +1,21 @@
-﻿from typing import Dict, List, Any, Optional
+﻿from __future__ import annotations
+from typing import Dict, List, Any, Optional
 import logging
-import re
 import json
+import re
+import datetime  # For _get_timestamp method
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-# This import is used in multiple chain definitions, so keeping it
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.documents import Document
+from langchain_mongodb.docstores import MongoDBDocStore
+from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
+from langchain_openai import OpenAIEmbeddings
 
 from storybook.config import get_llm
 from storybook.db.document_store import DocumentStore
+from storybook.db.mongodb_store import MongoDBStore  # Missing import
 from storybook.tools.document_tools import DocumentTools
-
-from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
-from pymongo import MongoClient
-from langchain_openai import OpenAIEmbeddings
 
 logger = logging.getLogger(__name__)
 

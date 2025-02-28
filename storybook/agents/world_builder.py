@@ -1,6 +1,7 @@
 from typing import Dict, List, Any, Optional
 import logging
 import re
+import json
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -134,8 +135,6 @@ class WorldBuilder:
         settings_str = chain.invoke("Extract settings")
 
         # Parse the settings
-        import json
-
         try:
             settings_list = json.loads(settings_str)
             if isinstance(settings_list, list):

@@ -1,10 +1,18 @@
+from __future__ import annotations
+
+# Standard library imports
 from typing import Dict, List, Any, Optional
 import logging
+import json
+import re
 
+# Third-party imports
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+from langchain_core.documents import Document  # Missing import for document operations
 
+# Local imports
 from storybook.config import get_llm
 from storybook.db.document_store import DocumentStore
 

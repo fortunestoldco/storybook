@@ -1,13 +1,15 @@
+from __future__ import annotations
 from typing import Dict, List, Any, Optional
 import logging
+import json
 import re
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough  # Used in chain definitions
+from langchain_core.runnables import RunnablePassthrough
 from langchain_mongodb.docstores import MongoDBDocStore
 
-from storybook.config import get_llm
+from storybook.config import get_llm, MONGODB_URI
 from storybook.db.document_store import DocumentStore
 
 logger = logging.getLogger(__name__)
@@ -75,8 +77,6 @@ class CharacterDeveloper:
         )
 
         # Extract the characters
-        import json
-
         characters_str = chain.invoke("Extract characters")
         try:
             characters_list = json.loads(characters_str)

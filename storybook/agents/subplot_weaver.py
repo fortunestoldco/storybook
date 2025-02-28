@@ -1,5 +1,7 @@
 from typing import Dict, List, Any, Optional
 import logging
+import json
+import re
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -145,7 +147,7 @@ class SubplotWeaver:
         subplots_str = chain.invoke("Identify subplots")
 
         # Parse the subplots
-        import json
+
 
         try:
             subplots_list = json.loads(subplots_str)
@@ -155,7 +157,6 @@ class SubplotWeaver:
         except json.JSONDecodeError:
             logger.error(f"Failed to parse subplots JSON: {subplots_str}")
             # Try a more lenient approach to extract structured data
-            import re
 
             subplots = []
 
@@ -606,8 +607,6 @@ class SubplotWeaver:
 
         # Parse the new subplots
         # This is tricky as the format might vary, so we'll try to identify subplot sections
-        import re
-
         # Try to find subplot sections (numbered or with "Subplot 1:" style headers)
         subplot_blocks = re.split(
             r"(?:Subplot\s+\d+:|New Subplot\s+\d+:|#\d+\s+Subplot|\d+\.\s+Subplot)",

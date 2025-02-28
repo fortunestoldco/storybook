@@ -1,5 +1,7 @@
 from typing import Dict, List, Any, Optional
 import logging
+import json
+import re
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -141,7 +143,7 @@ class StoryArcAnalyst:
         structure_analysis = chain.invoke("Analyze story structure")
 
         # Parse the analysis into sections
-        import re
+import re
 
         # Extract overall structure
         structure_match = re.search(
@@ -255,7 +257,7 @@ class StoryArcAnalyst:
             character_names = chain.invoke("Extract characters")
 
             # Parse the character names
-            import re
+import re
 
             name_matches = re.findall(
                 r"(?:^|\n)\s*-?\s*(\w+(?:\s+\w+){0,2})", character_names
@@ -349,7 +351,6 @@ class StoryArcAnalyst:
             arc_analysis = arc_chain.invoke(f"Analyze {character['name']}'s arc")
 
             # Parse the analysis into sections
-            import re
 
             # Extract key sections
             start_match = re.search(
@@ -495,7 +496,6 @@ class StoryArcAnalyst:
         pacing_analysis = chain.invoke("Analyze pacing")
 
         # Parse the analysis into sections
-        import re
 
         # Extract key sections
         overall_pacing_match = re.search(
@@ -512,7 +512,7 @@ class StoryArcAnalyst:
         low_intensity_match = re.search(
             r"Low-Intensity Sections:?\s*(.*?)(?=\n\n|\n\d\.|\Z)",
             pacing_analysis,
-            re.DOTALL,
+            re.DOTALL
         )
         balance_match = re.search(
             r"Pacing Balance:?\s*(.*?)(?=\n\n|\n\d\.|\Z)", pacing_analysis, re.DOTALL
@@ -664,7 +664,6 @@ class StoryArcAnalyst:
         improvement_plan = chain.invoke("Generate improvement plan")
 
         # Parse the plan into sections
-        import re
 
         # Extract key sections
         structure_improvements_match = re.search(
@@ -787,7 +786,6 @@ class StoryArcAnalyst:
         new_scenes = chain.invoke("Generate new scenes")
 
         # Parse the scenes
-        import re
 
         # Try to identify scene sections
         scene_blocks = re.split(r"(?:Scene\s+\d+:|New Scene\s+\d+:)", new_scenes)
