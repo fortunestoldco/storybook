@@ -1,158 +1,350 @@
 from __future__ import annotations
 
 from typing import Dict, Any, Optional, List, TypedDict, Literal
-import os
-import logging
 from pathlib import Path
-
-from langchain.schema import Document
 from langgraph.graph import StateGraph
 from langgraph.channels import LastValue
-from langchain_core.tools import BaseTool
 
-from storybook.agents import (
-    CharacterDeveloper,
-    DialogueEnhancer,
-    WorldBuilder,
-    SubplotWeaver,
-    StoryArcAnalyst,
-    ContinuityEditor,
-    LanguagePolisher,
-    QualityReviewer,
-    MarketResearcher,
-    ContentAnalyzer
-)
-from storybook.config import validate_agent_config, STATES
+# Project Management
+from .agents.project_management.project_lead_agent import ProjectLeadAgent
+from .agents.project_management.market_research_agent import MarketResearchAgent
+from .agents.project_management.novel_identity_agent import NovelIdentityAgent
 
+# Cultural Relevance
+from .agents.cultural_relevance.zeitgeist_analysis_agent import ZeitgeistAnalysisAgent
+from .agents.cultural_relevance.trend_forecasting_agent import TrendForecastingAgent
+from .agents.cultural_relevance.cultural_conversation_agent import CulturalConversationAgent
+
+# Story Architecture
+from .agents.story_architecture.structure_specialist_agent import StructureSpecialistAgent
+from .agents.story_architecture.plot_development_agent import PlotDevelopmentAgent
+from .agents.story_architecture.genre_innovation_agent import GenreInnovationAgent
+from .agents.story_architecture.architecture_coordinator import ArchitectureCoordinator
+
+# Core Creative
 from .agents.character_analyst import CharacterAnalyst
 from .agents.subplot_weaver import SubplotWeaver
-from .agents.theme_enhancer import ThemeEnhancer
-from .agents.pacing_editor import PacingEditor
 from .agents.world_builder import WorldBuilder
 
-logger = logging.getLogger(__name__)
+# Writing
+from .agents.writing.chapter_writer_agent import ChapterWriterAgent
+from .agents.writing.continuity_manager import ContinuityManager
+from .agents.writing.description_specialist import DescriptionSpecialist
 
-class GraphState(TypedDict):
-    """Type definition for graph state."""
+# Research Team
+from .agents.research.historical_research_agent import HistoricalResearchAgent
+from .agents.research.technical_domain_agent import TechnicalDomainAgent
+from .agents.research.cultural_authenticity_agent import CulturalAuthenticityAgent
+from .agents.research.research_supervisor_agent import ResearchSupervisorAgent
+
+# Creative Coordinator
+from .agents.creative.creative_coordinator import CreativeCoordinator
+
+class StoryState(TypedDict):
+    """Type definition for story state."""
     manuscript: Dict[str, Any]
+    market_analysis: Dict[str, Any]
+    cultural_analysis: Dict[str, Any]
+    research_findings: Dict[str, Any]  # Added for research
     characters: List[Dict[str, Any]]
-    research: Dict[str, Any]
-    analysis: Dict[str, Any]
-    improvements: List[Dict[str, Any]]
-    status: str
-
-def next_step(state: Dict[str, Any]) -> Literal[
-    "project_setup",
-    "market_analysis", 
-    "story_planning",
-    "character_development",
-    "world_building",
-    "subplot_development",
-    "end"
-]:
-    """Route to next step based on state."""
-    current_state = state["state"]
-    
-    if current_state == "start":
-        return "project_setup"
-    elif current_state == "setup_complete":
-        return "market_analysis"
-    elif current_state == "market_analyzed":
-        return "story_planning"
-    elif current_state == "story_planned":
-        return "character_development"
-    elif current_state == "characters_developed":
-        return "world_building"
-    elif current_state == "world_built":
-        return "subplot_development"
-    else:
-        return "end"
+    structure: Dict[str, Any]
+    subplots: List[Dict[str, Any]]
+    world_building: Dict[str, Any]
+    chapters: List[Dict[str, Any]]
+    state: str
 
 def build_storybook(config: Optional[Dict[str, Any]] = None) -> StateGraph:
     """Build the storybook processing graph."""
     
     workflow = StateGraph()
     
+    # Initialize all agents with config
+    agents = {
+        # Project Management Team
+        "project_lead": ProjectLeadAgent(config),
+        "market_research": MarketResearchAgent(config),
+        "novel_identity": NovelIdentityAgent(config),
+        
+        # Cultural Team
+        "zeitgeist": ZeitgeistAnalysisAgent(config),
+        "trend_forecaster": TrendForecastingAgent(config),
+        "cultural_conversation": CulturalConversationAgent(config),
+        
+        # Story Architecture Team
+        "structure_specialist": StructureSpecialistAgent(config),
+        "plot_development": PlotDevelopmentAgent(config),
+        "genre_innovation": GenreInnovationAgent(config),
+        "architecture_coordinator": ArchitectureCoordinator(config),
+        
+        # Core Creative Team
+        "character_analyst": CharacterAnalyst(config),
+        "world_builder": WorldBuilder(config),
+        "subplot_weaver": SubplotWeaver(config),
+        
+        # Writing Team
+        "chapter_writer": ChapterWriterAgent(config),
+        "continuity_manager": ContinuityManager(config),
+        "description_specialist": DescriptionSpecialist(config),
+
+        # Research Team
+        "historical_research": HistoricalResearchAgent(config),
+        "technical_research": TechnicalDomainAgent(config),
+        "cultural_research": CulturalAuthenticityAgent(config),
+        "research_supervisor": ResearchSupervisorAgent(config),
+
+        # Creative Coordinator
+        "creative_coordinator": CreativeCoordinator(config)
+    }
+    
     # Add channels
     workflow.add_channel("manuscript", LastValue(Dict[str, Any]))
     workflow.add_channel("market_analysis", LastValue(Dict[str, Any]))
+    workflow.add_channel("cultural_analysis", LastValue(Dict[str, Any]))
+    workflow.add_channel("research_findings", LastValue(Dict[str, Any]))
     workflow.add_channel("characters", LastValue(List[Dict[str, Any]]))
+    workflow.add_channel("structure", LastValue(Dict[str, Any]))
     workflow.add_channel("subplots", LastValue(List[Dict[str, Any]]))
     workflow.add_channel("world_building", LastValue(Dict[str, Any]))
+    workflow.add_channel("chapters", LastValue(List[Dict[str, Any]]))
     workflow.add_channel("state", LastValue(str))
 
     @workflow.node
     def project_setup(state):
-        """Initialize project settings and baseline manuscript."""
+        """Initialize project setup with management team."""
+        project_results = agents["project_lead"].process_manuscript(state["manuscript"]["id"])
+        market_results = agents["market_research"].process_manuscript(state["manuscript"]["id"])
+        identity_results = agents["novel_identity"].process_manuscript(state["manuscript"]["id"])
+        
         return {
-            "manuscript": {"id": state.get("manuscript_id"), "content": ""},
+            "manuscript": {**state["manuscript"], **identity_results},
+            "market_analysis": market_results,
             "state": "setup_complete"
         }
 
     @workflow.node
-    def market_analysis(state):
-        """Analyze market trends and target audience."""
-        return {
-            "market_analysis": {"target_audience": {}, "genre_requirements": {}},
-            "state": "market_analyzed"
-        }
-
-    @workflow.node
-    def story_planning(state):
-        """Plan core story elements."""
-        return {
-            "manuscript": {**state["manuscript"], "plot_outline": []},
-            "state": "story_planned"
-        }
-
-    @workflow.node
-    def character_development(state):
-        """Develop and analyze characters."""
-        character_results = state["character_analyst"].process_manuscript(
+    async def research_phase(state):
+        """Conduct comprehensive research."""
+        # Historical research
+        historical_results = await agents["historical_research"].process_manuscript(
             state["manuscript"]["id"]
-        ) if "character_analyst" in state else []
+        )
+        
+        # Technical domain research
+        technical_results = await agents["technical_research"].process_manuscript(
+            state["manuscript"]["id"]
+        )
+        
+        # Cultural authenticity research
+        cultural_results = await agents["cultural_research"].process_manuscript(
+            state["manuscript"]["id"]
+        )
+        
+        # Supervise and analyze research
+        research_summary = await agents["research_supervisor"].process_manuscript(
+            state["manuscript"]["id"]
+        )
+        
+        return {
+            "research_findings": {
+                "historical": historical_results,
+                "technical": technical_results,
+                "cultural": cultural_results,
+                "summary": research_summary
+            },
+            "state": "research_complete"
+        }
+
+    @workflow.node
+    def cultural_analysis(state):
+        """Analyze cultural context."""
+        zeitgeist_results = agents["zeitgeist"].process_manuscript(state["manuscript"]["id"])
+        trend_results = agents["trend_forecaster"].process_manuscript(state["manuscript"]["id"])
+        conversation_results = agents["cultural_conversation"].process_manuscript(state["manuscript"]["id"])
+        
+        return {
+            "cultural_analysis": {
+                "zeitgeist": zeitgeist_results,
+                "trends": trend_results,
+                "conversations": conversation_results
+            },
+            "state": "culture_analyzed"
+        }
+
+    @workflow.node
+    async def story_architecture(state):
+        """Define story structure integrating research findings."""
+        # Get architecture plan
+        architecture_plan = await agents["architecture_coordinator"].process_architecture(state)
+        
+        # Process with specialized agents
+        structure_results = await agents["structure_specialist"].process_manuscript(
+            state["manuscript"]["id"],
+            context=architecture_plan
+        )
+        
+        # Plot development with research context
+        plot_results = await agents["plot_development"].process_manuscript(
+            state["manuscript"]["id"],
+            context={
+                **architecture_plan,
+                "structure": structure_results
+            }
+        )
+        
+        # Genre innovation with full context
+        genre_results = await agents["genre_innovation"].process_manuscript(
+            state["manuscript"]["id"],
+            context={
+                **architecture_plan,
+                "structure": structure_results,
+                "plot": plot_results
+            }
+        )
+        
+        # Validate architecture cohesion
+        needs_research = any([
+            structure_results.get("needs_research", False),
+            plot_results.get("research_elements", {}).get("needs_validation", False),
+            genre_results.get("research_validation", {}).get("needs_review", False)
+        ])
+        
+        return {
+            "structure": {
+                "framework": structure_results,
+                "plot": plot_results,
+                "genre": genre_results,
+                "research_integration": architecture_plan,
+                "needs_research": needs_research
+            },
+            "state": "architecture_complete"
+        }
+
+    @workflow.node
+    async def creative_development(state):
+        """Develop creative elements based on architecture."""
+        # Get creative development plan
+        creative_plan = await agents["creative_coordinator"].process_creative_phase(state)
+        
+        # Character development with architectural context
+        character_results = await agents["character_analyst"].process_manuscript(
+            state["manuscript"]["id"],
+            context={
+                "structure": state["structure"],
+                "plan": creative_plan
+            }
+        )
+        
+        # World building with character context
+        world_results = await agents["world_builder"].process_manuscript(
+            state["manuscript"]["id"],
+            context={
+                "structure": state["structure"],
+                "characters": character_results,
+                "plan": creative_plan
+            }
+        )
+        
+        # Subplot development with full context
+        subplot_results = await agents["subplot_weaver"].process_manuscript(
+            state["manuscript"]["id"],
+            characters=character_results,
+            context={
+                "structure": state["structure"],
+                "world": world_results,
+                "plan": creative_plan
+            }
+        )
+        
+        # Validate creative cohesion
+        needs_architecture_review = _validate_creative_cohesion(
+            creative_plan,
+            character_results,
+            world_results,
+            subplot_results
+        )
         
         return {
             "characters": character_results,
-            "state": "characters_developed"
-        }
-
-    @workflow.node
-    def world_building(state):
-        """Build and enrich story world."""
-        world_results = state["world_builder"].process_manuscript(
-            state["manuscript"]["id"]
-        ) if "world_builder" in state else {}
-        
-        return {
             "world_building": world_results,
-            "state": "world_built"
+            "subplots": subplot_results,
+            "development_plan": creative_plan,
+            "state": "development_complete",
+            "needs_architecture_review": needs_architecture_review
         }
 
+    def _validate_creative_cohesion(
+        plan: Dict[str, Any],
+        characters: Dict[str, Any],
+        world: Dict[str, Any],
+        subplots: Dict[str, Any]
+    ) -> bool:
+        """Validate coherence between creative elements."""
+        # Implementation for validation
+        pass
+
     @workflow.node
-    def subplot_development(state):
-        """Develop and integrate subplots."""
-        subplot_results = state["subplot_weaver"].process_manuscript(
+    async def chapter_development(state):
+        """Develop and write chapters."""
+        chapter_results = await agents["chapter_writer"].process_manuscript(
             state["manuscript"]["id"],
-            state.get("characters", [])
-        ) if "subplot_weaver" in state else []
+            context={
+                "structure": state["structure"],
+                "characters": state["characters"],
+                "world": state["world_building"],
+                "subplots": state["subplots"]
+            }
+        )
+        
+        continuity_results = await agents["continuity_manager"].process_manuscript(
+            state["manuscript"]["id"],
+            context={
+                "chapters": chapter_results,
+                "structure": state["structure"]
+            }
+        )
+        
+        description_results = await agents["description_specialist"].process_manuscript(
+            state["manuscript"]["id"],
+            context={
+                "chapters": chapter_results,
+                "world": state["world_building"]
+            }
+        )
         
         return {
-            "subplots": subplot_results,
-            "state": "complete"
+            "chapters": chapter_results,
+            "continuity": continuity_results,
+            "descriptions": description_results,
+            "state": "chapter_complete"
         }
 
     # Configure workflow routing
     workflow.set_entry_point("project_setup")
-    workflow.add_conditional_edges(next_step)
+    workflow.add_conditional_edges(
+        lambda state: {
+            "start": "project_setup",
+            "setup_complete": "research_phase",  # Add research phase
+            "research_complete": "story_architecture",
+            "architecture_complete": "creative_development",
+            "development_complete": (
+                "story_architecture" if state.get("needs_architecture_review", False)
+                else "chapter_development"
+            ),
+            "chapter_complete": "end"
+        }.get(state["state"], "end")
+    )
     
     # Initialize state
     workflow.set_initial_state({
         "manuscript": {},
         "market_analysis": {},
+        "cultural_analysis": {},
+        "research_findings": {},  # Add research findings
+        "structure": {},
         "characters": [],
         "subplots": [],
         "world_building": {},
+        "chapters": [],
         "state": "start"
     })
 
