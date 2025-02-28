@@ -19,16 +19,15 @@ from langchain_core.output_parsers import StrOutputParserfrom langchain_core.out
 
 # Environment variables
 MONGODB_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
-MONGODB_DB_NAME = os.environ.get("MONGODB_DB_NAME", "storybook")", "storybook")
+MONGODB_DB_NAME = os.environ.get("MONGODB_DB_NAME", "storybook")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN")PI_TOKEN")
+REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
 FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
 
 # LLM configuration
 DEFAULT_OPENAI_MODEL = "gpt-4o"
-DEFAULT_REPLICATE_MODEL = "meta/llama-3-70b-instruct:2a30ae62b32ab1f47530ed5fd32fea38ed408255c747684c41749824a771fa12"DEFAULT_REPLICATE_MODEL = "meta/llama-3-70b-instruct:2a30ae62b32ab1f47530ed5fd32fea38ed408255c747684c41749824a771fa12"
-
+DEFAULT_REPLICATE_MODEL = "meta/llama-3-70b-instruct:2a30ae62b32ab1f47530ed5fd32fea38ed408255c747684c41749824a771fa12")
 
 def get_llm(
     model: Optional[str] = None, temperature: float = 0.7, use_replicate: bool = False  model: Optional[str] = None, temperature: float = 0.7, use_replicate: bool = False
