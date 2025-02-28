@@ -7,8 +7,7 @@ from pathlib import Path
 
 from langchain.schema import Document
 from langgraph.graph import Graph
-from langgraph.channels import LastValue
-from langgraph.pregel import channels  # Changed from BaseChannel
+from langgraph.channels import LastValue, Channel
 from langchain_core.tools import BaseTool
 
 from storybook.agents import (
@@ -41,7 +40,7 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
     
     workflow = Graph()
 
-    # Create channels for state management using correct imports
+    # Create channels for state management
     channels = {
         "manuscript": LastValue(),
         "characters": LastValue(default=[]),
@@ -69,22 +68,39 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
         "content_analyzer": ContentAnalyzer(config)
     }
 
-    # Add nodes with proper state handling
-    workflow.add_node("start", lambda x: x)
+    # Add start node that initializes state
+    def init_state(inputs: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "manuscript": inputs.get("manuscript", {}),
+            "characters": [],
+            "research": {},
+            "analysis": {},
+            "improvements": [],
+            "status": STATES["START"]
+        }
+
+    workflow.add_node("start", init_state)
 
     # Add agent nodes
     for state_name in STATES:
         if state_name not in ["START", "END"]:
             agent_name = state_name.lower().replace("_", "")
             if agent_name in agents:
-                workflow.add_node(
-                    state_name,
-                    lambda x, agent=agents[agent_name]: agent.process(x)
-                )
+                def create_agent_node(agent):
+                    def agent_node(inputs: Dict[str, Any]) -> Dict[str, Any]:
+                        result = agent.process(inputs)
+                        return {**inputs, **result}
+                    return agent_node
+                
+                workflow.add_node(state_name, create_agent_node(agents[agent_name]))
 
-    workflow.add_node("end", lambda x: {**x, "status": STATES["END"]})
+    # Add end node that finalizes state
+    def finalize_state(inputs: Dict[str, Any]) -> Dict[str, Any]:
+        return {**inputs, "status": STATES["END"]}
 
-    # Define and add edges
+    workflow.add_node("end", finalize_state)
+
+    # Define edges
     edges = [
         ("start", "RESEARCH"),
         ("RESEARCH", "ANALYSIS"),
@@ -99,6 +115,7 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
         ("QUALITY_REVIEW", "end")
     ]
 
+    # Add edges
     for start, end in edges:
         workflow.add_edge(start, end)
 
