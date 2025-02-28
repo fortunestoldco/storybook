@@ -2,8 +2,9 @@
 
 __version__ = "0.1.0"
 
+from __future__ import annotations
+
 from storybook.agents.base import BaseAgent
-from storybook.agents.content_analyzer import ContentAnalyzer
 from storybook.agents.character_developer import CharacterDeveloper
 from storybook.agents.dialogue_enhancer import DialogueEnhancer
 from storybook.agents.world_builder import WorldBuilder
@@ -13,6 +14,7 @@ from storybook.agents.continuity_editor import ContinuityEditor
 from storybook.agents.language_polisher import LanguagePolisher
 from storybook.agents.quality_reviewer import QualityReviewer
 from storybook.agents.market_researcher import MarketResearcher
+from storybook.agents.content_analyzer import ContentAnalyzer
 
 __all__ = [
     "BaseAgent",

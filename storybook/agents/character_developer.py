@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 # Standard library imports
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional, List
 import logging
 import json
 import re
@@ -17,12 +17,13 @@ from pymongo import MongoClient  # Replace MongoDB imports
 # Local imports
 from storybook.config import get_llm, MONGODB_URI
 from storybook.db.document_store import DocumentStore
+from storybook.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
 
 class CharacterDeveloper(BaseAgent):
-    """Agent responsible for developing and enhancing characters."""
+    """Agent responsible for developing and refining characters."""
 
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
         """Initialize with optional LLM configuration."""
