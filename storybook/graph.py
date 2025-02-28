@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 
 from langchain.schema import Document
-from langgraph.graph import Graph
+from langgraph.graph import StateGraph
 from langgraph.channels import LastValue
 from langchain_core.tools import BaseTool
 
@@ -35,12 +35,9 @@ class GraphState(TypedDict):
     improvements: List[Dict[str, Any]]
     status: str
 
-def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
-    """Build the storybook workflow graph."""
+def build_storybook(config: Optional[Dict[str, Any]] = None) -> StateGraph:
+    """Build the storybook processing graph."""
     
-    workflow = Graph()
-
-    # Create channels for state management
     channels = {
         "manuscript": LastValue(Dict[str, Any]),  # Specify type as Dict[str, Any]
         "characters": LastValue(default=[]),
@@ -51,6 +48,7 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
     }
 
     # Add channels to graph
+    workflow = StateGraph()
     for name, channel in channels.items():
         workflow.add_channel(name, channel)
 
