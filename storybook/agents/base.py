@@ -20,8 +20,8 @@ class BaseAgent:
     """Base class for all agents with configurable LLM support."""
 
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
-        """Initialize agent with optional LLM configuration."""
-        if llm_config:
+        """Initialize with optional LLM configuration."""
+        if llm_config:  # Remove super() call, BaseAgent has no parent class
             self.llm = create_llm(llm_config)
         else:
             self.llm = get_llm()
@@ -36,7 +36,11 @@ class BaseAgent:
         return []
 
     def validate_input(self, **kwargs) -> bool:
-        """Validate input parameters. Override in subclasses."""
+        """Validate input parameters."""
+        manuscript_id = kwargs.get('manuscript_id')
+        if not manuscript_id:
+            logger.error("Missing required manuscript_id")
+            return False
         return True
 
     def handle_error(self, error: Exception) -> Dict[str, Any]:

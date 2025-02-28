@@ -27,14 +27,7 @@ class StoryArcAnalyst(BaseAgent):
         super().__init__(llm_config)
         self.document_store = DocumentStore()
 
-    def analyze_story_arc(
-        self,
-        manuscript_id: str,
-        target_audience: Optional[Dict[str, Any]] = None,
-        research_insights: Optional[Dict[str, Any]] = None,
-        llm_config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Analyze the story arc and provide improvement suggestions."""
+    def analyze_story_arc(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]] = None, research_insights: Optional[Dict[str, Any]] = None, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         try:
             if llm_config:
                 self.llm = create_llm(llm_config)
@@ -43,25 +36,12 @@ class StoryArcAnalyst(BaseAgent):
             if not manuscript:
                 return {"error": f"Manuscript {manuscript_id} not found"}
 
-            # Analyze story arc components
-            arc_analysis = self._analyze_arc_components(
-                manuscript["content"],
-                target_audience=target_audience
-            )
-
-            # Evaluate pacing and balance
-            pacing_analysis = self._evaluate_pacing(
-                manuscript["content"],
-                arc_analysis,
-                target_audience=target_audience
-            )
-
+            # Implementation logic here
             return {
                 "manuscript_id": manuscript_id,
                 "arc_analysis": arc_analysis,
                 "pacing_analysis": pacing_analysis
             }
-
         except Exception as e:
             logger.error(f"Error in analyze_story_arc: {str(e)}")
             return self.handle_error(e)

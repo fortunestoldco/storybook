@@ -29,7 +29,7 @@ class CharacterDeveloper(BaseAgent):
         """Identify and enhance all characters in the manuscript."""
         try:
             # Update LLM if new config provided at runtime
-            if llm_config:
+            if (llm_config):
                 self.llm = create_llm(llm_config)
 
             manuscript = self.document_store.get_manuscript(manuscript_id)

@@ -344,22 +344,16 @@ class ContentAnalyzer(BaseAgent):
             },
         }
 
-    def _calculate_metric_change(
-        self, initial: Dict[str, Any], final: Dict[str, Any]
-    ) -> float:
-        """Calculate the percentage of change between initial and final metrics."""
+    def _calculate_metric_change(self, initial: Dict[str, Any], final: Dict[str, Any]) -> float:
         if not initial or not final:
             return 0.0
-
         total_fields = 0
         changed_fields = 0
-
         for key in initial:
             if key in final:
                 total_fields += 1
                 if initial[key] != final[key]:
                     changed_fields += 1
-
         return changed_fields / max(total_fields, 1)
 
     def _get_timestamp(self) -> str:
@@ -367,3 +361,19 @@ class ContentAnalyzer(BaseAgent):
         from datetime import datetime
 
         return datetime.now().isoformat()
+
+    def _store_analysis_document(self, manuscript_id: str, analysis: Dict[str, Any]) -> str:
+        """Store analysis in vector store."""
+        try:
+            doc = Document(
+                page_content=json.dumps(analysis, indent=2),
+                metadata={
+                    "type": "content_analysis",
+                    "manuscript_id": manuscript_id,
+                    "timestamp": self._get_timestamp()
+                }
+            )
+            return self.document_store.db.store_documents_with_embeddings("analysis", [doc])
+        except Exception as e:
+            logger.error(f"Error storing analysis: {e}")
+            return None

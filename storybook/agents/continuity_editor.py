@@ -1,341 +1,342 @@
 from __future__ import annotations
-
-# Standard library imports
 from typing import Dict, List, Any, Optional
-import logging
-import json
+from datetime import datetime
+import loggingport Dict, List, Any, Optional
+import jsoning
+import reon
 import re
-
-# Third-party imports
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.documents import DocumentTemplate
+from langchain_openai import OpenAIEmbeddingsOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langchain_core.documents import Document
-
-# Local imports
-from storybook.agents.base import BaseAgent
+from storybook.agents.base import BaseAgentnt
 from storybook.config import create_llm, get_llm
 from storybook.db.document_store import DocumentStore
-
+from storybook.db.mongodb_store import MongoDBStore  # Add missing import
+from storybook.tools.document_tools import DocumentTools
+from storybook.db.document_store import DocumentStore
+logger = logging.getLogger(__name__)
 logger = logging.getLogger(__name__)
 
-
-class ContinuityEditor(BaseAgent):
+class ContentAnalyzer(BaseAgent):
+    """Agent responsible for analyzing manuscript content."""
     """Agent responsible for maintaining narrative continuity."""
-
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
         """Initialize with optional LLM configuration."""
         super().__init__(llm_config)
         self.document_store = DocumentStore()
+        self.document_tools = DocumentTools())
+        self.embeddings = OpenAIEmbeddings()
+        self.db = MongoDBStore()    def check_continuity(
 
-    def check_continuity(
-        self,
-        manuscript_id: str,
-        target_audience: Optional[Dict[str, Any]] = None,
-        research_insights: Optional[Dict[str, Any]] = None,
-        llm_config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Check and maintain narrative continuity."""
-        try:
+    def get_tools(self):
+        """Get tools available to this agent."""udience: Optional[Dict[str, Any]] = None,
+        return [None,
+            self.document_tools.get_manuscript_tool(),
+            self.document_tools.get_manuscript_search_tool(),Dict[str, Any]:
+        ]        """Check and maintain narrative continuity."""
+
+    def analyze_content(self, manuscript_id: str, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Analyze manuscript content with optional runtime LLM configuration."""if llm_config:
+        try:g)
             # Update LLM if new config provided
-            if llm_config:
-                self.llm = create_llm(llm_config)
-
-            manuscript = self.document_store.get_manuscript(manuscript_id)
-            if not manuscript:
-                return {"error": f"Manuscript {manuscript_id} not found"}
-
-            # Identify continuity issues
-            issues = self._identify_continuity_issues(
-                manuscript["content"],
-                target_audience=target_audience
-            )
-
-            # If issues found, attempt to fix them
-            if issues["issues"]:
-                fixed_content = self._fix_continuity_issues(
-                    manuscript["content"],
-                    issues,
-                    target_audience=target_audience
-                )
+            if llm_config:manuscript(manuscript_id)
+                self.llm = create_llm(llm_config)ot manuscript:
                 
-                # Update manuscript with fixed content
-                self.document_store.update_manuscript(
-                    manuscript_id,
-                    {"content": fixed_content}
-                )
-
-                return {
-                    "manuscript_id": manuscript_id,
-                    "issues_found": len(issues["issues"]),
-                    "issues_fixed": True,
-                    "continuity_analysis": issues
-                }
+            logger.info(f"Analyzing content for manuscript {manuscript_id}")
             
-            return {
-                "manuscript_id": manuscript_id,
-                "issues_found": 0,
-                "issues_fixed": False,
-                "continuity_analysis": issues
+            # Get manuscript content from document store
+            document = self.document_store.get_manuscript(manuscript_id)content"],
+            if not document:
+                raise ValueError(f"Manuscript {manuscript_id} not found"))
+            
+            content = document.get("content", "")# If issues found, attempt to fix them
+            
+            # Perform comprehensive content analysisntent = self._fix_continuity_issues(
+            analysis = {
+                "sentiment": self._analyze_sentiment(content),
+                "readability": self._analyze_readability(content),
+                "content_structure": self._analyze_structure(content),
+                "genre_match": self._analyze_genre(content),
+                "themes": self._identify_themes(content),pt with fixed content
+                "key_elements": {
+                    "plot_points": self._extract_plot_points(content),
+                    "characters": self._extract_characters(content),
+                    "settings": self._extract_settings(content),
+                }
+            }    return {
+            "manuscript_id": manuscript_id,
+            return {en(issues["issues"]),
+                "analysis": analysis,
+                "message": "Content analysis completed successfully"       "continuity_analysis": issues
             }
-
         except Exception as e:
-            logger.error(f"Error in check_continuity: {str(e)}")
-            return self.handle_error(e)
+            logger.error(f"Error analyzing content for manuscript {manuscript_id}: {e}")
+            return {"error": str(e)}                "manuscript_id": manuscript_id,
 
-    def _identify_continuity_issues(self, content: str) -> Dict[str, Any]:
-        """Identify continuity issues in the manuscript."""
-        # Break the content into manageable chunks for analysis
-        chunk_size = min(10000, len(content) // 3)
-        chunks = []
+    def analyze_progress(self, manuscript_id: str, previous_analysis: Dict[str, Any], stage: str) -> Dict[str, Any]:
+        """Analyze progress made after a specific stage of the transformation."""
+        manuscript = self.document_store.get_manuscript(manuscript_id)
+        if not manuscript:
+            logger.error(f"Manuscript {manuscript_id} not found")ion as e:
+            return {}            logger.error(f"Error in check_continuity: {str(e)}")
 
-        for i in range(0, len(content), chunk_size):
-            chunk = content[i : i + chunk_size]
-            chunks.append(chunk)
-
-        # Limit to a reasonable number of chunks
-        chunks = chunks[:5]
-
-        # Create prompt for continuity analysis
-        prompt = ChatPromptTemplate.from_template(
-            """
-        You are a Continuity Editor specializing in identifying inconsistencies in manuscripts.
-        
-        Analyze the following manuscript excerpts for continuity issues such as:
-        
-        1. Character inconsistencies (names, descriptions, traits changing)
-        2. Timeline inconsistencies (events out of order, impossible timing)
-        3. Setting inconsistencies (locations changing unexpectedly)
-        4. Plot inconsistencies (contradictory events or information)
-        5. Logic inconsistencies (implausible or impossible situations)
-        
-        Manuscript Excerpts:
-        {manuscript_excerpts}
-        
-        For each continuity issue you identify, provide:
-        1. Issue Type: The category of continuity error
-        2. Description: A clear explanation of the inconsistency
-        3. Location: Where in the excerpt the issue appears (quote the relevant text)
-        4. Severity: How significantly it impacts the story (High, Medium, Low)
-        5. Recommended Fix: A specific suggestion to resolve the inconsistency
-        
-        Format your response as a JSON list of objects with the above keys.
-        Focus only on clear continuity issues, not subjective writing preferences.
-        """
-        )
-
-        # Format the chunks
-        excerpts_text = []
-        for i, chunk in enumerate(chunks):
-            excerpts_text.append(
-                f"EXCERPT {i+1} (approximately {i+1}/{len(chunks)} of the way through):\n{chunk}"
+        content = manuscript.get("content", "")
+str) -> Dict[str, Any]:
+        # Define what to analyze based on the stage issues in the manuscript."""
+        progress_analysis = {}        # Break the content into manageable chunks for analysis
+len(content) // 3)
+        if stage == "story_arc":
+            # Analyze structure improvements
+            new_structure = self._analyze_structure(content)
+            progress_analysis["structure_improvements"] = self._compare_analysis(
+                previous_analysis.get("content_structure", {}), new_structurehunks.append(chunk)
             )
+            progress_analysis["content_structure"] = new_structure        # Limit to a reasonable number of chunks
 
-        combined_excerpts = "\n\n" + "\n\n".join(excerpts_text)
+        elif stage == "language":
+            # Analyze style and readability improvements
+            new_style = self._analyze_style(content)
+            new_readability = self._analyze_readability(content)            """
+es in manuscripts.
+            progress_analysis["style_improvements"] = self._compare_analysis(
+                previous_analysis.get("writing_style", {}), new_styleze the following manuscript excerpts for continuity issues such as:
+            )
+            progress_analysis["readability_improvements"] = self._compare_analysis(g)
+                previous_analysis.get("readability", {}), new_readabilitymeline inconsistencies (events out of order, impossible timing)
+            )        3. Setting inconsistencies (locations changing unexpectedly)
+nformation)
+            progress_analysis["writing_style"] = new_styletuations)
+            progress_analysis["readability"] = new_readability        
 
-        # Create the chain
+        elif stage == "complete":
+            # Comprehensive final analysis
+            new_sentiment = self._analyze_sentiment(content)
+            new_readability = self._analyze_readability(content)
+            new_structure = self._analyze_structure(content)nconsistency
+            new_style = self._analyze_style(content)        3. Location: Where in the excerpt the issue appears (quote the relevant text)
+ts the story (High, Medium, Low)
+            # Compare all metrics with originallve the inconsistency
+            progress_analysis["overall_improvements"] = {
+                "sentiment": self._compare_analysis(s.
+                    previous_analysis.get("sentiment", {}), new_sentiment on clear continuity issues, not subjective writing preferences.
+                ),
+                "readability": self._compare_analysis(
+                    previous_analysis.get("readability", {}), new_readability
+                ),
+                "structure": self._compare_analysis(
+                    previous_analysis.get("content_structure", {}), new_structurenk in enumerate(chunks):
+                ),
+                "style": self._compare_analysis( way through):\n{chunk}"
+                    previous_analysis.get("writing_style", {}), new_style
+                ),
+            }        combined_excerpts = "\n\n" + "\n\n".join(excerpts_text)
+
+            # Generate improvement summary
+            progress_analysis["improvement_summary"] = (
+                self._generate_improvement_summary(mbda _: combined_excerpts}
+                    previous_analysis,
+                    {
+                        "sentiment": new_sentiment,
+                        "readability": new_readability,
+                        "content_structure": new_structure,
+                        "writing_style": new_style,n
+                    },r = chain.invoke("Identify continuity issues")
+                )
+            )        # Parse the issues
+
+        # Store the progress analysis
+        analysis_doc_id = self.document_store.store_analysis_document(
+            manuscript_id, f"{stage}_progress_analysis", progress_analysis       return {"issues": issues_list}
+        )            return {"issues": []}
+
+        # Store in MongoDB Atlas Vector for easy searchingr(f"Failed to parse continuity issues JSON: {issues_str}")
+        doc = Document(
+            page_content=json.dumps(progress_analysis, indent=2),xtract structured data manually
+            metadata={
+                "type": "progress_analysis",
+                "stage": stage,
+                "manuscript_id": manuscript_id,
+                "analysis_id": analysis_doc_id,  r"(\d+\.\s+Issue Type:.*?)(?=\d+\.\s+Issue Type:|$)",
+            },       issues_str,
+        )                re.DOTALL,
+
+        self.document_store.db.store_documents_with_embeddings("analysis", [doc])
+locks:
+        return progress_analysis                issue = {}
+
+    def _analyze_sentiment(self, content: str) -> Dict[str, Any]:
+        """Analyze emotional tone and sentiment of the content."""arch(r"Issue Type:?\s*(.*?)(?=\n|$)", block)
+        # Implementation using LLMf type_match:
+        return {}                    issue["Issue Type"] = type_match.group(1).strip()
+
+    def _analyze_readability(self, content: str) -> Dict[str, Any]:
+        """Analyze readability metrics."""arch(
+        # Implementation using LLM   r"Description:?\s*(.*?)(?=\n\d|$)", block, re.DOTALL
+        return {}                )
+
+    def _analyze_structure(self, content: str) -> Dict[str, Any]: desc_match.group(1).strip()
+        """Analyze narrative structure."""
+        # Implementation using LLM Extract location
+        return {}                loc_match = re.search(r"Location:?\s*(.*?)(?=\n\d|$)", block, re.DOTALL)
+
+    def _analyze_genre(self, content: str) -> Dict[str, Any]:tch.group(1).strip()
+        """Determine genre characteristics."""
+        # Implementation using LLM Extract severity
+        return {}                sev_match = re.search(r"Severity:?\s*(.*?)(?=\n|$)", block)
+
+    def _identify_themes(self, content: str) -> List[str]:oup(1).strip()
+        """Extract major themes from the content."""
+        # Implementation using LLM Extract recommended fix
+        return []                fix_match = re.search(
+ALL
+    def _extract_plot_points(self, content: str) -> List[Dict[str, Any]]:
+        """Extract major plot points."""
+        # Implementation using LLM   issue["Recommended Fix"] = fix_match.group(1).strip()
+        return []
+
+    def _extract_characters(self, content: str) -> List[Dict[str, Any]]:
+        """Extract character mentions and descriptions."""
+        # Implementation using LLMn {"issues": issues}
+        return []
+
+    def _extract_settings(self, content: str) -> List[Dict[str, Any]]:es: Dict[str, Any]
+        """Extract setting descriptions."""
+        # Implementation using LLMentified continuity issues in the manuscript."""
+        return []        issues = continuity_issues.get("issues", [])
+
+    def _compare_analysis(
+        self, previous: Dict[str, Any], current: Dict[str, Any]= [
+    ) -> Dict[str, Any]:
+        """Compare previous and current analysis to determine improvements.""" issues
+        improvements = {, "").lower() in ["high", "medium"]
+            "improved_aspects": [],
+            "new_aspects": [],
+            "changed_aspects": [],rn content unchanged
+            "improvement_score": 0.0,f not priority_issues:
+        }            return content, []
+
+        # Skip if either analysis is empty
+        if not previous or not current:nt
+            return improvements        fixed_issues = []
+
+        # Track improvement count for scoring_issues:
+        improvement_count = 0 issue information
+        total_aspects = 0            issue_type = issue.get("Issue Type", "")
+ = issue.get("Location", "")
+        # Compare each key)
+        all_keys = set(previous.keys()) | set(current.keys())
+        for key in all_keys: a location or fix, skip
+            total_aspects += 1            if not issue_location or not recommended_fix:
+
+            # New aspect
+            if key not in previous and key in current:ontent
+                improvements["new_aspects"].append(key) from the location
+                improvement_count += 1            location_snippet = self._extract_snippet(issue_location)
+
+            # Changed aspectpet not in updated_content:
+            elif key in previous and key in current:
+                prev_value = previous[key]
+                curr_value = current[key]            # Create prompt for fixing this specific issue
+rom_template(
+                # If values are different
+                if prev_value != curr_value:nconsistency in a manuscript.
+                    improvements["changed_aspects"].append(
+                        {"aspect": key, "previous": prev_value, "current": curr_value}e: {issue_type}
+                    )            Issue Description: {issue_description}
+
+                    # Determine if it's an improvement
+                    if self._is_improvement(key, prev_value, curr_value):
+                        improvements["improved_aspects"].append(key)
+                        improvement_count += 1            Recommended Fix Approach:
+
+        # Calculate overall improvement score (0.0-1.0)
+        if total_aspects > 0:inuity issue.
+            improvements["improvement_score"] = improvement_count / total_aspects            Make minimal changes - only what's necessary to resolve the inconsistency.
+me style, tone, and length as the original text.
+        return improvements            
+matic section.
+    def _is_improvement(self, aspect: str, previous: Any, current: Any) -> bool:
+        """Determine if a change represents an improvement."""
+        # For numeric values
+        if isinstance(previous, (int, float)) and isinstance(current, (int, float)):
+            # For readability scores, higher is generally better
+            if "score" in aspect or "count" in aspect:
+                return current > previous                    "issue_type": lambda _: issue_type,
+", ""),
+        # For text values, longer descriptions might indicate more detailt(
+        if isinstance(previous, str) and isinstance(current, str):
+            # If complexity or readability, prefer more moderate values
+            if "complexity" in aspect:
+                return current.lower() in ["moderate", "balanced"]                }
+
+            # For most text aspects, more detail is better
+            return len(current) > len(previous) * 1.1  # 10% longer                | StrOutputParser()
+
+        # For lists, more items might indicate more comprehensive analysis
+        if isinstance(previous, list) and isinstance(current, list):
+            return len(current) > len(previous)            fixed_text = chain.invoke("Fix continuity issue")
+
+        # Default - assume change is an improvementce the problematic text with the fixed version
+        return True            context = self._get_context(updated_content, location_snippet)
+ent:
+    def _generate_improvement_summary(ntext, fixed_text, 1)
+        self, initial: Dict[str, Any], final: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Generate a summary of improvements from initial to final analysis."""
+        # Define prompt for improvement summary
+        prompt = ChatPromptTemplate.from_template(         "issue_type": issue_type,
+            """
+        You are a Manuscript Improvement Analyst. Compare the initial and final analysis of a manuscript
+        and summarize the improvements made during the transformation process.                "fixed_text": fixed_text,
+        
+        Initial Analysis:
+        {initial_analysis}
+        content, fixed_issues
+        Final Analysis:
+        {final_analysis}_extract_snippet(self, location_text: str) -> str:
+        om the location description."""
+        Provide a detailed summary of:
+        1. Overall improvement assessment, location_text)
+        2. Most significant improvements
+        3. Areas with the most dramatic changes
+        4. Remaining opportunities for improvement
+        5. Impact on target audience appeal# Try to find text between single quotes
+        on_text)
+        Format your response as a comprehensive report.single_quotes:
+        """   return single_quotes[0]
+        )
+ial text (at least 10 chars)
+        # Format the analysis datalocation_text)
+        initial_str = json.dumps(initial, indent=2)
+        final_str = json.dumps(final, indent=2)            for phrase in words:
+ase) >= 10:
+        # Create the chain   return phrase
         chain = (
-            {"manuscript_excerpts": lambda _: combined_excerpts}
+            {
+                "initial_analysis": lambda _: initial_str,
+                "final_analysis": lambda _: final_str,n(words) >= 3:
+            } ".join(words[:3])
             | prompt
             | self.llm
             | StrOutputParser()
-        )
-
+        )    def _get_context(self, content: str, snippet: str) -> str:
+ounding context of a snippet in the content."""
         # Run the chain
-        issues_str = chain.invoke("Identify continuity issues")
-
-        # Parse the issues
-        try:
-            issues_list = json.loads(issues_str)
-            if isinstance(issues_list, list):
-                return {"issues": issues_list}
-            return {"issues": []}
-        except json.JSONDecodeError:
-            logger.error(f"Failed to parse continuity issues JSON: {issues_str}")
-
-            # Try to extract structured data manually
-            issues = []
-
-            # Try to find issue blocks
-            issue_blocks = re.findall(
-                r"(\d+\.\s+Issue Type:.*?)(?=\d+\.\s+Issue Type:|$)",
-                issues_str,
-                re.DOTALL,
-            )
-
-            for block in issue_blocks:
-                issue = {}
-
-                # Extract issue type
-                type_match = re.search(r"Issue Type:?\s*(.*?)(?=\n|$)", block)
-                if type_match:
-                    issue["Issue Type"] = type_match.group(1).strip()
-
-                # Extract description
-                desc_match = re.search(
-                    r"Description:?\s*(.*?)(?=\n\d|$)", block, re.DOTALL
-                )
-                if desc_match:
-                    issue["Description"] = desc_match.group(1).strip()
-
-                # Extract location
-                loc_match = re.search(r"Location:?\s*(.*?)(?=\n\d|$)", block, re.DOTALL)
-                if loc_match:
-                    issue["Location"] = loc_match.group(1).strip()
-
-                # Extract severity
-                sev_match = re.search(r"Severity:?\s*(.*?)(?=\n|$)", block)
-                if sev_match:
-                    issue["Severity"] = sev_match.group(1).strip()
-
-                # Extract recommended fix
-                fix_match = re.search(
-                    r"Recommended Fix:?\s*(.*?)(?=\n\d|$)", block, re.DOTALL
-                )
-                if fix_match:
-                    issue["Recommended Fix"] = fix_match.group(1).strip()
-
-                if issue:
-                    issues.append(issue)
-
-            return {"issues": issues}
-
-    def _fix_continuity_issues(
-        self, content: str, continuity_issues: Dict[str, Any]
-    ) -> tuple:
-        """Fix identified continuity issues in the manuscript."""
-        issues = continuity_issues.get("issues", [])
-
-        # Filter to only high and medium severity issues
-        priority_issues = [
-            issue
-            for issue in issues
-            if issue.get("Severity", "").lower() in ["high", "medium"]
-        ]
-
-        # If no priority issues, return content unchanged
-        if not priority_issues:
-            return content, []
-
-        # Fix each issue one by one
-        updated_content = content
-        fixed_issues = []
-
-        for issue in priority_issues:
-            # Extract the issue information
-            issue_type = issue.get("Issue Type", "")
-            issue_location = issue.get("Location", "")
-            recommended_fix = issue.get("Recommended Fix", "")
-
-            # If we don't have a location or fix, skip
-            if not issue_location or not recommended_fix:
-                continue
-
-            # Try to find the problematic text in the content
-            # We'll look for a snippet from the location
-            location_snippet = self._extract_snippet(issue_location)
-
-            if not location_snippet or location_snippet not in updated_content:
-                continue
-
-            # Create prompt for fixing this specific issue
-            prompt = ChatPromptTemplate.from_template(
-                """
-            You are a Continuity Editor fixing a specific inconsistency in a manuscript.
-            
-            Issue Type: {issue_type}
-            Issue Description: {issue_description}
-            
-            Original Problematic Text:
-            {problematic_text}
-            
-            Recommended Fix Approach:
-            {recommended_fix}
-            
-            Provide a revised version of the problematic text that fixes the continuity issue.
-            Make minimal changes - only what's necessary to resolve the inconsistency.
-            Maintain the same style, tone, and length as the original text.
-            
-            Return ONLY the revised text that should directly replace the problematic section.
-            """
-            )
-
-            # Create the chain
-            chain = (
-                {
-                    "issue_type": lambda _: issue_type,
-                    "issue_description": lambda _: issue.get("Description", ""),
-                    "problematic_text": lambda _: self._get_context(
-                        updated_content, location_snippet
-                    ),
-                    "recommended_fix": lambda _: recommended_fix,
-                }
-                | prompt
-                | self.llm
-                | StrOutputParser()
-            )
-
-            # Run the chain
-            fixed_text = chain.invoke("Fix continuity issue")
-
-            # Replace the problematic text with the fixed version
-            context = self._get_context(updated_content, location_snippet)
-            if context in updated_content:
-                updated_content = updated_content.replace(context, fixed_text, 1)
-
-                # Add to fixed issues
-                fixed_issues.append(
-                    {
-                        "issue_type": issue_type,
-                        "description": issue.get("Description", ""),
-                        "original_text": context,
-                        "fixed_text": fixed_text,
-                    }
-                )
-
-        return updated_content, fixed_issues
-
-    def _extract_snippet(self, location_text: str) -> str:
-        """Extract a usable snippet from the location description."""
-        # Try to find quoted text
-        quotes = re.findall(r'"([^"]+)"', location_text)
-        if quotes:
-            return quotes[0]
-
-        # Try to find text between single quotes
-        single_quotes = re.findall(r"'([^']+)'", location_text)
-        if single_quotes:
-            return single_quotes[0]
-
-        # Try to find any substantial text (at least 10 chars)
-        words = re.findall(r"(\w+(?:\s+\w+){3,})", location_text)
-        if words:
-            for phrase in words:
-                if len(phrase) >= 10:
-                    return phrase
-
-        # Fall back to any text we can find
-        words = location_text.split()
-        if len(words) >= 3:
-            return " ".join(words[:3])
-
-        return ""
-
-    def _get_context(self, content: str, snippet: str) -> str:
-        """Get the surrounding context of a snippet in the content."""
-        # Find the snippet in the content
-        snippet_idx = content.find(snippet)
-        if snippet_idx == -1:
-            return snippet
-
-        # Find paragraph boundaries
-        para_start = content.rfind("\n\n", 0, snippet_idx)
-        if para_start == -1:
-            para_start = max(0, snippet_idx - 200)
-
-        para_end = content.find("\n\n", snippet_idx)
-        if para_end == -1:
-            para_end = min(len(content), snippet_idx + 200)
-
-        # Extract the paragraph
-        return content[para_start:para_end].strip()
+        summary = chain.invoke("Generate improvement summary")        snippet_idx = content.find(snippet)
+et_idx == -1:
+        return {
+            "improvement_summary": summary,
+            "improvement_metrics": {
+                "sentiment_change": self._calculate_metric_change(
+                    initial.get("sentiment", {}), final.get("sentiment", {})art == -1:
+                ),
+                "readability_change": self._calculate_metric_change(
+                    initial.get("readability", {}), final.get("readability", {}) content.find("\n\n", snippet_idx)
+                ),
+                "structure_change": self._calculate_metric_change(0)
+                    initial.get("content_structure", {}),
+                    final.get("content_structure", {}),the paragraph
+                ),
+                "style_change": self._calculate_metric_change(                    initial.get("writing_style", {}), final.get("writing_style", {})                ),            },        }    def _calculate_metric_change(        self, initial: Dict[str, Any], final: Dict[str, Any]    ) -> float:        """Calculate the percentage of change between initial and final metrics."""        if not initial or not final:            return 0.0        total_fields = 0        changed_fields = 0        for key in initial:            if key in final:                total_fields += 1                if initial[key] != final[key]:                    changed_fields += 1        return changed_fields / max(total_fields, 1)    def _get_timestamp(self) -> str:        """Get current timestamp in ISO format."""        from datetime import datetime        return datetime.now().isoformat()    def _store_analysis_document(self, manuscript_id: str, analysis: Dict[str, Any]) -> str:        """Store analysis in vector store."""        try:            doc = Document(                page_content=json.dumps(analysis, indent=2),                metadata={                    "type": "content_analysis",                    "manuscript_id": manuscript_id,                    "timestamp": self._get_timestamp()                }            )            return self.document_store.db.store_documents_with_embeddings("analysis", [doc])        except Exception as e:            logger.error(f"Error storing analysis: {e}")            return None

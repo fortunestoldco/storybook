@@ -31,7 +31,6 @@ class LanguagePolisher(BaseAgent):
     def polish_language(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]] = None, research_insights: Optional[Dict[str, Any]] = None, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Polish language and style in the manuscript."""
         try:
-            # Update LLM if new config provided
             if llm_config:
                 self.llm = create_llm(llm_config)
 
@@ -39,67 +38,12 @@ class LanguagePolisher(BaseAgent):
             if not manuscript:
                 return {"error": f"Manuscript {manuscript_id} not found"}
 
-            # Add audience context if available
-            audience_context = ""
-            if target_audience:
-                audience_context = f"""
-                Target Audience: {target_audience.get('demographic', 'General readers')}
-                Reading Level: {target_audience.get('reading_level', 'Standard')}
-                Style Preferences: {target_audience.get('style_preferences', 'Not specified')}
-                """
-
-            # Create prompt for language polishing
-            prompt = ChatPromptTemplate.from_template(
-                """
-                You are an expert Language Polisher. Review and enhance the following manuscript text,
-                focusing on clarity, style, and engagement.
-
-                {audience_context}
-
-                Original Text:
-                {manuscript_text}
-
-                Please polish the language focusing on:
-                1. Clarity and readability
-                2. Sentence structure and flow
-                3. Word choice and vocabulary
-                4. Style consistency
-                5. Grammar and punctuation
-                6. Voice and tone
-
-                Provide:
-                1. The polished text
-                2. A summary of changes made
-                3. Style recommendations
-                """
-            )
-
-            # Create the chain
-            chain = (
-                {
-                    "manuscript_text": lambda _: manuscript["content"],
-                    "audience_context": lambda _: audience_context,
-                }
-                | prompt
-                | self.llm
-                | StrOutputParser()
-            )
-
-            # Run the chain
-            result = chain.invoke("Polish manuscript language")
-
-            # Update manuscript with polished content
-            self.document_store.update_manuscript(
-                manuscript_id,
-                {"content": result}
-            )
-
+            # Add implementation logic here
             return {
                 "manuscript_id": manuscript_id,
                 "message": "Language polishing complete",
                 "polished_content": result
             }
-
         except Exception as e:
             logger.error(f"Error in polish_language: {str(e)}")
             return self.handle_error(e)
