@@ -40,7 +40,7 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> StateGraph:
     
     channels = {
         "manuscript": LastValue(Dict[str, Any]),  # Specify type as Dict[str, Any]
-        "characters": LastValue(default=[]),
+        "characters": LastValue(List[Dict[str, Any]]),  # Changed from default parameter
         "research": LastValue(default={}),
         "analysis": LastValue(default={}),
         "improvements": LastValue(default=[]),
