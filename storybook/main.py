@@ -11,7 +11,7 @@ from langserve import add_routes
 from pydantic import BaseModel, Field
 
 # Local imports
-from storybook.graph import storybook
+from storybook.graph import storybook, build_storybook
 from storybook.db.document_store import DocumentStore
 
 # Configure logging
@@ -176,11 +176,11 @@ async def start_transformation(request: ManuscriptTransformRequest):
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    return {"status": "ok"}
+    """Health check endpoint required by Cloud Run."""
+    return {"status": "healthy"}
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
