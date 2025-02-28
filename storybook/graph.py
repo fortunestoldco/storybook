@@ -24,6 +24,12 @@ from storybook.agents import (
 )
 from storybook.config import validate_agent_config, STATES
 
+from .agents.character_analyst import CharacterAnalyst
+from .agents.subplot_weaver import SubplotWeaver
+from .agents.theme_enhancer import ThemeEnhancer
+from .agents.pacing_editor import PacingEditor
+from .agents.world_builder import WorldBuilder
+
 logger = logging.getLogger(__name__)
 
 class GraphState(TypedDict):
@@ -38,35 +44,82 @@ class GraphState(TypedDict):
 def build_storybook(config: Optional[Dict[str, Any]] = None) -> StateGraph:
     """Build the storybook processing graph."""
     
-    # Define channel types
-    channels = {
-        "manuscript": LastValue(Dict[str, Any]),
-        "characters": LastValue(List[Dict[str, Any]]),  # No default parameter
-        "subplots": LastValue(List[Dict[str, Any]]),
-        "state": LastValue(str)
-    }
-
     # Create workflow graph
-    workflow = StateGraph(channels=channels)
+    workflow = StateGraph()
+    
+    # Add channels
+    workflow.add_channel("manuscript", LastValue(Dict[str, Any]))
+    workflow.add_channel("characters", LastValue(List[Dict[str, Any]]))
+    workflow.add_channel("subplots", LastValue(List[Dict[str, Any]]))
+    workflow.add_channel("themes", LastValue(List[Dict[str, Any]]))
+    workflow.add_channel("world_building", LastValue(Dict[str, Any]))
+    workflow.add_channel("state", LastValue(str))
 
-    # Define node functions
+    # Initialize agents
+    character_analyst = CharacterAnalyst()
+    subplot_weaver = SubplotWeaver()
+    theme_enhancer = ThemeEnhancer()
+    pacing_editor = PacingEditor()
+    world_builder = WorldBuilder()
+
     @workflow.node
     def analyze_characters(state):
-        return {"characters": []}
+        manuscript = state["manuscript"]
+        results = character_analyst.process_manuscript(manuscript["id"])
+        return {"characters": results}
 
     @workflow.node
-    def generate_subplots(state):
-        return {"subplots": []}
+    def develop_subplots(state):
+        manuscript = state["manuscript"]
+        characters = state["characters"]
+        results = subplot_weaver.process_manuscript(
+            manuscript["id"], 
+            characters=characters
+        )
+        return {"subplots": results}
+
+    @workflow.node
+    def enhance_themes(state):
+        manuscript = state["manuscript"]
+        characters = state["characters"]
+        subplots = state["subplots"]
+        results = theme_enhancer.process_manuscript(
+            manuscript["id"],
+            characters=characters,
+            subplots=subplots
+        )
+        return {"themes": results}
+
+    @workflow.node
+    def build_world(state):
+        manuscript = state["manuscript"]
+        results = world_builder.process_manuscript(manuscript["id"])
+        return {"world_building": results}
+
+    @workflow.node
+    def edit_pacing(state):
+        manuscript = state["manuscript"]
+        subplots = state["subplots"]
+        results = pacing_editor.process_manuscript(
+            manuscript["id"],
+            subplots=subplots
+        )
+        return {"manuscript": results}
 
     # Set up graph structure
     workflow.set_entry_point("analyze_characters")
-    workflow.add_edge("analyze_characters", "generate_subplots")
+    workflow.add_edge("analyze_characters", "develop_subplots")
+    workflow.add_edge("develop_subplots", "enhance_themes")
+    workflow.add_edge("enhance_themes", "build_world")
+    workflow.add_edge("build_world", "edit_pacing")
     
     # Initialize state
     workflow.set_initial_state({
         "manuscript": {},
         "characters": [],
         "subplots": [],
+        "themes": [],
+        "world_building": {},
         "state": "start"
     })
 
