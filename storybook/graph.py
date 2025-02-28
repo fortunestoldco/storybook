@@ -52,12 +52,14 @@ async def develop_creative(state: State, *, config: RunnableConfig) -> Dict[str,
     subplot_result = await subplot_agent.process_manuscript(state.manuscript)
     
     return {
+        "characters": AgentOutput(content=char_result, timestamp=datetime.now(), agent_id="character_developer"),
+        "dialogue": AgentOutput(content=dialog_result, timestamp=datetime.now(), agent_id="dialogue_enhancer"),
         "world_building": AgentOutput(content=world_result, timestamp=datetime.now(), agent_id="world_builder"),
         "subplots": AgentOutput(content=subplot_result, timestamp=datetime.now(), agent_id="subplot_weaver"),
         "current_step": "creative_complete"
     }
 
-async def story_development(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
+async def develop_story(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
     """Story development node."""
     arc_agent = StoryArcAnalyst(config)
     lang_agent = LanguagePolisher(config)
@@ -71,7 +73,7 @@ async def story_development(state: State, *, config: RunnableConfig) -> Dict[str
         "current_step": "story_complete"
     }
 
-async def quality_review(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
+async def review_quality(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
     """Quality review node."""
     agent = QualityReviewer(config)
     result = await agent.process_manuscript(state.manuscript)
@@ -87,19 +89,19 @@ async def quality_review(state: State, *, config: RunnableConfig) -> Dict[str, A
 # Build graph
 builder = StateGraph(State, input=InputState, config_schema=Configuration)
 
-# Add nodes
-builder.add_node("market_research", market_research)
-builder.add_node("content_analysis", content_analysis)
-builder.add_node("creative_development", creative_development)
-builder.add_node("story_development", story_development)
-builder.add_node("quality_review", quality_review)
+# Add nodes with new names
+builder.add_node("research_market", research_market)
+builder.add_node("analyze_content", analyze_content)
+builder.add_node("develop_creative", develop_creative)
+builder.add_node("develop_story", develop_story)
+builder.add_node("review_quality", review_quality)
 
-# Add edges
-builder.add_edge("__start__", "market_research")
-builder.add_edge("market_research", "content_analysis")
-builder.add_edge("content_analysis", "creative_development")
-builder.add_edge("creative_development", "story_development")
-builder.add_edge("story_development", "quality_review")
+# Add edges with new node names
+builder.add_edge("__start__", "research_market")
+builder.add_edge("research_market", "analyze_content")
+builder.add_edge("analyze_content", "develop_creative")
+builder.add_edge("develop_creative", "develop_story")
+builder.add_edge("develop_story", "review_quality")
 
 # Compile graph
 graph = builder.compile()
