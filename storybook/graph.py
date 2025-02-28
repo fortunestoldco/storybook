@@ -74,34 +74,55 @@ def build_storybook(config: RunnableConfig) -> StateGraph:
     """Build and return the hierarchical storybook processing graph."""
     builder = StateGraph(State, input=InputState, config_schema=Configuration)
     
-    # Add supervisor nodes with stream support
-    for node in ["research_team", "creative_team", "quality_team"]:
-        builder.add_node(node, globals()[f"{node}_supervisor"])
+    # Add individual agent nodes
+    agents = {
+        "research_team": {
+            "supervisor": "research_team_supervisor",
+            "agents": ["market_researcher", "content_analyzer"]
+        },
+        "creative_team": {
+            "supervisor": "creative_team_supervisor",
+            "agents": ["character_developer", "dialogue_enhancer", "world_builder", "subplot_weaver"]
+        },
+        "quality_team": {
+            "supervisor": "quality_team_supervisor",
+            "agents": ["story_arc_analyst", "language_polisher", "quality_reviewer"]
+        }
+    }
 
-    # Add stream-enabled edges
-    builder.add_edge("__start__", "research_team")
-    builder.add_edge("research_team", "creative_team")
-    builder.add_edge("creative_team", "quality_team")
+    # Add all nodes and their connections
+    for team, structure in agents.items():
+        # Add supervisor
+        builder.add_node(structure["supervisor"], globals()[structure["supervisor"]])
+        
+        # Add team agents and connect to supervisor
+        for agent in structure["agents"]:
+            builder.add_node(agent, globals()[agent])
+            builder.add_edge(agent, structure["supervisor"])
+
+    # Add high-level team routing
+    builder.add_edge("__start__", "research_team_supervisor")
+    builder.add_edge("research_team_supervisor", "creative_team_supervisor")
+    builder.add_edge("creative_team_supervisor", "quality_team_supervisor")
 
     def should_revise(state: State) -> str:
-        """Strongly typed conditional routing"""
-        return "creative_team" if state.quality_review.content.get("needs_revision", False) else "__end__"
+        return "creative_team_supervisor" if state.quality_review.content.get("needs_revision", False) else "__end__"
 
-    # Add conditional edges with proper parameter name
+    # Add conditional edges
     builder.add_conditional_edges(
-        "quality_team",
-        path=should_revise  # Ensure the path function handles the logic
+        "quality_team_supervisor",
+        path=should_revise
     )
 
     # Configure graph properties
     graph = builder.compile(
         checkpointer=MemorySaver(),
         debug=config.get("debug", False),
-        interrupt_after=["research_team", "creative_team", "quality_team"]
+        interrupt_after=[f"{team}_supervisor" for team in agents.keys()]
     )
     
-    graph.name = "HierarchicalStoryBookGraph"
-    graph.stream_mode = "updates"  # Enable progress streaming
+    graph.name = "DetailedStoryBookGraph"
+    graph.stream_mode = "updates"
     return graph
 
 __all__ = ["build_storybook"]
