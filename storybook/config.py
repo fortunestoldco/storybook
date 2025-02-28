@@ -1,15 +1,18 @@
 ﻿from __future__ import annotations
 
-# Standard imports
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 import os
 
-# LLM Provider imports
+# LLM imports
+from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_community.llms import Replicate, LlamaCpp
 from langchain_community.chat_models import ChatOllama
 from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
+
+# Local imports
+from storybook.graph import LLMProvider
 
 # Environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -45,20 +48,16 @@ def get_llm(
     model: Optional[str] = None,
     temperature: float = 0.7,
     use_replicate: bool = False,
-):
-    """Get a configured LLM instance."""
-    if use_replicate:
-        return Replicate(
-            model=model or DEFAULT_REPLICATE_MODEL,
-            temperature=temperature,
-            api_key=REPLICATE_API_TOKEN,
-        )
-    else:
-        return ChatOpenAI(
-            model=model or DEFAULT_OPENAI_MODEL,
-            temperature=temperature,
-            api_key=OPENAI_API_KEY,
-        )
+) -> BaseChatModel:
+    """Get a configured LLM instance with default settings."""
+    default_config = {
+        "provider": LLMProvider.REPLICATE if use_replicate else LLMProvider.OPENAI,
+        "config": {
+            "model_name": model or (DEFAULT_REPLICATE_MODEL if use_replicate else DEFAULT_OPENAI_MODEL),
+            "temperature": temperature
+        }
+    }
+    return create_llm(default_config)
 
 def create_llm(llm_config: Dict[str, Any]) -> BaseChatModel:
     """Create an LLM instance based on configuration."""

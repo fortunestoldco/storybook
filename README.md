@@ -62,6 +62,28 @@ export OPENAI_API_KEY="your_openai_key"  # Optional
 uvicorn storybook.main:app --reload
 ```
 
+## Setup Local Models
+
+For local model support (llama.cpp), run:
+
+```bash
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Download required models
+python scripts/download_models.py
+```
+
+## Environment Configuration
+
+1. Copy `.env.example` to `.env`
+2. Fill in your API keys and configuration
+3. Adjust model paths if needed
+
 ## API Endpoints
 
 - POST `/manuscripts`: Upload a new manuscript
