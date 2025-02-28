@@ -77,6 +77,18 @@ class WorldBuilder(BaseAgent):
             logger.error(f"Error in build_world: {str(e)}")
             return self.handle_error(e)
 
+    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Process manuscript for world building."""
+        try:
+            return self.build_world(
+                manuscript_id,
+                target_audience,
+                research_insights
+            )
+        except Exception as e:
+            logger.error(f"Error in world building: {str(e)}")
+            return self.handle_error(e)
+
     def _extract_settings(self, content: str, target_audience: Optional[Dict[str, Any]] = None, research_insights: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Extract settings and locations from the manuscript."""
         try:

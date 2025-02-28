@@ -63,3 +63,15 @@ class DialogueEnhancer(BaseAgent):
         except Exception as e:
             logger.error(f"Error in enhance_dialogue: {str(e)}")
             return self.handle_error(e)
+
+    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Process manuscript for dialogue enhancement."""
+        try:
+            return self.enhance_dialogue(
+                manuscript_id,
+                target_audience,
+                research_insights
+            )
+        except Exception as e:
+            logger.error(f"Error in dialogue enhancement: {str(e)}")
+            return self.handle_error(e)

@@ -81,6 +81,18 @@ class MarketResearcher(BaseAgent):
             logger.error(f"Error in research_market: {str(e)}")
             return self.handle_error(e)
 
+    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Process manuscript for market research."""
+        try:
+            return self.research_market(
+                manuscript_id,
+                target_audience,
+                research_insights
+            )
+        except Exception as e:
+            logger.error(f"Error in market research: {str(e)}")
+            return self.handle_error(e)
+
     def _infer_genre_and_audience(self, content: str) -> Dict[str, Any]:
         """Infer the genre and target audience of the manuscript."""
         try:
@@ -308,19 +320,16 @@ class MarketResearcher(BaseAgent):
                 text = item["results"].lower()
                 
                 # Extract format preferences using raw string
-                if "format" in text:
-                    formats = re.findall(fr"prefer\s+(ebook|audiobook|print|hardcover|paperback)", text)
-                    preferences["format"].extend(formats)
+                formats = re.findall(fr"prefer\s+(ebook|audiobook|print|hardcover|paperback)", text)
+                preferences["format"].extend(formats)
                 
                 # Extract genre preferences
-                if "genre" in text:
-                    genres = re.findall(fr"prefer\s+(\w+)\s+(?:books|fiction|novels)", text)
-                    preferences["genre"].extend(genres)
+                genres = re.findall(fr"prefer\s+(\w+)\s+(?:books|fiction|novels)", text)
+                preferences["genre"].extend(genres)
                 
                 # Extract content preferences
-                if "content" in text:
-                    content = re.findall(fr"prefer\s+([\w\s]+)\s+content", text)
-                    preferences["content"].extend(content)
+                content = re.findall(fr"prefer\s+([\w\s]+)\s+content", text)
+                preferences["content"].extend(content)
                 
                 # Extract pricing preferences
                 if "price" in text or "pricing" in text:

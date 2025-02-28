@@ -48,6 +48,18 @@ class LanguagePolisher(BaseAgent):
             logger.error(f"Error in polish_language: {str(e)}")
             return self.handle_error(e)
 
+    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Process manuscript for language polishing."""
+        try:
+            return self.polish_language(
+                manuscript_id,
+                target_audience,
+                research_insights
+            )
+        except Exception as e:
+            logger.error(f"Error in language polishing: {str(e)}")
+            return self.handle_error(e)
+
     def _analyze_language_style(
         self, content: str, target_audience: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:

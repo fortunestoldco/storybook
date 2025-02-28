@@ -819,3 +819,27 @@ class SubplotWeaver(BaseAgent):
                 )
 
         return updated_content
+
+    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Process manuscript for subplot integration."""
+        try:
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
+
+            subplots = self._identify_subplots(manuscript["content"])
+            enhanced_subplots = self._enhance_subplots(
+                manuscript_id,
+                subplots,
+                target_audience,
+                research_insights
+            )
+
+            return {
+                "manuscript_id": manuscript_id,
+                "subplots": enhanced_subplots,
+                "status": "success"
+            }
+        except Exception as e:
+            logger.error(f"Error in subplot weaving: {str(e)}")
+            return self.handle_error(e)

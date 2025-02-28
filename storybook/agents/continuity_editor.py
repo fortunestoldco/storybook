@@ -25,3 +25,15 @@ class ContinuityEditor(BaseAgent):
         super().__init__(llm_config)
         self.document_store = DocumentStore()
         self.document_tools = DocumentTools()
+
+    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Process manuscript for continuity checking."""
+        try:
+            return self.check_continuity(
+                manuscript_id,
+                target_audience,
+                research_insights
+            )
+        except Exception as e:
+            logger.error(f"Error in continuity checking: {str(e)}")
+            return self.handle_error(e)

@@ -51,3 +51,7 @@ class BaseAgent:
             "message": str(error),
             "type": error.__class__.__name__
         }
+
+    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Abstract method to be implemented by each agent."""
+        raise NotImplementedError("Each agent must implement process_manuscript")

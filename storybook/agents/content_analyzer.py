@@ -165,6 +165,28 @@ class ContentAnalyzer(BaseAgent):
 
         return progress_analysis
 
+    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Process manuscript for content analysis."""
+        try:
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
+
+            analysis = self._analyze_content(
+                manuscript["content"],
+                target_audience,
+                research_insights
+            )
+
+            return {
+                "manuscript_id": manuscript_id,
+                "analysis": analysis,
+                "status": "success"
+            }
+        except Exception as e:
+            logger.error(f"Error in content analysis: {str(e)}")
+            return self.handle_error(e)
+
     def _analyze_sentiment(self, content: str) -> Dict[str, Any]:
         """Analyze emotional tone and sentiment of the content."""
         # Implementation using LLM
@@ -353,7 +375,8 @@ class ContentAnalyzer(BaseAgent):
             if key in final:
                 total_fields += 1
                 if initial[key] != final[key]:
-                    changed_fields += 1
+                    changed_fields += 1  # Add missing implementation
+                
         return changed_fields / max(total_fields, 1)
 
     def _get_timestamp(self) -> str:

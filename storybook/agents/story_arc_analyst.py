@@ -71,6 +71,18 @@ class StoryArcAnalyst(BaseAgent):
             logger.error(f"Error in analyze_story_arc: {str(e)}")
             return self.handle_error(e)
 
+    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Process manuscript for story arc analysis."""
+        try:
+            return self.analyze_story_arc(
+                manuscript_id,
+                target_audience,
+                research_insights
+            )
+        except Exception as e:
+            logger.error(f"Error in story arc analysis: {str(e)}")
+            return self.handle_error(e)
+
     def _extract_preferences(self, research: List[Dict[str, Any]]) -> Dict[str, Any]:
         try:
             # Add implementation...
@@ -322,6 +334,9 @@ class StoryArcAnalyst(BaseAgent):
         target_audience: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Apply story arc refinements to the manuscript."""
+        if not improvement_plan.get("key_scene_changes"):
+            return content  # Add missing return
+
         # Extract key scene changes from the improvement plan
         key_scene_changes = improvement_plan.get("key_scene_changes", "")
 

@@ -229,3 +229,31 @@ class CharacterDeveloper(BaseAgent):
         profile["id"] = character_id
 
         return profile
+
+    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Process manuscript for character development."""
+        try:
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
+
+            characters = self._extract_characters(manuscript["content"])
+            character_profiles = []
+
+            for character in characters:
+                profile = self.create_character_profile(
+                    manuscript_id,
+                    character,
+                    target_audience,
+                    research_insights
+                )
+                character_profiles.append(profile)
+
+            return {
+                "manuscript_id": manuscript_id,
+                "characters": character_profiles,
+                "status": "success"
+            }
+        except Exception as e:
+            logger.error(f"Error in character development: {str(e)}")
+            return self.handle_error(e)

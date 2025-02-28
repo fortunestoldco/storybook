@@ -79,6 +79,18 @@ class QualityReviewer(BaseAgent):  # Add inheritance
             logger.error(f"Error in finalize_manuscript: {str(e)}")
             return self.handle_error(e)
 
+    def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Process manuscript for quality review."""
+        try:
+            return self.review_quality(
+                manuscript_id,
+                target_audience,
+                research_insights
+            )
+        except Exception as e:
+            logger.error(f"Error in quality review: {str(e)}")
+            return self.handle_error(e)
+
     def _review_quality(
         self,
         content: str,
