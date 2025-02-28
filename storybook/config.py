@@ -3,6 +3,7 @@ from __future__ import annotations
 # Standard library imports
 from typing import Dict, Any, Optional, Union
 import os
+import logging
 from pathlib import Path
 
 # Third-party imports
@@ -12,6 +13,8 @@ from langchain_anthropic import ChatAnthropic
 from langchain_community.llms import Replicate, LlamaCpp
 from langchain_community.chat_models import ChatOllama
 from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
+
+logger = logging.getLogger(__name__)
 
 # Environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -141,6 +144,38 @@ def validate_llm_config(llm_config: Dict[str, Any]) -> bool:
         if not config.get("model_name"):
             raise ValueError("model_name is required for Replicate")
 
+    return True
+
+def validate_agent_config(config: Optional[Dict[str, Any]] = None) -> bool:
+    """Validate agent configuration."""
+    if not config:
+        return True  # Default config is valid
+        
+    required_fields = ["provider"]
+    if not all(field in config for field in required_fields):
+        logger.error(f"Missing required fields in agent config: {required_fields}")
+        return False
+        
+    provider = config.get("provider", "").lower()
+    provider_configs = {
+        "openai": ["api_key", "model_name"],
+        "anthropic": ["api_key", "model_name"],
+        "replicate": ["api_token", "model"],
+        "llamacpp": ["model_path"],
+        "ollama": ["model_name"]
+    }
+    
+    if provider not in provider_configs:
+        logger.error(f"Invalid provider: {provider}")
+        return False
+        
+    provider_required = provider_configs[provider]
+    provider_config = config.get("config", {})
+    
+    if not all(field in provider_config for field in provider_required):
+        logger.error(f"Missing required fields for {provider}: {provider_required}")
+        return False
+        
     return True
 
 # Collection Names
