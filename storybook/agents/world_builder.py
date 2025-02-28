@@ -92,8 +92,53 @@ class WorldBuilder(BaseAgent):
     def _extract_settings(self, content: str, target_audience: Optional[Dict[str, Any]] = None, research_insights: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Extract settings and locations from the manuscript."""
         try:
-            # Implementation here
-            return []
+            prompt = ChatPromptTemplate.from_template(
+                """
+                You are a Setting Identification Specialist. Analyze the following manuscript content and identify all settings and locations mentioned. Focus on settings that are important to the story.
+
+                Manuscript Content:
+                {content}
+
+                {audience_context}
+
+                List each setting's name and a brief description of its role in the story. Format your response as a JSON list of objects with "name" and "description" keys.
+                Example:
+                [
+                    {"name": "Hogwarts", "description": "A magical school for wizards and witches."},
+                    {"name": "Diagon Alley", "description": "A hidden street where wizards and witches shop for magical supplies."}
+                ]
+                """
+            )
+
+            # Add audience context if available
+            audience_context = ""
+            if target_audience:
+                audience_context = f"""
+                Target Audience Information:
+                - Demographic: {target_audience.get('demographic', 'General readers')}
+                - Reading Preferences: {target_audience.get('reading_preferences', {}).get('settings', 'Various preferences')}
+                
+                Consider the target audience preferences when identifying settings.
+                """
+
+            chain = (
+                {
+                    "content": lambda _: content,
+                    "audience_context": lambda _: audience_context,
+                }
+                | prompt
+                | self.llm
+                | StrOutputParser()
+            )
+
+            settings_str = chain.invoke("Extract settings")
+            try:
+                settings_list = json.loads(settings_str)
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse settings JSON: {settings_str}")
+                settings_list = []
+
+            return settings_list
         except Exception as e:
             logger.error(f"Error extracting settings: {e}")
             return []

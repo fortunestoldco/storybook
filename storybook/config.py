@@ -121,6 +121,14 @@ def create_llm(llm_config: Dict[str, Any]) -> BaseChatModel:
             trust_remote_code=config.get("trust_remote_code", True),
         )
 
+    elif provider == LLMProvider.CUSTOM:
+        return CustomLLM(
+            model_path=config.get("model_path"),
+            temperature=config.get("temperature", 0.7),
+            max_tokens=config.get("max_tokens"),
+            streaming=config.get("streaming", False),
+        )
+
     raise ValueError(f"Unsupported LLM provider: {provider}")
 
 def validate_llm_config(llm_config: Dict[str, Any]) -> bool:
@@ -284,3 +292,18 @@ STATES = {
     "FINALIZE": "finalize",
     "END": "end",
 }
+
+class CustomLLM(BaseChatModel):
+    def __init__(self, model_path: str, temperature: float = 0.7, max_tokens: int = 1000, streaming: bool = False):
+        self.model_path = model_path
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.streaming = streaming
+
+    def generate(self, prompt: str) -> str:
+        # Implement the logic to generate text using the custom LLM
+        pass
+
+    def stream_generate(self, prompt: str):
+        # Implement the logic to stream generate text using the custom LLM
+        pass

@@ -37,3 +37,44 @@ class ContinuityEditor(BaseAgent):
         except Exception as e:
             logger.error(f"Error in continuity checking: {str(e)}")
             return self.handle_error(e)
+
+    def check_continuity(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]] = None, research_insights: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Check narrative continuity in the manuscript."""
+        try:
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
+
+            content = manuscript.get("content", "")
+
+            # Define the prompt for continuity checking
+            prompt = ChatPromptTemplate.from_template(
+                """
+                You are a Continuity Editor. Analyze the following manuscript for narrative continuity issues.
+                Identify any inconsistencies in plot, character development, setting, and timeline.
+                Provide a detailed report highlighting the issues and suggesting possible resolutions.
+
+                Manuscript Content:
+                {content}
+                """
+            )
+
+            # Create the chain
+            chain = (
+                {"content": lambda _: content}
+                | prompt
+                | self.llm
+                | StrOutputParser()
+            )
+
+            # Run the chain
+            continuity_report = chain.invoke("Check continuity")
+
+            return {
+                "manuscript_id": manuscript_id,
+                "continuity_report": continuity_report,
+                "status": "success"
+            }
+        except Exception as e:
+            logger.error(f"Error in check_continuity: {str(e)}")
+            return self.handle_error(e)

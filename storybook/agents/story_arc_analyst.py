@@ -87,8 +87,39 @@ class StoryArcAnalyst(BaseAgent):
 
     def _extract_preferences(self, research: List[Dict[str, Any]]) -> Dict[str, Any]:
         try:
-            # Add implementation...
+            preferences = {
+                "format": [],
+                "genre": [],
+                "content": [],
+                "pricing": []
+            }
+            
+            for item in research:
+                text = item["results"].lower()
+                
+                # Extract format preferences using raw string
+                formats = re.findall(fr"prefer\s+(ebook|audiobook|print|hardcover|paperback)", text)
+                preferences["format"].extend(formats)
+                
+                # Extract genre preferences
+                genres = re.findall(fr"prefer\s+(\w+)\s+(?:books|fiction|novels)", text)
+                preferences["genre"].extend(genres)
+                
+                # Extract content preferences
+                content = re.findall(fr"prefer\s+([\w\s]+)\s+content", text)
+                preferences["content"].extend(content)
+                
+                # Extract pricing preferences
+                if "price" in text or "pricing" in text:
+                    pricing = re.findall(r"\$\d+(?:\.\d{2})?", text)
+                    preferences["pricing"].extend(pricing)
+            
+            # Remove duplicates and sort
+            for key in preferences:
+                preferences[key] = sorted(list(set(preferences[key])))
+            
             return preferences
+            
         except Exception as e:
             logger.error(f"Error extracting preferences: {str(e)}")
             return {"format": [], "genre": [], "content": [], "pricing": []}

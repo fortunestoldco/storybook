@@ -32,17 +32,32 @@ class LanguagePolisher(BaseAgent):
         """Polish language and style in the manuscript."""
         try:
             if llm_config:
-                self.update_llm(llm_config)  # Missing this
+                self.update_llm(llm_config)
 
             manuscript = self.document_store.get_manuscript(manuscript_id)
             if not manuscript:
                 return {"error": f"Manuscript {manuscript_id} not found"}
 
-            # Add implementation logic here
+            # Analyze the language style
+            style_analysis = self._analyze_language_style(
+                manuscript["content"], target_audience
+            )
+
+            # Identify improvement areas
+            improvement_areas = self._identify_improvement_areas(
+                manuscript["content"], style_analysis, target_audience, research_insights
+            )
+
+            # Polish selected sections
+            polished_content, improved_sections = self._polish_sections(
+                manuscript["content"], improvement_areas, style_analysis, target_audience
+            )
+
             return {
                 "manuscript_id": manuscript_id,
                 "message": "Language polishing complete",
-                "polished_content": result
+                "polished_content": polished_content,
+                "improved_sections": improved_sections,
             }
         except Exception as e:
             logger.error(f"Error in polish_language: {str(e)}")
