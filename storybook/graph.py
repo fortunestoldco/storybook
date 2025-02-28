@@ -16,7 +16,12 @@ from storybook.config import Configuration
 async def research_market(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
     """Market research node."""
     agent = MarketResearcher(config)
-    result = await agent.process_manuscript(state.manuscript)
+    result = await agent.process_manuscript({
+        "title": state.title,
+        "text": state.manuscript,
+        "notes": state.notes,
+        "llm_provider": state.llm_provider
+    })
     return {
         "market_analysis": AgentOutput(
             content=result,
@@ -88,7 +93,7 @@ async def review_quality(state: State, *, config: RunnableConfig) -> Dict[str, A
 
 def build_storybook(config: RunnableConfig) -> StateGraph:
     """Build and return the storybook processing graph."""
-    # Initialize workflow
+    # Initialize workflow with new input schema
     builder = StateGraph(State, input=InputState, config_schema=Configuration)
 
     # Add nodes
