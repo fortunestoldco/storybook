@@ -3,6 +3,7 @@ from typing import Dict, List, Any, Optional
 import logging
 import json
 import re
+from datetime import datetime
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -23,13 +24,8 @@ class WorldBuilder(BaseAgent):
         super().__init__(llm_config)
         self.document_store = DocumentStore()
 
-    def build_world(
-        self,
-        manuscript_id: str,
-        target_audience: Optional[Dict[str, Any]] = None,
-        research_insights: Optional[Dict[str, Any]] = None,
-        llm_config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    def build_world(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]] = None,
+        research_insights: Optional[Dict[str, Any]] = None, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Identify and enhance settings and world-building elements."""
         try:
             if llm_config:
