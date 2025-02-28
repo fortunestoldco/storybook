@@ -42,7 +42,7 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
 
     # Create channels for state management
     channels = {
-        "manuscript": LastValue(),
+        "manuscript": LastValue(Dict[str, Any]),  # Specify type as Dict[str, Any]
         "characters": LastValue(default=[]),
         "research": LastValue(default={}),
         "analysis": LastValue(default={}),
