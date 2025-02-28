@@ -14,6 +14,7 @@ from langchain_core.output_parsers import StrOutputParser
 # MongoDB Configuration
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "storybook")
+MONGODB_VECTOR_COLLECTION = os.getenv("MONGODB_VECTOR_COLLECTION", "vectors")
 
 # API Configuration
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
@@ -59,6 +60,59 @@ COLLECTION_WORLDS = os.getenv("COLLECTION_WORLDS", "worlds")
 COLLECTION_SUBPLOTS = os.getenv("COLLECTION_SUBPLOTS", "subplots")
 COLLECTION_RESEARCH = os.getenv("COLLECTION_RESEARCH", "research")
 COLLECTION_ANALYSIS = os.getenv("COLLECTION_ANALYSIS", "analysis")
+
+# Vector Store Configuration
+VECTOR_NAMESPACE = f"{MONGODB_DB_NAME}.{MONGODB_VECTOR_COLLECTION}"
+VECTOR_INDEX_NAME = os.getenv("VECTOR_INDEX_NAME", "vector_index")
+
+# Vector Search Configuration
+VECTOR_SEARCH_INDEX_DEFAULTS = {
+    "name": "vector_search_index",
+    "definition": {
+        "mappings": {
+            "dynamic": True,
+            "fields": {
+                "embedding": {
+                    "dimensions": 1536,  # OpenAI embeddings dimension
+                    "similarity": "cosine",
+                    "type": "knnVector",
+                },
+                "text": {"type": "string"},
+                "metadata": {
+                    "type": "document"
+                }
+            }
+        }
+    }
+}
+
+# Collection Vector Search Configurations
+COLLECTION_VECTOR_CONFIGS = {
+    COLLECTION_MANUSCRIPTS: {
+        **VECTOR_SEARCH_INDEX_DEFAULTS,
+        "name": "manuscript_vector_index"
+    },
+    COLLECTION_CHARACTERS: {
+        **VECTOR_SEARCH_INDEX_DEFAULTS,
+        "name": "character_vector_index"
+    },
+    COLLECTION_WORLDS: {
+        **VECTOR_SEARCH_INDEX_DEFAULTS,
+        "name": "world_vector_index"
+    },
+    COLLECTION_SUBPLOTS: {
+        **VECTOR_SEARCH_INDEX_DEFAULTS,
+        "name": "subplot_vector_index"
+    },
+    COLLECTION_RESEARCH: {
+        **VECTOR_SEARCH_INDEX_DEFAULTS,
+        "name": "research_vector_index"
+    },
+    COLLECTION_ANALYSIS: {
+        **VECTOR_SEARCH_INDEX_DEFAULTS,
+        "name": "analysis_vector_index"
+    }
+}
 
 # Define the states for our state machine
 STATES = {
