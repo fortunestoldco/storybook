@@ -1,12 +1,18 @@
-﻿import os
-from typing import Optional
+﻿from __future__ import annotations
 
-from langchain_openai import ChatOpenAI
-from langchain_community.llms import Replicate
-from langchain_mongodb.docstores import MongoDBDocStore
-from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
+from importlib.metadata import version
+from typing import Any, Generator, Iterable, Iterator, List, Optional, Sequence, Union
+
+from langchain_core.documents import Document
+from langchain_core.stores import BaseStore
 from pymongo import MongoClient
-from langchain_openai import OpenAIEmbeddings
+from pymongo.collection import Collection
+from pymongo.driver_info import DriverInfo
+
+from langchain_mongodb.utils import make_serializable
+from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_community.llms import Replicate
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 

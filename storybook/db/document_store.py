@@ -1,15 +1,19 @@
-﻿from typing import Dict, List, Optional, Any
-import logging
+﻿from __future__ import annotations
+from importlib.metadata import version
+from typing import Any, Generator, Iterable, Iterator, List, Optional, Sequence, Union
 
 from langchain_core.documents import Document
+from langchain_core.stores import BaseStore
+from pymongo import MongoClient
+from pymongo.collection import Collection
+from pymongo.driver_info import DriverInfo
+
+from langchain_mongodb.utils import make_serializable
 from langchain_community.document_loaders.web_base import WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
-from langchain_mongodb.docstores import MongoDBDocStore
-from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
-from langchain_community.tools import TavilySearchResults
-from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
 
+from storybook.db.mongodb_client import MongoDBStore
 from storybook.config import (
     COLLECTION_MANUSCRIPTS,
     COLLECTION_CHARACTERS,
@@ -27,17 +31,13 @@ class DocumentStore:
 
     def __init__(self):
         """Initialize the document store."""
-        self.doc_store = MongoDBDocStore(connection_string=MONGODB_URI)
-        self.vector_store = MongoDBAtlasVectorSearch.from_connection_string(
-            connection_string=MONGODB_URI,
-            namespace=f"{MONGODB_DB_NAME}.vectors",
-            embedding=OpenAIEmbeddings(),
-            index_name="vector_index"
-        )
+        self.db = MongoDBStore()
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1500, chunk_overlap=150
         )
-        self.tavily_search = TavilySearchResults(api_wrapper=TavilySearchAPIWrapper())
+        # Remove direct embedding initialization
+        # self.embeddings = OpenAIEmbeddings()
+        # Use the vector store from MongoDBStore instead
 
     def store_manuscript(
         self, title: str, content: str, metadata: Optional[Dict[str, Any]] = None
@@ -114,33 +114,17 @@ class DocumentStore:
         all_documents = []
         metadata = {"source_type": "web", "tags": tags or []}
 
-        # First try Tavily search for enhanced results
+        # Use WebBaseLoader
         try:
-            search_results = self.tavily_search.run(urls[0])  # Search first URL as query
-            if search_results:
-                for result in search_results:
-                    doc = Document(
-                        page_content=result.get("content", ""),
-                        metadata={
-                            **metadata,
-                            "url": result.get("url", ""),
-                            "title": result.get("title", ""),
-                        }
-                    )
-                    all_documents.append(doc)
+            loader = WebBaseLoader(urls)
+            documents = loader.load()
+            # Add metadata
+            for doc in documents:
+                doc.metadata.update(metadata)
+            all_documents.extend(documents)
         except Exception as e:
-            logger.error(f"Tavily search failed: {e}")
-            
-            # Fallback to WebBaseLoader
-            try:
-                loader = WebBaseLoader(urls)
-                documents = loader.load()
-                for doc in documents:
-                    doc.metadata.update(metadata)
-                all_documents.extend(documents)
-            except Exception as e:
-                logger.error(f"WebBaseLoader failed: {e}")
-                return []
+            logger.error(f"WebBaseLoader failed: {e}")
+            return []
 
         # Split documents
         split_documents = self.text_splitter.split_documents(all_documents)

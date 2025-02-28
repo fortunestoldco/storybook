@@ -29,12 +29,10 @@ class ContentAnalyzer:
         self.document_store = DocumentStore()
         self.document_tools = DocumentTools()
         self.embeddings = OpenAIEmbeddings()
-        self.vector_store = MongoDBAtlasVectorSearch.from_connection_string(
-            connection_string=MONGODB_URI,
-            namespace=f"{MONGODB_DB_NAME}.vectors",
-            embedding=self.embeddings,
-            index_name="vector_index"
-        )
+        self.db = MongoDBStore()
+        # Remove direct vector store initialization
+        # self.vector_store = MongoDBAtlasVectorSearch(...)
+        # Use self.db.vector_store instead for vector operations
 
     def get_tools(self):
         """Get tools available to this agent."""
