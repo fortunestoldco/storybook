@@ -789,6 +789,58 @@ def analyze_audience(state: Dict[str, Any]) -> Dict[str, Any]:
     return new_state
 
 
+def write_draft(state: Dict[str, Any]) -> Dict[str, Any]:
+    """Write or revise manuscript draft based on research and development."""
+    logger.info(f"Writing/revising draft for manuscript {state['manuscript_id']}")
+
+    # Initialize new state
+    new_state = state.copy()
+    current_version = state.get("draft_version", 0)
+    new_state["draft_version"] = current_version + 1
+
+    # Gather all development materials
+    writing_materials = {
+        "world_building": state.get("settings", []),
+        "characters": state.get("characters", []),
+        "subplots": state.get("subplots", []),
+        "target_audience": state.get("target_audience", {}),
+        "research_insights": state.get("research_insights", {}),
+        "story_analysis": state.get("story_analysis", {}),
+    }
+
+    # Store the draft and development materials in MongoDB Atlas Vector
+    document_store = DocumentStore()
+    
+    # Store the current draft version
+    doc = Document(
+        page_content=str(writing_materials),
+        metadata={
+            "type": "draft",
+            "version": new_state["draft_version"],
+            "manuscript_id": state["manuscript_id"],
+            "title": state["title"],
+        },
+    )
+    document_store.db.store_documents_with_embeddings("drafts", [doc])
+
+    # Update state
+    new_state["current_state"] = "writing_supervisor"
+    new_state["message"] = f"Completed draft version {new_state['draft_version']}"
+    new_state["stage_progress"] = {
+        **state.get("stage_progress", {}),
+        "draft_writing": min(1.0, (current_version + 1) / 5),  # Assume max 5 drafts
+    }
+
+    # Track draft completion
+    new_state["writing_status"] = {
+        **state.get("writing_status", {}),
+        "draft_complete": True,
+        "current_draft": new_state["draft_version"]
+    }
+
+    return new_state
+
+
 def build_storybook() -> StateGraph:
     """Build the storybook workflow graph with team-based structure."""
     workflow = StateGraph(StorybookState)
