@@ -360,7 +360,7 @@ class LanguagePolisher(BaseAgent):
                 if "name" not in current_area:
                     current_area["name"] = block.strip().split("\n")[0].strip() if block.strip() else ""
                     # Extract the rest of the content
-                    content_lines = block.strip().split("\n")[1:] if len(block.strip().split("\n())) > 1 else []  # Fixed line
+                    content_lines = block.strip().split("\n")[1:] if len(block.strip().split("\n")) > 1 else []  # Fixed parentheses
                     current_area["description"] = "\n".join(content_lines).strip()
                 else:
                     # Append to existing description
