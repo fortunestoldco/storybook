@@ -37,7 +37,6 @@ class LanguagePolisher(BaseAgent):
     ) -> Dict[str, Any]:
         """Polish language and style in the manuscript."""
         try:
-            # Update LLM if new config provided
             if llm_config:
                 self.llm = create_llm(llm_config)
 
@@ -107,7 +106,7 @@ class LanguagePolisher(BaseAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in polish_language: {e}")
+            logger.error(f"Error in polish_language: {str(e)}")
             return self.handle_error(e)
 
     def _analyze_language_style(

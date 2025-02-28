@@ -59,12 +59,7 @@ class StoryArcAnalyst(BaseAgent):
             return {
                 "manuscript_id": manuscript_id,
                 "arc_analysis": arc_analysis,
-                "pacing_analysis": pacing_analysis,
-                "recommendations": self._generate_recommendations(
-                    arc_analysis,
-                    pacing_analysis,
-                    target_audience
-                )
+                "pacing_analysis": pacing_analysis
             }
 
         except Exception as e:

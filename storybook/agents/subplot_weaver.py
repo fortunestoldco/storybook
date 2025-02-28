@@ -36,52 +36,55 @@ class SubplotWeaver(BaseAgent):
         research_insights: Optional[Dict[str, Any]] = None,
         llm_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """Identify and integrate subplots in the manuscript."""
-        manuscript = self.document_store.get_manuscript(manuscript_id)
-        if not manuscript:
-            return {"error": f"Manuscript {manuscript_id} not found"}
+        try:
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
 
-        # Identify existing subplots
-        existing_subplots = self._identify_subplots(
-            manuscript["content"], characters, target_audience
-        )
+            # Identify existing subplots
+            existing_subplots = self._identify_subplots(
+                manuscript["content"], characters, target_audience
+            )
 
-        # Analyze subplot potential
-        subplot_potential = self._analyze_subplot_potential(
-            manuscript["content"],
-            characters,
-            existing_subplots,
-            target_audience,
-            research_insights,
-        )
+            # Analyze subplot potential
+            subplot_potential = self._analyze_subplot_potential(
+                manuscript["content"],
+                characters,
+                existing_subplots,
+                target_audience,
+                research_insights,
+            )
 
-        # Develop and integrate subplots
-        developed_subplots = self._develop_subplots(
-            manuscript_id,
-            existing_subplots,
-            subplot_potential,
-            characters,
-            target_audience,
-            research_insights,
-        )
+            # Develop and integrate subplots
+            developed_subplots = self._develop_subplots(
+                manuscript_id,
+                existing_subplots,
+                subplot_potential,
+                characters,
+                target_audience,
+                research_insights,
+            )
 
-        # Integrate subplots into the manuscript
-        updated_content = self._integrate_subplots(
-            manuscript["content"], developed_subplots, characters, target_audience
-        )
+            # Integrate subplots into the manuscript
+            updated_content = self._integrate_subplots(
+                manuscript["content"], developed_subplots, characters, target_audience
+            )
 
-        # Store the updated manuscript
-        self.document_store.update_manuscript(
-            manuscript_id, {"content": updated_content}
-        )
+            # Store the updated manuscript
+            self.document_store.update_manuscript(
+                manuscript_id, {"content": updated_content}
+            )
 
-        return {
-            "manuscript_id": manuscript_id,
-            "existing_subplots": existing_subplots,
-            "subplot_potential": subplot_potential,
-            "developed_subplots": developed_subplots,
-            "message": f"Identified {len(existing_subplots)} existing subplots and developed {len(developed_subplots)} subplots.",
-        }
+            return {
+                "manuscript_id": manuscript_id,
+                "existing_subplots": existing_subplots,
+                "subplot_potential": subplot_potential,
+                "developed_subplots": developed_subplots,
+                "message": f"Identified {len(existing_subplots)} existing subplots and developed {len(developed_subplots)} subplots.",
+            }
+        except Exception as e:
+            logger.error(f"Error in weave_subplots: {str(e)}")
+            return self.handle_error(e)
 
     def _identify_subplots(
         self,

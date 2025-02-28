@@ -491,8 +491,3 @@ class MarketResearcher(BaseAgent):  # Add inheritance
             expectations["recommendations"] = match.group(1).strip()
 
         return expectations
-
-
-class ResearchAgent:
-    def __init__(self):
-        self.search_tool = TavilySearchResults(api_wrapper=TavilySearchAPIWrapper())

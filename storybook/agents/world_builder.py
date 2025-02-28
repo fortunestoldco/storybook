@@ -31,8 +31,8 @@ class WorldBuilder(BaseAgent):
         llm_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Identify and enhance settings and world-building elements."""
-        if "llm_config" in kwargs:
-            self.llm = create_llm(kwargs["llm_config"])
+        if llm_config:  # Changed from kwargs to llm_config
+            self.llm = create_llm(llm_config)
             
         manuscript = self.document_store.get_manuscript(manuscript_id)
         if not manuscript:
