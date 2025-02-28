@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=75.8.2", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,23 +12,24 @@ authors = [
     {name = "David James Lennon", email = "david@fortunestold.co"}
 ]
 dependencies = [
-    "langchain>=0.3.0,<0.4.0",
-    "langchain-core>=0.1.0",
-    "langchain-openai>=0.0.5",
-    "langchain-community>=0.0.10",
-    "langgraph>=0.0.10",
-    "fastapi>=0.109.0",
-    "uvicorn>=0.27.0",
-    "pymongo>=4.6.1",
+    "fastapi==0.115.9",
+    "langchain==0.3.19",
+    "langchain-community==0.3.18",
+    "langchain-core==0.3.40",
+    "langchain-mongodb==0.5.0",
+    "langchain-openai==0.3.7",
+    "langchain-text-splitters==0.3.6",
+    "langgraph==0.3.1",
+    "langserve==0.3.1",
+    "pydantic==2.10.6",
+    "pymongo==4.11.1",
     "python-dotenv>=1.0.0",
-    "pydantic>=2.0.0",
-    "replicate>=0.22.0",
-    "tavily-python>=0.2.8"
+    "uvicorn==0.34.0"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.0",
+    "pytest==8.3.4",
     "pytest-cov>=4.1.0",
     "black>=23.7.0",
     "isort>=5.12.0",
