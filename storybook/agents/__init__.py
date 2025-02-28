@@ -1,9 +1,10 @@
-"""Storybook: A LangGraph-powered workflow for transforming draft manuscripts into finished novels."""
-
-__version__ = "0.1.0"
-
 from __future__ import annotations
 
+# Standard library imports
+import logging
+from typing import Dict, Any, Optional, List
+
+# Local imports
 from storybook.agents.base import BaseAgent
 from storybook.agents.character_developer import CharacterDeveloper
 from storybook.agents.dialogue_enhancer import DialogueEnhancer
@@ -16,9 +17,10 @@ from storybook.agents.quality_reviewer import QualityReviewer
 from storybook.agents.market_researcher import MarketResearcher
 from storybook.agents.content_analyzer import ContentAnalyzer
 
+logger = logging.getLogger(__name__)
+
 __all__ = [
     "BaseAgent",
-    "ContentAnalyzer",
     "CharacterDeveloper",
     "DialogueEnhancer",
     "WorldBuilder",
@@ -27,5 +29,6 @@ __all__ = [
     "ContinuityEditor",
     "LanguagePolisher",
     "QualityReviewer",
-    "MarketResearcher"
+    "MarketResearcher",
+    "ContentAnalyzer"
 ]
