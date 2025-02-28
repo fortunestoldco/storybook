@@ -56,7 +56,7 @@ class StorybookState(TypedDict):
     # Editorial team outputs
     story_analysis: Optional[Dict[str, Any]]  # Story arc evaluation
     continuity_issues: Optional[List[Dict[str, Any]]]  # Continuity checks
-    style_analysis: Optional[Dict[str, Any]]]  # Language polish results
+    style_analysis: Optional[Dict[str, Any]]  # Language polish results
     final_review: Optional[Dict[str, Any]]  # Quality review results
 
     # Team status tracking
