@@ -29,7 +29,10 @@ class AgentOutput(BaseModel):
 
 class State(BaseModel):
     """Overall graph state."""
-    manuscript: ManuscriptState
+    title: str
+    manuscript: str
+    notes: str = ""
+    llm_provider: LLMProvider = Field(default=LLMProvider.ANTHROPIC)
     market_analysis: Optional[AgentOutput] = None
     content_analysis: Optional[AgentOutput] = None
     characters: Optional[AgentOutput] = None
@@ -42,6 +45,15 @@ class State(BaseModel):
     current_step: str = "start"
     
     model_config = {"arbitrary_types_allowed": True}
+    
+    def get_manuscript_state(self) -> ManuscriptState:
+        """Create a ManuscriptState instance from current state."""
+        return ManuscriptState(
+            title=self.title,
+            manuscript=self.manuscript,
+            notes=self.notes,
+            llm_provider=self.llm_provider
+        )
 
 class InputState(BaseModel):
     """Input state definition."""

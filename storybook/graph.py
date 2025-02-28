@@ -16,12 +16,16 @@ from storybook.config import Configuration
 async def research_market(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
     """Market research node."""
     agent = MarketResearcher(config)
-    result = await agent.process_manuscript({
-        "title": state.title,
-        "text": state.manuscript,
-        "notes": state.notes,
-        "llm_provider": state.llm_provider
-    })
+    manuscript_state = ManuscriptState(
+        title=state.title,
+        manuscript=state.manuscript,
+        notes=state.notes,
+        llm_provider=state.llm_provider
+    )
+    
+    state.manuscript = manuscript_state
+    result = await agent.process_manuscript(manuscript_state)
+    
     return {
         "market_analysis": AgentOutput(
             content=result,
