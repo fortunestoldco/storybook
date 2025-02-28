@@ -313,145 +313,141 @@ class LanguagePolisher(BaseAgent):
 
         return {"full_analysis": improvement_areas, "areas": structured_areas}
 
-    def _polish_sections(
-        self,
-        content: str,
-        improvement_areas: Dict[str, Any],
-        style_analysis: Dict[str, Any],
-        target_audience: Optional[Dict[str, Any]] = None,
-    ) -> tuple:
-        """Polish selected sections of the manuscript based on identified improvement areas.""" 
-        # Break the content into paragraphs
-        paragraphs = content.split("\n\n")
+    def _polish_sections(self, content: str, improvement_areas: Dict[str, Any], style_analysis: Dict[str, Any], target_audience: Optional[Dict[str, Any]] = None) -> tuple:
+        try:
+            paragraphs = content.split("\n\n")
 
-        # We'll enhance a selection of paragraphs rather than the entire manuscript
-        # Select paragraphs for each improvement area
-        improvement_types = [
-            area.get("name", "") for area in improvement_areas.get("areas", [])
-        ]
+            # We'll enhance a selection of paragraphs rather than the entire manuscript
+            # Select paragraphs for each improvement area
+            improvement_types = [
+                area.get("name", "") for area in improvement_areas.get("areas", [])
+            ]
 
-        # Map improvement types to paragraph selection criteria
-        selection_criteria = {
-            "sentence variety": lambda p: len(p.split(".")) > 4 and len(p) > 200,
-            "overused words": lambda p: len(p) > 200,
-            "weak descriptions": lambda p: "saw" in p.lower()
-            or "looked" in p.lower()
-            or "seemed" in p.lower(),
-            "telling": lambda p: "felt" in p.lower()
-            or "thought" in p.lower()
-            or "realized" in p.lower(),
-            "passive voice": lambda p: " was " in p.lower() and " by " in p.lower(),
-            "dialogue": lambda p: '"' in p or "'" in p,
-            "tone": lambda p: len(p) > 200,
-            "exposition": lambda p: len(p) > 300,
-        }
+            # Map improvement types to paragraph selection criteria
+            selection_criteria = {
+                "sentence variety": lambda p: len(p.split(".")) > 4 and len(p) > 200,
+                "overused words": lambda p: len(p) > 200,
+                "weak descriptions": lambda p: "saw" in p.lower()
+                or "looked" in p.lower()
+                or "seemed" in p.lower(),
+                "telling": lambda p: "felt" in p.lower()
+                or "thought" in p.lower()
+                or "realized" in p.lower(),
+                "passive voice": lambda p: " was " in p.lower() and " by " in p.lower(),
+                "dialogue": lambda p: '"' in p or "'" in p,
+                "tone": lambda p: len(p) > 200,
+                "exposition": lambda p: len(p) > 300,
+            }
 
-        # Select paragraphs for improvement
-        paragraphs_to_improve = []
+            # Select paragraphs for improvement
+            paragraphs_to_improve = []
 
-        for i, para in enumerate(paragraphs):
-            # Skip very short paragraphs
-            if len(para) < 50:
-                continue
+            for i, para in enumerate(paragraphs):
+                # Skip very short paragraphs
+                if len(para) < 50:
+                    continue
 
-            # Check against our criteria
-            for imp_type, criterion in selection_criteria.items():
-                if any(
-                    imp_type.lower() in area.lower() for area in improvement_types
-                ) and criterion(para):
-                    paragraphs_to_improve.append((i, para, imp_type))
-                    break
+                # Check against our criteria
+                for imp_type, criterion in selection_criteria.items():
+                    if any(
+                        imp_type.lower() in area.lower() for area in improvement_types
+                    ) and criterion(para):
+                        paragraphs_to_improve.append((i, para, imp_type))
+                        break
 
-        # Limit the number of paragraphs to improve
-        max_improvements = min(10, len(paragraphs_to_improve))
-        # Prioritize by spreading throughout the manuscript
-        step = (
-            len(paragraphs_to_improve) // max_improvements
-            if len(paragraphs_to_improve) > max_improvements
-            else 1
-        )
-        selected_paragraphs = [
-            paragraphs_to_improve[i] for i in range(0, len(paragraphs_to_improve), step)
-        ][:max_improvements]
+            # Limit the number of paragraphs to improve
+            max_improvements = min(10, len(paragraphs_to_improve))
+            # Prioritize by spreading throughout the manuscript
+            step = (
+                len(paragraphs_to_improve) // max_improvements
+                if len(paragraphs_to_improve) > max_improvements
+                else 1
+            )
+            selected_paragraphs = [
+                paragraphs_to_improve[i] for i in range(0, len(paragraphs_to_improve), step)
+            ][:max_improvements]
 
-        # Add audience context if available
-        audience_context = ""
-        if target_audience:
-            audience_context = f"""
-            Target Audience: {target_audience.get('demographic', 'General readers')}
-            Language Preferences: {target_audience.get('reading_preferences', {}).get('language', 'No specific preferences')}
-            
-            Ensure the enhancements will appeal to this audience.
-            """
-
-        # Improve each selected paragraph
-        improved_sections = []
-
-        for idx, para, imp_type in selected_paragraphs:
-            # Create prompt for polishing this paragraph
-            prompt = ChatPromptTemplate.from_template(
+            # Add audience context if available
+            audience_context = ""
+            if target_audience:
+                audience_context = f"""
+                Target Audience: {target_audience.get('demographic', 'General readers')}
+                Language Preferences: {target_audience.get('reading_preferences', {}).get('language', 'No specific preferences')}
+                
+                Ensure the enhancements will appeal to this audience.
                 """
-            You are a Literary Style Enhancer. Improve the following paragraph from a manuscript,
-            focusing particularly on {improvement_type}.
-            
-            Original Paragraph:
-            {original_paragraph}
-            
-            Writing Style Notes:
-            Voice: {voice}
-            Tone: {tone}
-            Vocabulary Level: {vocabulary}
-            
-            {audience_context}
-            
-            Enhance this paragraph to address the {improvement_type} issue while:
-            1. Maintaining the same story information and meaning
-            2. Preserving the author's voice and overall tone
-            3. Keeping approximately the same length
-            4. Making the language more engaging and vivid
-            
-            Return ONLY the improved paragraph, with no additional comments.
-            """
-            )
 
-            # Create the chain
-            chain = (
-                {
-                    "improvement_type": lambda _: imp_type,
-                    "original_paragraph": lambda _: para,
-                    "voice": lambda _: style_analysis.get(
-                        "voice_and_pov", "Not specified"
-                    ),
-                    "tone": lambda _: style_analysis.get("tone", "Not specified"),
-                    "vocabulary": lambda _: style_analysis.get(
-                        "vocabulary_level", "Not specified"
-                    ),
-                    "audience_context": lambda _: audience_context,
-                }
-                | prompt
-                | self.llm
-                | StrOutputParser()
-            )
+            # Improve each selected paragraph
+            improved_sections = []
 
-            # Run the chain
-            improved_para = chain.invoke(f"Improve paragraph with {imp_type} issue")
+            for idx, para, imp_type in selected_paragraphs:
+                # Create prompt for polishing this paragraph
+                prompt = ChatPromptTemplate.from_template(
+                    """
+                You are a Literary Style Enhancer. Improve the following paragraph from a manuscript,
+                focusing particularly on {improvement_type}.
+                
+                Original Paragraph:
+                {original_paragraph}
+                
+                Writing Style Notes:
+                Voice: {voice}
+                Tone: {tone}
+                Vocabulary Level: {vocabulary}
+                
+                {audience_context}
+                
+                Enhance this paragraph to address the {improvement_type} issue while:
+                1. Maintaining the same story information and meaning
+                2. Preserving the author's voice and overall tone
+                3. Keeping approximately the same length
+                4. Making the language more engaging and vivid
+                
+                Return ONLY the improved paragraph, with no additional comments.
+                """
+                )
 
-            # Store the improvement
-            improved_sections.append(
-                {
-                    "original": para,
-                    "improved": improved_para,
-                    "improvement_type": imp_type,
-                }
-            )
+                # Create the chain
+                chain = (
+                    {
+                        "improvement_type": lambda _: imp_type,
+                        "original_paragraph": lambda _: para,
+                        "voice": lambda _: style_analysis.get(
+                            "voice_and_pov", "Not specified"
+                        ),
+                        "tone": lambda _: style_analysis.get("tone", "Not specified"),
+                        "vocabulary": lambda _: style_analysis.get(
+                            "vocabulary_level", "Not specified"
+                        ),
+                        "audience_context": lambda _: audience_context,
+                    }
+                    | prompt
+                    | self.llm
+                    | StrOutputParser()
+                )
 
-            # Update the paragraph in the manuscript
-            paragraphs[idx] = improved_para
+                # Run the chain
+                improved_para = chain.invoke(f"Improve paragraph with {imp_type} issue")
 
-        # Recombine the paragraphs
-        updated_content = "\n\n".join(paragraphs)
+                # Store the improvement
+                improved_sections.append(
+                    {
+                        "original": para,
+                        "improved": improved_para,
+                        "improvement_type": imp_type,
+                    }
+                )
 
-        return updated_content, improved_sections
+                # Update the paragraph in the manuscript
+                paragraphs[idx] = improved_para
+
+            # Recombine the paragraphs
+            updated_content = "\n\n".join(paragraphs)
+
+            return updated_content, improved_sections
+        except Exception as e:
+            logger.error(f"Error in polish_sections: {str(e)}")
+            return content, []
 
     def _extract_style_patterns(self, content: str) -> Dict[str, List[str]]:
         """Extract common style patterns from the text.""" 

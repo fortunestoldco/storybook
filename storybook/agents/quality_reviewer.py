@@ -318,21 +318,18 @@ class QualityReviewer(BaseAgent):  # Add inheritance
         longterm_revisions = longterm_match.group(1).strip() if longterm_match else ""
 
         # Try to extract individual issues
-        def extract_issues(text):
+        def extract_issues(text: str) -> List[Dict[str, Any]]:
+            """Extract individual issues from text."""
+            if not text:
+                return []
+            
             issues = []
-            # Look for numbered issues (e.g., "1. Issue description")
-            issue_blocks = re.findall(r"(\d+\.\s+.*?)(?=\n\n\d+\.|\Z)", text, re.DOTALL)
-            if not issue_blocks:
-                # Try another pattern (e.g., "Issue 1: description")
-                issue_blocks = re.findall(
-                    r"((?:Issue\s+)?\d+:?\s+.*?)(?=\n\n(?:Issue\s+)?\d+:?|\Z)",
-                    text,
-                    re.DOTALL,
-                )
-
-            for block in issue_blocks:
-                issues.append(block.strip())
-
+            issue_blocks = re.split(r"\d+\.", text)
+            for block in issue_blocks[1:]:  # Skip first empty split
+                issues.append({
+                    "description": block.strip(),
+                    "priority": "high" if any(urgent in block.lower() for urgent in ["critical", "serious", "major"]) else "medium"
+                })
             return issues
 
         critical_issues_list = extract_issues(critical_issues)

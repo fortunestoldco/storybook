@@ -31,51 +31,55 @@ class WorldBuilder(BaseAgent):
         llm_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Identify and enhance settings and world-building elements."""
-        if llm_config:  # Changed from kwargs to llm_config
-            self.llm = create_llm(llm_config)
-            
-        manuscript = self.document_store.get_manuscript(manuscript_id)
-        if not manuscript:
-            return {"error": f"Manuscript {manuscript_id} not found"}
+        try:
+            if llm_config:
+                self.llm = create_llm(llm_config)
+                
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
 
-        # Extract settings and locations
-        settings = self._extract_settings(
-            manuscript["content"], target_audience, research_insights
-        )
-
-        # Develop each setting
-        enhanced_settings = []
-        for setting in settings:
-            setting_profile = self._develop_setting(
-                manuscript_id,
-                setting,
-                manuscript["content"],
-                target_audience,
-                research_insights,
+            # Extract settings and locations
+            settings = self._extract_settings(
+                manuscript["content"], target_audience, research_insights
             )
-            enhanced_settings.append(setting_profile)
 
-        # Analyze world consistency
-        world_consistency = self._analyze_world_consistency(
-            enhanced_settings, manuscript["content"], target_audience
-        )
+            # Develop each setting
+            enhanced_settings = []
+            for setting in settings:
+                setting_profile = self._develop_setting(
+                    manuscript_id,
+                    setting,
+                    manuscript["content"],
+                    target_audience,
+                    research_insights,
+                )
+                enhanced_settings.append(setting_profile)
 
-        # Update the manuscript with enhanced world descriptions
-        updated_content = self._enhance_setting_descriptions(
-            manuscript["content"], enhanced_settings, target_audience
-        )
+            # Analyze world consistency
+            world_consistency = self._analyze_world_consistency(
+                enhanced_settings, manuscript["content"], target_audience
+            )
 
-        # Store the updated manuscript
-        self.document_store.update_manuscript(
-            manuscript_id, {"content": updated_content}
-        )
+            # Update the manuscript with enhanced world descriptions
+            updated_content = self._enhance_setting_descriptions(
+                manuscript["content"], enhanced_settings, target_audience
+            )
 
-        return {
-            "manuscript_id": manuscript_id,
-            "settings": enhanced_settings,
-            "world_consistency": world_consistency,
-            "message": f"Enhanced {len(enhanced_settings)} settings and world-building elements.",
-        }
+            # Store the updated manuscript
+            self.document_store.update_manuscript(
+                manuscript_id, {"content": updated_content}
+            )
+
+            return {
+                "manuscript_id": manuscript_id,
+                "settings": enhanced_settings,
+                "world_consistency": world_consistency,
+                "message": f"Enhanced {len(enhanced_settings)} settings and world-building elements.",
+            }
+        except Exception as e:
+            logger.error(f"Error in build_world: {str(e)}")
+            return self.handle_error(e)
 
     def _extract_settings(self, content: str, target_audience: Optional[Dict[str, Any]] = None, research_insights: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Extract settings and locations from the manuscript."""

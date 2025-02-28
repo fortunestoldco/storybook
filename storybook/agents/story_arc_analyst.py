@@ -36,7 +36,10 @@ class StoryArcAnalyst(BaseAgent):
             if not manuscript:
                 return {"error": f"Manuscript {manuscript_id} not found"}
 
-            # Implementation logic here
+            # Implementation here
+            arc_analysis = self._analyze_arc_components(manuscript["content"], target_audience)
+            pacing_analysis = self._analyze_pacing(manuscript["content"], arc_analysis, target_audience)
+
             return {
                 "manuscript_id": manuscript_id,
                 "arc_analysis": arc_analysis,
