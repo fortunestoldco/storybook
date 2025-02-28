@@ -51,13 +51,13 @@ class StorybookState(TypedDict):
     # Editorial team outputs
     story_analysis: Optional[Dict[str, Any]]  # Story arc evaluation
     continuity_issues: Optional[List[Dict[str, Any]]]  # Continuity checks
-    style_analysis: Optional[Dict[str, Any]]]  # Language polish results
-    final_review: Optional[Dict[str, Any]]]  # Quality review results
+    style_analysis: Optional[Dict[str, Any]]  # Language polish results
+    final_review: Optional[Dict[str, Any]]  # Quality review results
 
     # Team status tracking
-    research_status: Optional[Dict[str, bool]]]  # Research team progress
-    writing_status: Optional[Dict[str, bool]]]  # Writing team progress
-    editorial_status: Optional[Dict[str, bool]]]  # Editorial team progress
+    research_status: Optional[Dict[str, bool]]  # Research team progress
+    writing_status: Optional[Dict[str, bool]]  # Writing team progress
+    editorial_status: Optional[Dict[str, bool]]  # Editorial team progress
 
 
 def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
