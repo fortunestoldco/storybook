@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Literal
 from enum import Enum
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, END, SubGraph
 from langgraph.graph.message import ToolCall, ToolResponse
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import HumanMessage, AIMessage
@@ -15,6 +15,117 @@ from storybook.agents import (
     Researcher, Writer, Editor
 )
 from storybook.config import Configuration
+
+# Define Project X specialized NLP agents
+class NarrativeArcSurgeon:
+    def __init__(self, config):
+        self.config = config
+    
+    async def analyze_narrative_arc(self, manuscript, project):
+        # Maps tension curves across chapters
+        # Identifies structural weaknesses
+        # Prescribes scene relocations
+        # Maintains narrative heartbeat monitor
+        pass
+
+class CharacterResonanceAnalyzer:
+    def __init__(self, config):
+        self.config = config
+    
+    async def analyze_character_resonance(self, manuscript, project):
+        # Tracks character voice patterns
+        # Maps character growth trajectories
+        # Identifies missed opportunities for character depth
+        # Suggests dialogue and action revisions
+        pass
+
+class EmotionalImpactOptimizer:
+    def __init__(self, config):
+        self.config = config
+    
+    async def optimize_emotional_impact(self, manuscript, project):
+        # Identifies scenes with untapped emotional potential
+        # Suggests sensory detail enhancements
+        # Maps anticipated emotional responses
+        # Balances emotional highs/lows
+        pass
+
+class MarketAlignmentStrategist:
+    def __init__(self, config):
+        self.config = config
+    
+    async def analyze_market_alignment(self, manuscript, project):
+        # Analyzes bestseller patterns within genre
+        # Identifies market alignment/misalignment
+        # Suggests modifications to increase appeal
+        # Preserves authorial voice
+        pass
+
+class ProseElevationSpecialist:
+    def __init__(self, config):
+        self.config = config
+    
+    async def elevate_prose(self, manuscript, project):
+        # Identifies diminishing prose patterns
+        # Suggests sentence rhythm variations
+        # Eliminates clichés
+        # Elevates key passages
+        pass
+
+class ReaderEngagementPredictor:
+    def __init__(self, config):
+        self.config = config
+    
+    async def predict_engagement(self, manuscript, project):
+        # Simulates reader experience
+        # Flags potential engagement issues
+        # Suggests revisions to maintain attention
+        # Analyzes page-turner qualities
+        pass
+
+class ThematicCoherenceEngineer:
+    def __init__(self, config):
+        self.config = config
+    
+    async def engineer_thematic_coherence(self, manuscript, project):
+        # Maps thematic elements
+        # Identifies opportunities to strengthen themes
+        # Suggests enhancements to motifs and symbols
+        # Ensures themes reach satisfying culmination
+        pass
+
+class DialogueAuthenticator:
+    def __init__(self, config):
+        self.config = config
+    
+    async def authenticate_dialogue(self, manuscript, project):
+        # Identifies stilted exchanges
+        # Suggests subtext enhancements
+        # Ensures consistent character voices
+        # Improves dialogue/action balance
+        pass
+
+class WorldBuildingImmersionEnhancer:
+    def __init__(self, config):
+        self.config = config
+    
+    async def enhance_world_building(self, manuscript, project):
+        # Identifies opportunities for sensory world-building
+        # Maps setting consistency
+        # Suggests strategic setting details
+        # Balances world-building against momentum
+        pass
+
+class NarrativeBlindSpotDetector:
+    def __init__(self, config):
+        self.config = config
+    
+    async def detect_blind_spots(self, manuscript, project):
+        # Identifies assumptions about reader knowledge
+        # Flags potential cultural sensitivity issues
+        # Analyzes for unintentional implications
+        # Identifies logical inconsistencies
+        pass
 
 # Define input schema with Enums
 class SubmissionType(str, Enum):
@@ -59,6 +170,7 @@ class ProjectState(BaseModel):
     research_team: Optional[TeamState] = None
     writing_team: Optional[TeamState] = None
     editorial_team: Optional[TeamState] = None
+    project_x_team: Optional[TeamState] = None
     
 class EnhancedState(State):
     submission: InputState
@@ -160,6 +272,18 @@ async def orchestrator_initialize(state: EnhancedState, config: RunnableConfig) 
         members=["editor_in_chief", "copy_editor", "quality_reviewer"]
     )
     
+    # Setup Project X team
+    project_x_team = TeamState(
+        team_id=f"PX-{uuid4().hex[:6].upper()}",
+        members=[
+            "narrative_arc_surgeon", "character_resonance_analyzer", 
+            "emotional_impact_optimizer", "market_alignment_strategist",
+            "prose_elevation_specialist", "reader_engagement_predictor",
+            "thematic_coherence_engineer", "dialogue_authenticator",
+            "world_building_immersion_enhancer", "narrative_blind_spot_detector"
+        ]
+    )
+    
     # Assign initial tasks
     research_tasks = await agent.assign_research_tasks(state.project)
     writing_tasks = await agent.assign_ideation_tasks(state.project)
@@ -170,11 +294,16 @@ async def orchestrator_initialize(state: EnhancedState, config: RunnableConfig) 
     writing_team.tasks = writing_tasks
     writing_team.current_task = writing_tasks[0] if writing_tasks else None
     
+    # Assign same tasks to Project X team
+    project_x_team.tasks = writing_tasks.copy() if writing_tasks else []
+    project_x_team.current_task = project_x_team.tasks[0] if project_x_team.tasks else None
+    
     updated_project = state.project.copy()
     updated_project.status = "in_progress"
     updated_project.research_team = research_team
     updated_project.writing_team = writing_team
     updated_project.editorial_team = editorial_team
+    updated_project.project_x_team = project_x_team
     
     return {
         "project": updated_project,
@@ -392,6 +521,12 @@ async def orchestrator_update(state: EnhancedState, config: RunnableConfig) -> D
             if not updated_project.writing_team.current_task and writing_tasks:
                 updated_project.writing_team.current_task = writing_tasks[0]
             
+            # Also update Project X team tasks
+            if updated_project.project_x_team:
+                updated_project.project_x_team.tasks.extend(writing_tasks.copy())
+                if not updated_project.project_x_team.current_task and writing_tasks:
+                    updated_project.project_x_team.current_task = writing_tasks[0]
+            
             # Continue research in parallel if there are tasks
             if updated_project.research_team.current_task:
                 return {
@@ -400,6 +535,9 @@ async def orchestrator_update(state: EnhancedState, config: RunnableConfig) -> D
                     "current_team": "research"
                 }
             else:
+                # Start both writing team and Project X team
+                # Since they need to work in parallel but independently, we'll start with the main writing team
+                # and the Project X team will be triggered by the orchestrator after
                 return {
                     "project": updated_project,
                     "current_phase": "writing_team_work",
@@ -407,8 +545,15 @@ async def orchestrator_update(state: EnhancedState, config: RunnableConfig) -> D
                 }
     
     elif current_team == "writing":
-        # Writing team completed work, determine if it needs editorial review
-        if state.project.draft_number > 0:
+        # Writing team completed work - now let's run Project X team if it has tasks
+        if state.project.project_x_team and state.project.project_x_team.current_task:
+            return {
+                "current_phase": "project_x_team_work",
+                "current_team": "project_x"
+            }
+            
+        # If Project X team isn't available or doesn't have work, proceed to editorial
+        elif state.project.draft_number > 0:
             return {
                 "current_phase": "editorial_team_work",
                 "current_team": "editorial"
@@ -428,6 +573,21 @@ async def orchestrator_update(state: EnhancedState, config: RunnableConfig) -> D
                     "current_team": "research"
                 }
     
+    elif current_team == "project_x":
+        # Project X team has completed their work, now editorial team can review both
+        if state.project.draft_number > 0:
+            return {
+                "current_phase": "editorial_team_work",
+                "current_team": "editorial"
+            }
+        else:
+            # If there are more Project X tasks, continue with them
+            if state.project.project_x_team and state.project.project_x_team.current_task:
+                return {
+                    "current_phase": "project_x_team_work",
+                    "current_team": "project_x"
+                }
+    
     elif current_team == "editorial":
         # Editorial provided feedback, check draft number
         if state.project.draft_number >= 3:
@@ -444,6 +604,11 @@ async def orchestrator_update(state: EnhancedState, config: RunnableConfig) -> D
             updated_project = state.project.copy()
             updated_project.writing_team.tasks = revision_tasks
             updated_project.writing_team.current_task = revision_tasks[0] if revision_tasks else None
+            
+            # Also update Project X team tasks
+            if updated_project.project_x_team:
+                updated_project.project_x_team.tasks = revision_tasks.copy()
+                updated_project.project_x_team.current_task = revision_tasks[0] if revision_tasks else None
             
             return {
                 "project": updated_project,
@@ -510,6 +675,13 @@ async def final_author_review(state: EnhancedState, config: RunnableConfig) -> D
             updated_project.writing_team.tasks.append(revision_task)
             updated_project.writing_team.current_task = revision_task
             
+            # Also assign to Project X team
+            if updated_project.project_x_team:
+                if not updated_project.project_x_team.tasks:
+                    updated_project.project_x_team.tasks = []
+                updated_project.project_x_team.tasks.append(revision_task.copy())
+                updated_project.project_x_team.current_task = revision_task.copy()
+            
             return {
                 "human_in_loop": False,
                 "chat_history": state.chat_history + [{"role": "system", "content": confirmation}],
@@ -527,6 +699,113 @@ async def final_author_review(state: EnhancedState, config: RunnableConfig) -> D
         "chat_history": updated_history,
         "current_phase": "final_author_review"  # Stay in this node
     }
+
+# Project X Team workflow
+async def project_x_team_work(state: EnhancedState, config: RunnableConfig) -> Dict[str, Any]:
+    """Project X Team with specialized NLP agents performs writing/editing tasks."""
+    # Instantiate all the specialized agents
+    narrative_arc_surgeon = NarrativeArcSurgeon(config)
+    character_resonance_analyzer = CharacterResonanceAnalyzer(config)
+    emotional_impact_optimizer = EmotionalImpactOptimizer(config)
+    market_alignment_strategist = MarketAlignmentStrategist(config)
+    prose_elevation_specialist = ProseElevationSpecialist(config)
+    reader_engagement_predictor = ReaderEngagementPredictor(config)
+    thematic_coherence_engineer = ThematicCoherenceEngineer(config)
+    dialogue_authenticator = DialogueAuthenticator(config)
+    world_building_enhancer = WorldBuildingImmersionEnhancer(config)
+    blind_spot_detector = NarrativeBlindSpotDetector(config)
+    
+    project_x_team = state.project.project_x_team
+    if not project_x_team or not project_x_team.current_task:
+        return {"current_phase": "orchestrator_update", "error": "No Project X tasks assigned"}
+    
+    # Get latest research reports that might be useful
+    research_reports = []
+    if state.project.research_team and state.project.research_team.reports:
+        research_reports = state.project.research_team.reports
+    
+    # Determine the task type and perform specialized analyses based on task type
+    current_task = project_x_team.current_task
+    task_type = current_task.get("type", "")
+    manuscript = state.project.manuscript
+    
+    # Each specialized agent contributes to the task
+    narrative_analysis = await narrative_arc_surgeon.analyze_narrative_arc(manuscript, state.project)
+    character_analysis = await character_resonance_analyzer.analyze_character_resonance(manuscript, state.project)
+    emotional_analysis = await emotional_impact_optimizer.optimize_emotional_impact(manuscript, state.project)
+    market_analysis = await market_alignment_strategist.analyze_market_alignment(manuscript, state.project)
+    prose_analysis = await prose_elevation_specialist.elevate_prose(manuscript, state.project)
+    engagement_analysis = await reader_engagement_predictor.predict_engagement(manuscript, state.project)
+    thematic_analysis = await thematic_coherence_engineer.engineer_thematic_coherence(manuscript, state.project)
+    dialogue_analysis = await dialogue_authenticator.authenticate_dialogue(manuscript, state.project)
+    worldbuilding_analysis = await world_building_enhancer.enhance_world_building(manuscript, state.project)
+    blindspot_analysis = await blind_spot_detector.detect_blind_spots(manuscript, state.project)
+    
+    # Combine all analyses into a comprehensive result
+    task_result = {
+        "narrative_structure": narrative_analysis,
+        "character_resonance": character_analysis,
+        "emotional_impact": emotional_analysis,
+        "market_alignment": market_analysis,
+        "prose_quality": prose_analysis,
+        "reader_engagement": engagement_analysis,
+        "thematic_coherence": thematic_analysis,
+        "dialogue_authenticity": dialogue_analysis,
+        "world_building": worldbuilding_analysis,
+        "blind_spots": blindspot_analysis,
+        "final_manuscript": manuscript  # This would actually be the modified version after all analyses
+    }
+    
+    # Update team state
+    updated_team = project_x_team.copy()
+    completed_task = updated_team.current_task.copy()
+    completed_task["result"] = task_result
+    completed_task["status"] = "completed"
+    completed_task["completion_time"] = datetime.now().isoformat()
+    
+    updated_team.completed_tasks.append(completed_task)
+    
+    # Prepare comprehensive report
+    report = {
+        "id": f"PX-{uuid4().hex[:6].upper()}",
+        "task_id": completed_task.get("id"),
+        "content": task_result,
+        "timestamp": datetime.now().isoformat()
+    }
+    updated_team.reports.append(report)
+    
+    # Move to next task if available
+    if updated_team.tasks:
+        updated_team.tasks.pop(0)  # Remove the completed task from the queue
+        updated_team.current_task = updated_team.tasks[0] if updated_team.tasks else None
+    
+    # If Project X team completed a draft, add it as an alternative
+    if any(task.get("type") == "complete_draft" for task in updated_team.completed_tasks[-1:]):
+        # Store both versions - the original from writing team and this alternative
+        updated_project = state.project.copy()
+        updated_project.project_x_team = updated_team
+        
+        # Store alternative manuscript in report rather than overwriting main one
+        report["alternative_manuscript"] = task_result.get("final_manuscript", "")
+    else:
+        updated_project = state.project.copy()
+        updated_project.project_x_team = updated_team
+    
+    # Determine next phase
+    if updated_team.current_task:
+        # More Project X tasks to do
+        return {
+            "project": updated_project,
+            "current_phase": "project_x_team_work",  # Continue Project X work
+            "current_team": "project_x"
+        }
+    else:
+        # Project X work complete for now
+        return {
+            "project": updated_project,
+            "current_phase": "orchestrator_update",
+            "current_team": "project_x"
+        }
 
 def should_end(state: EnhancedState) -> bool:
     """Determine if the workflow should end."""
@@ -547,6 +826,9 @@ def build_storybook(config: RunnableConfig) -> StateGraph:
     builder.add_node("writing_team_work", writing_team_work)
     builder.add_node("editorial_team_work", editorial_team_work)
     builder.add_node("final_author_review", final_author_review)
+    
+    # Add Project X team node
+    builder.add_node("project_x_team_work", project_x_team_work)
 
     # Add conditional edges based on the current phase
     builder.add_conditional_edges(
@@ -591,6 +873,12 @@ def build_storybook(config: RunnableConfig) -> StateGraph:
     
     builder.add_conditional_edges(
         "final_author_review",
+        lambda state: state.current_phase
+    )
+    
+    # Add edge for Project X team
+    builder.add_conditional_edges(
+        "project_x_team_work",
         lambda state: state.current_phase
     )
 
