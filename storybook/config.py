@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional, Union
 import os
 import logging
 from pathlib import Path
+from enum import Enum
 
 # Third-party imports
 from langchain_core.language_models import BaseChatModel
@@ -13,6 +14,16 @@ from langchain_anthropic import ChatAnthropic
 from langchain_community.llms import Replicate, LlamaCpp
 from langchain_community.chat_models import ChatOllama
 from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
+
+__all__ = [
+    'LLMProvider',
+    'get_llm',
+    'create_llm',
+    'validate_llm_config',
+    'validate_agent_config',
+    'DEFAULT_CONFIGS',
+    'STATES'
+]
 
 logger = logging.getLogger(__name__)
 
@@ -50,20 +61,24 @@ FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
 DEFAULT_OPENAI_MODEL = "gpt-4"
 DEFAULT_REPLICATE_MODEL = "meta/llama-3-70b-instruct:2a30ae62b32ab1f47530ed5fd32fea38ed408255c747684c41749824a771fa12"
 
-def get_llm(
-    model: Optional[str] = None,
-    temperature: float = 0.7,
-    use_replicate: bool = False,
-) -> BaseChatModel:
-    """Get a configured LLM instance with default settings."""
-    default_config = {
+class LLMProvider(str, Enum):
+    """Supported LLM providers."""
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    HUGGINGFACE = "huggingface"
+    REPLICATE = "replicate"
+    OLLAMA = "ollama"
+    LLAMACPP = "llamacpp"
+
+def get_llm(config: Optional[Dict[str, Any]] = None):
+    """Get default LLM configuration."""
+    use_replicate = config.get("use_replicate", False) if config else False
+    
+    return {
         "provider": LLMProvider.REPLICATE if use_replicate else LLMProvider.OPENAI,
-        "config": {
-            "model_name": model or (DEFAULT_REPLICATE_MODEL if use_replicate else DEFAULT_OPENAI_MODEL),
-            "temperature": temperature
-        }
+        "model": "meta/llama-2-70b-chat" if use_replicate else "gpt-4-turbo-preview",
+        "temperature": 0.7
     }
-    return create_llm(default_config)
 
 def create_llm(llm_config: Dict[str, Any]) -> BaseChatModel:
     """Create an LLM instance based on configuration."""

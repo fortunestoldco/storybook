@@ -21,8 +21,25 @@ class BaseAgent:
 
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
         """Initialize with optional LLM configuration."""
-        self.llm = create_llm(llm_config) if llm_config else get_llm()
+        self.llm = create_llm(llm_config) if llm_config else create_llm(get_llm())
         self.document_store = DocumentStore()
+
+    async def store_result(
+        self,
+        collection: str,
+        data: Dict[str, Any],
+        text_key: str = "text"
+    ) -> str:
+        """Store results with embeddings."""
+        text = data.get(text_key, "")
+        if text:
+            embedding = await self.document_store.db.embeddings.embed_query(text)
+            return await self.document_store.store_document(
+                collection,
+                data,
+                embedding
+            )
+        return await self.document_store.store_document(collection, data)
 
     def update_llm(self, llm_config: Dict[str, Any]) -> None:
         """Update LLM configuration at runtime."""

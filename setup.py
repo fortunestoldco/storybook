@@ -7,13 +7,17 @@ setup(
     install_requires=[
         "langgraph",
         "langchain",
+        "langchain-core",
+        "langchain-openai",
+        "langchain-anthropic",
+        "langchain-community",
         "pydantic",
-        "tavily-python",
         "pymongo",
         "openai",
         "anthropic",
-        "huggingface_hub",
-        "replicate"
-    ],
-    python_requires=">=3.9",
+        "replicate",
+        "tavily-python",
+        "huggingface-hub",
+        "python-dotenv"
+    ]
 )

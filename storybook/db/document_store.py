@@ -37,6 +37,18 @@ class DocumentStore:
         # self.embeddings = OpenAIEmbeddings()
         # Use the vector store from MongoDBStore instead
 
+    async def store_document(
+        self,
+        collection: str,
+        document: Dict[str, Any],
+        embedding: Optional[List[float]] = None
+    ) -> str:
+        """Store a document with optional embedding."""
+        if embedding:
+            document["embedding"] = embedding
+        result = self.db.db[collection].insert_one(document)
+        return str(result.inserted_id)
+
     def store_manuscript(
         self, title: str, content: str, metadata: Optional[Dict[str, Any]] = None
     ) -> str:

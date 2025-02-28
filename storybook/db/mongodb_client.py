@@ -12,6 +12,7 @@ from pymongo.errors import CollectionInvalid, OperationFailure
 
 from langchain_core.documents import Document
 from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
+from langchain_openai import OpenAIEmbeddings
 
 # Local imports
 from storybook.config import (
@@ -26,6 +27,7 @@ from storybook.config import (
     COLLECTION_SUBPLOTS,
     COLLECTION_RESEARCH,
     COLLECTION_ANALYSIS,
+    OPENAI_API_KEY,
 )
 
 logger = logging.getLogger(__name__)
@@ -35,12 +37,12 @@ class MongoDBStore:
     """Interface to MongoDB for document storage and retrieval."""
 
     def __init__(self):
-        """Initialize the MongoDB connection."""
+        """Initialize MongoDB connection and embeddings."""
         self.client = MongoClient(MONGODB_URI)
         self.db = self.client[MONGODB_DB_NAME]
-
-        # Initialize embeddings for vector search
-        self.embeddings = OpenAIEmbeddings()
+        self.embeddings = OpenAIEmbeddings(
+            openai_api_key=OPENAI_API_KEY
+        )
 
         # Initialize vector search
         self.vector_store = MongoDBAtlasVectorSearch.from_connection_string(
