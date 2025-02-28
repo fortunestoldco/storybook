@@ -26,22 +26,14 @@ from storybook.db.document_store import DocumentStore
 logger = logging.getLogger(__name__)
 
 
-class NovelGraphState(TypedDict):
+class StorybookState(TypedDict):
+    """State definition for the Storybook workflow."""
     manuscript_id: str
-    title: str
-    current_state: str
-    characters: List[Dict[str, Any]]
-    settings: List[Dict[str, Any]]
-    subplots: List[Dict[str, Any]]
-    story_analysis: Dict[str, Any]
-    continuity_issues: List[Dict[str, Any]]
-    style_analysis: Dict[str, Any]
-    final_review: Dict[str, Any]
-    research_insights: Dict[str, Any]
+    target_audience: Optional[Dict[str, Any]]
+    research_insights: Optional[Dict[str, Any]]
     analysis_results: Dict[str, Any]
-    target_audience: Dict[str, Any]
-    message: str
-    stage_progress: Dict[str, float]
+    improvements: Dict[str, Any]
+    status: str
 
 
 def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -74,7 +66,7 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
         title = manuscript.get("title", "Untitled")
 
     # Initialize state with manuscript ID
-    new_state = NovelGraphState(
+    new_state = StorybookState(
         manuscript_id=manuscript_id,
         title=title,
         current_state="research",
@@ -637,10 +629,11 @@ def check_analysis_progress(
 
 
 def build_storybook() -> StateGraph:
-    workflow = StateGraph(NovelGraphState)
+    """Build the storybook workflow graph."""
+    workflow = StateGraph(StorybookState)
 
     # Add nodes
-    workflow.add_node("START", start_workflow)
+    workflow.add_node("start", start_workflow)
     workflow.add_node("research", conduct_market_research)
     workflow.add_node("analysis", analyze_manuscript)
     workflow.add_node("initialize", initialize_graph)
@@ -653,25 +646,33 @@ def build_storybook() -> StateGraph:
     workflow.add_node("language_polishing", polish_language)
     workflow.add_node("quality_review", review_quality)
     workflow.add_node("finalize", finalize)
-    workflow.add_node("END")
 
-    # Add edges
-    workflow.set_entry_point("START")
-    workflow.add_edge("START", "research")
+    # Set entry point and add edges
+    workflow.set_entry_point("start")
+    
+    # Define workflow edges
+    workflow.add_edge("start", "research")
     workflow.add_edge("research", "analysis")
+    
+    # Add conditional edges
     workflow.add_conditional_edges(
         "analysis",
         check_analysis_progress,
-        {"analysis": "analysis", "initialize": "initialize"},
+        {
+            "analysis": "analysis",
+            "initialize": "initialize"
+        }
     )
+    
+    # Add remaining sequential edges
     workflow.add_edge("initialize", "character_development")
     workflow.add_conditional_edges(
         "character_development",
         should_retry_character_development,
         {
             "character_development": "character_development",
-            "dialogue_enhancement": "dialogue_enhancement",
-        },
+            "dialogue_enhancement": "dialogue_enhancement"
+        }
     )
     workflow.add_edge("dialogue_enhancement", "world_building")
     workflow.add_edge("world_building", "subplot_integration")
@@ -679,15 +680,21 @@ def build_storybook() -> StateGraph:
     workflow.add_edge("story_arc_evaluation", "continuity_check")
     workflow.add_edge("continuity_check", "language_polishing")
     workflow.add_edge("language_polishing", "quality_review")
+    
+    # Add final conditional routing
     workflow.add_conditional_edges(
         "quality_review",
         route_after_quality_review,
-        {"quality_review": "quality_review", "finalize": "finalize"},
+        {
+            "quality_review": "quality_review",
+            "finalize": "finalize"
+        }
     )
-    workflow.add_edge("finalize", "END")
+    
+    # Add final edge to END
+    workflow.add_edge("finalize", END)
 
     return workflow
 
-
-# Create the novel transformation graph
+# Create the compiled graph
 storybook = build_storybook().compile()
