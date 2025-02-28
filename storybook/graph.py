@@ -18,12 +18,13 @@ from storybook.agents import (
     ContentAnalyzer
 )
 
-# Input schema definition
+# Schema Definitions
 class InputState(TypedDict):
+    """Input state schema definition."""
     manuscript_text: str
 
-# Output schema definition
 class OutputState(TypedDict):
+    """Output state schema definition."""
     market_analysis: Dict[str, Any]
     content_analysis: Dict[str, Any]
     characters: List[Dict[str, Any]]
@@ -34,9 +35,8 @@ class OutputState(TypedDict):
     language: Dict[str, Any]
     quality_review: Dict[str, Any]
 
-# Overall state schema
 class GraphState(InputState, OutputState):
-    """Type definition for graph state."""
+    """Overall graph state schema."""
     state: str
 
 def build_storybook(config: RunnableConfig) -> StateGraph:
@@ -64,7 +64,6 @@ def build_storybook(config: RunnableConfig) -> StateGraph:
         "quality_reviewer": QualityReviewer(llm_config)
     }
 
-    @workflow.node
     async def market_research(state: GraphState):
         """Analyze market positioning and trends."""
         results = await agents["market_researcher"].process_manuscript(state)
@@ -73,7 +72,6 @@ def build_storybook(config: RunnableConfig) -> StateGraph:
             "state": "market_analyzed"
         }
 
-    @workflow.node
     async def content_analysis(state: GraphState):
         """Analyze content and themes."""
         results = await agents["content_analyzer"].process_manuscript(state)
@@ -82,7 +80,6 @@ def build_storybook(config: RunnableConfig) -> StateGraph:
             "state": "content_analyzed"
         }
 
-    @workflow.node
     async def creative_development(state: GraphState):
         """Develop creative elements."""
         character_results = await agents["character_developer"].process_manuscript(state)
@@ -104,7 +101,6 @@ def build_storybook(config: RunnableConfig) -> StateGraph:
             "state": "creative_complete"
         }
 
-    @workflow.node
     async def story_development(state: GraphState):
         """Develop story structure and language."""
         arc_results = await agents["story_arc_analyst"].process_manuscript(
@@ -120,7 +116,6 @@ def build_storybook(config: RunnableConfig) -> StateGraph:
             "state": "story_complete"
         }
 
-    @workflow.node
     async def quality_review(state: GraphState):
         """Review and validate story elements."""
         review_results = await agents["quality_reviewer"].process_manuscript(
@@ -131,6 +126,13 @@ def build_storybook(config: RunnableConfig) -> StateGraph:
             "quality_review": review_results,
             "state": "complete"
         }
+
+    # Add nodes to workflow
+    workflow.add_node("market_research", market_research)
+    workflow.add_node("content_analysis", content_analysis)
+    workflow.add_node("creative_development", creative_development)
+    workflow.add_node("story_development", story_development)
+    workflow.add_node("quality_review", quality_review)
 
     # Configure workflow routing
     workflow.add_edge(START, "market_research")
