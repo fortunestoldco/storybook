@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+# Standard library imports
 from typing import Dict, Any, Optional, Union
 import os
+from pathlib import Path
 
-# LLM imports
+# Third-party imports
 from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
@@ -11,16 +13,17 @@ from langchain_community.llms import Replicate, LlamaCpp
 from langchain_community.chat_models import ChatOllama
 from langchain_community.llms.huggingface_pipeline import HuggingFacePipeline
 
-# Local imports
-from storybook.graph import LLMProvider
-
 # Environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
-# Default paths
+# Create necessary directories
+Path("docs").mkdir(parents=True, exist_ok=True)
+Path("models").mkdir(parents=True, exist_ok=True)
+
+# Default model paths
 LLAMACPP_MODEL_PATH = os.getenv("LLAMACPP_MODEL_PATH", "./models/llama-2-7b.Q4_K_M.gguf")
 
 # MongoDB Configuration
@@ -147,8 +150,7 @@ COLLECTION_WORLDS = os.getenv("COLLECTION_WORLDS", "worlds")
 COLLECTION_SUBPLOTS = os.getenv("COLLECTION_SUBPLOTS", "subplots")
 COLLECTION_RESEARCH = os.getenv("COLLECTION_RESEARCH", "research")
 COLLECTION_ANALYSIS = os.getenv("COLLECTION_ANALYSIS", "analysis")
-mkdir -p docs
-python -m storybook.graph
+
 # Vector Store Configuration
 VECTOR_NAMESPACE = f"{MONGODB_DB_NAME}.{MONGODB_VECTOR_COLLECTION}"
 VECTOR_INDEX_NAME = os.getenv("VECTOR_INDEX_NAME", "vector_index")
