@@ -34,7 +34,10 @@ class MarketResearcher(BaseAgent):
 
     def research_market(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Conduct market research for the manuscript."""
         try:
+            if not self.validate_input(manuscript_id=manuscript_id):
+                return {"error": "Invalid manuscript_id"}
             if llm_config:
                 self.llm = create_llm(llm_config)
 
@@ -172,13 +175,15 @@ class MarketResearcher(BaseAgent):
 
             # Crawl one main URL for more information if available
             additional_research = []
-            if urls:
+            if urls and self.research_tools:  # Add null check
                 try:
-                    crawl_result = self.research_tools.get_web_crawl_tool().run(urls[0])
-                    additional_research.append({
-                        "url": urls[0],
-                        "content": crawl_result
-                    })
+                    crawl_tool = self.research_tools.get_web_crawl_tool()
+                    if crawl_tool:  # Add null check
+                        crawl_result = crawl_tool.run(urls[0])
+                        additional_research.append({
+                            "url": urls[0],
+                            "content": crawl_result
+                        })
                 except Exception as e:
                     logger.warning(f"Error crawling URL: {str(e)}")
 
@@ -206,8 +211,12 @@ class MarketResearcher(BaseAgent):
 
             demographic_research = []
             for query in additional_queries:
-                result = self.search_tool.run(query)
-                demographic_research.append({"query": query, "results": result})
+                try:
+                    result = self.search_tool.run(query, timeout=10)  # Add timeout
+                    demographic_research.append({"query": query, "results": result})
+                except TimeoutError:
+                    logger.warning(f"Search timeout for query: {query}")
+                    continue
 
             return {
                 "demographic": demographic,
@@ -300,17 +309,17 @@ class MarketResearcher(BaseAgent):
                 
                 # Extract format preferences using raw string
                 if "format" in text:
-                    formats = re.findall(r"prefer\s+(ebook|audiobook|print|hardcover|paperback)", text)
+                    formats = re.findall(fr"prefer\s+(ebook|audiobook|print|hardcover|paperback)", text)
                     preferences["format"].extend(formats)
                 
                 # Extract genre preferences
                 if "genre" in text:
-                    genres = re.findall(r"prefer\s+(\w+)\s+(?:books|fiction|novels)", text)
+                    genres = re.findall(fr"prefer\s+(\w+)\s+(?:books|fiction|novels)", text)
                     preferences["genre"].extend(genres)
                 
                 # Extract content preferences
                 if "content" in text:
-                    content = re.findall(r"prefer\s+([\w\s]+)\s+content", text)
+                    content = re.findall(fr"prefer\s+([\w\s]+)\s+content", text)
                     preferences["content"].extend(content)
                 
                 # Extract pricing preferences
@@ -345,3 +354,15 @@ class MarketResearcher(BaseAgent):
         except Exception as e:
             logger.error(f"Error extracting recommendations: {str(e)}")
             return []
+
+    def _clean_text(self, text: str) -> str:
+        """Clean and normalize text for analysis."""
+        try:
+            # Remove special characters
+            text = re.sub(r'[^\w\s.,!?-]', '', text)
+            # Normalize whitespace
+            text = ' '.join(text.split())
+            return text.strip().lower()
+        except Exception as e:
+            logger.error(f"Error cleaning text: {str(e)}")
+            return text
