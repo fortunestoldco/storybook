@@ -38,7 +38,7 @@ class StoryArcAnalyst(BaseAgent):
         """Analyze the story arc and provide improvement suggestions."""
         try:
             if llm_config:
-                self.llm = create_llm(llm_config)
+                self.update_llm(llm_config)  # Missing this
 
             manuscript = self.document_store.get_manuscript(manuscript_id)
             if not manuscript:

@@ -22,8 +22,9 @@ class CharacterDeveloper(BaseAgent):
 
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
         """Initialize with optional LLM configuration."""
-        super().__init__(llm_config)
+        super().__init__(llm_config)  # This is correct
         self.document_store = DocumentStore()
+        # But then the LLM isn't used in the methods below
 
     def enhance_characters(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]] = None, research_insights: Optional[Dict[str, Any]] = None, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Identify and enhance all characters in the manuscript."""

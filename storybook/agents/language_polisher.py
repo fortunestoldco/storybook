@@ -32,7 +32,7 @@ class LanguagePolisher(BaseAgent):
         """Polish language and style in the manuscript."""
         try:
             if llm_config:
-                self.llm = create_llm(llm_config)
+                self.update_llm(llm_config)  # Missing this
 
             manuscript = self.document_store.get_manuscript(manuscript_id)
             if not manuscript:

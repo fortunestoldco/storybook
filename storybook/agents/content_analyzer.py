@@ -189,8 +189,8 @@ class ContentAnalyzer(BaseAgent):
 
     def _analyze_sentiment(self, content: str) -> Dict[str, Any]:
         """Analyze emotional tone and sentiment of the content."""
-        # Implementation using LLM
-        return {}
+        chain = ChatPromptTemplate.from_template(prompt) | self.llm | StrOutputParser()
+        return chain.invoke({"content": content})
 
     def _analyze_readability(self, content: str) -> Dict[str, Any]:
         """Analyze readability metrics."""

@@ -33,6 +33,8 @@ class QualityReviewer(BaseAgent):  # Add inheritance
         llm_config: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         try:
+            if llm_config:
+                self.update_llm(llm_config)  # Missing this
             manuscript = self.document_store.get_manuscript(manuscript_id)
             if not manuscript:
                 return {"error": f"Manuscript {manuscript_id} not found"}

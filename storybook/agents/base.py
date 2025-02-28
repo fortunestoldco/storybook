@@ -21,10 +21,7 @@ class BaseAgent:
 
     def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
         """Initialize with optional LLM configuration."""
-        if llm_config:  # Remove super() call, BaseAgent has no parent class
-            self.llm = create_llm(llm_config)
-        else:
-            self.llm = get_llm()
+        self.llm = create_llm(llm_config) if llm_config else get_llm()
         self.document_store = DocumentStore()
 
     def update_llm(self, llm_config: Dict[str, Any]) -> None:
@@ -51,6 +48,21 @@ class BaseAgent:
             "message": str(error),
             "type": error.__class__.__name__
         }
+
+    def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Process inputs using the configured LLM."""
+        try:
+            # Update LLM config if provided in inputs
+            if "llm_config" in inputs:
+                self.update_llm(inputs["llm_config"])
+            return self.process_manuscript(
+                inputs["manuscript_id"],
+                inputs.get("target_audience"),
+                inputs.get("research_insights")
+            )
+        except Exception as e:
+            logger.error(f"Error in {self.__class__.__name__} process: {str(e)}")
+            return self.handle_error(e)
 
     def process_manuscript(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]], research_insights: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """Abstract method to be implemented by each agent."""

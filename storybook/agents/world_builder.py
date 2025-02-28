@@ -29,7 +29,7 @@ class WorldBuilder(BaseAgent):
         """Identify and enhance settings and world-building elements."""
         try:
             if llm_config:
-                self.llm = create_llm(llm_config)
+                self.update_llm(llm_config)  # Missing this
                 
             manuscript = self.document_store.get_manuscript(manuscript_id)
             if not manuscript:
