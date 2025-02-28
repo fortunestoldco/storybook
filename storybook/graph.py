@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import Dict, Any, Optional, Annotated, List
+from typing import Dict, Any, Optional, Annotated, List, TypedDict
 import os
 import logging
 from pathlib import Path
 
 from langchain.schema import Document
-from langgraph.graph import Graph
-from langgraph.pregel import StateType  # Changed import
+from langgraph.graph import Graph, END, StateType
 from langgraph.prebuilt.tool_executor import ToolExecutor
 from langchain_core.tools import BaseTool
 
@@ -27,18 +26,18 @@ from storybook.config import validate_agent_config, STATES
 
 logger = logging.getLogger(__name__)
 
+class GraphState(TypedDict):
+    """Type definition for graph state."""
+    manuscript: Dict[str, Any]
+    characters: List[Dict[str, Any]]
+    research: Dict[str, Any]
+    analysis: Dict[str, Any]
+    improvements: List[Dict[str, Any]]
+    status: str
+
 def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
     """Build the storybook workflow graph."""
     
-    # Define state type with Annotated for multi-value channels
-    class State(StateType):
-        manuscript: Dict[str, Any]
-        characters: Annotated[List[Dict[str, Any]], "characters"]
-        research: Annotated[Dict[str, Any], "research"]
-        analysis: Annotated[Dict[str, Any], "analysis"]  # Fixed extra bracket
-        improvements: Annotated[List[Dict[str, Any]], "improvements"]
-        status: str  # Added status field
-
     # Initialize tools and agents
     agents = {
         "character_developer": CharacterDeveloper(config),
