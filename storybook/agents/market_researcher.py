@@ -1,32 +1,31 @@
 from __future__ import annotations
+
+# Standard library imports
 from typing import Dict, List, Any, Optional
 import logging
-import re
 import json
+import re
 
+# Third-party imports
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langchain_community.tools import TavilySearchResults
-from langchain_community.utilities import TavilySearchAPIWrapper  # Add missing import
 from langchain_core.documents import Document
+from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper  # Fixed import path
 
+# Local imports
 from storybook.config import get_llm, TAVILY_API_KEY
 from storybook.db.document_store import DocumentStore
-from storybook.tools.document_tools import DocumentTools
-from storybook.tools.research_tools import ResearchTools
 
 logger = logging.getLogger(__name__)
 
-
 class MarketResearcher:
-    """Agent responsible for market research and target audience analysis."""
+    """Agent responsible for market research and audience analysis."""
 
     def __init__(self):
-        self.llm = get_llm(temperature=0.7, use_replicate=True)
+        self.llm = get_llm(temperature=0.7)
         self.document_store = DocumentStore()
-        self.document_tools = DocumentTools()
-        self.research_tools = ResearchTools()
+        self.search = TavilySearchAPIWrapper(tavily_api_key=TAVILY_API_KEY)
 
     def get_tools(self):
         """Get tools available to this agent."""
