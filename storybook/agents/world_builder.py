@@ -77,7 +77,14 @@ class WorldBuilder(BaseAgent):
             "message": f"Enhanced {len(enhanced_settings)} settings and world-building elements.",
         }
 
-    def _extract_settings(...):  # Either complete implementation or remove
+    def _extract_settings(self, content: str, target_audience: Optional[Dict[str, Any]] = None, research_insights: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """Extract settings and locations from the manuscript."""
+        try:
+            # Implementation here
+            return []
+        except Exception as e:
+            logger.error(f"Error extracting settings: {e}")
+            return []
 
     def _develop_setting(
         self,

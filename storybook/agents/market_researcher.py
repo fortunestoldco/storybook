@@ -287,147 +287,150 @@ class MarketResearcher(BaseAgent):  # Add inheritance
         }
 
     def research_market(self, manuscript_id: str, title: str, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Conduct comprehensive market research for the manuscript."""
-        # Step 1: Infer genre and target audience
-        genre_audience = self.infer_genre_and_audience(manuscript_id, llm_config)
+        try:
+            # Step 1: Infer genre and target audience
+            genre_audience = self.infer_genre_and_audience(manuscript_id, llm_config)
 
-        if not genre_audience:
+            if not genre_audience:
+                return {
+                    "manuscript_id": manuscript_id,
+                    "status": "inference_failed",
+                    "message": "Failed to infer genre and target audience.",
+                }
+
+            # Extract key information
+            genre = genre_audience.get("primary_genre", "fiction")
+            demographic = genre_audience.get("target_demographic", "general readers")
+            themes = []
+
+            # Extract themes
+            themes_text = genre_audience.get("key_themes", "")
+            theme_matches = re.findall(
+                r'["\']([^"\']+)["\']|(\w+(?:\s+\w+){0,2})', themes_text
+            )
+            for match in theme_matches:
+                theme = match[0] if match[0] else match[1]
+                if theme and len(theme) > 3 and theme.lower() not in ["and", "the", "with"]:
+                    themes.append(theme)
+
+            if not themes:
+                themes = ["adventure", "relationships", "personal growth"]  # Default themes
+
+            # Step 2: Research similar books
+            market_research = self.research_similar_books(genre, themes)
+
+            # Step 3: Analyze target demographic
+            demographic_analysis = self.analyze_target_demographic(demographic, genre)
+
+            # Step 4: Generate comprehensive insights
+            prompt = ChatPromptTemplate.from_template(
+                """
+            You are a Publishing Consultant preparing a comprehensive market research report for an author.
+            
+            Manuscript Title: {title}
+            Genre: {genre}
+            Target Demographic: {demographic}
+            Key Themes: {themes}
+            
+            Market Analysis:
+            {market_analysis}
+            
+            Demographic Profile:
+            {demographic_profile}
+            
+            Based on all this research, prepare a comprehensive report covering:
+            
+            1. Market Overview: Current state of the {genre} market
+            2. Competition: How similar books are performing and positioning
+            3. Target Audience: Detailed profile of the ideal reader
+            4. Market Opportunities: Gaps or trends the author could leverage
+            5. Positioning Recommendations: How to position this book for success
+            6. Content Recommendations: Specific elements to include or emphasize to appeal to the target audience
+            7. Marketing Considerations: Channels and approaches likely to reach this audience
+            
+            Your report should provide actionable insights that will guide decisions about character development,
+            dialogue style, world-building, and language choices to maximize appeal to the target audience.
+            """
+            )
+
+            # Create the chain
+            chain = (
+                {
+                    "title": lambda _: title,
+                    "genre": lambda _: genre,
+                    "demographic": lambda _: demographic,
+                    "themes": lambda _: ", ".join(themes),
+                    "market_analysis": lambda _: market_research.get("market_analysis", ""),
+                    "demographic_profile": lambda _: demographic_analysis.get(
+                        "demographic_profile", ""
+                    ),
+                }
+                | prompt
+                | self.llm
+                | StrOutputParser()
+            )
+
+            # Run the chain
+            comprehensive_report = chain.invoke("Generate market report")
+
+            # Store the research in the database
+            research_data = {
+                "title": f"Market Research Report for '{title}'",
+                "genre_analysis": genre_audience,
+                "market_research": market_research,
+                "demographic_analysis": demographic_analysis,
+                "comprehensive_report": comprehensive_report,
+            }
+
+            self.document_store.store_research_document(
+                manuscript_id, "market_research", research_data
+            )
+
+            # Store in MongoDB Atlas Vector store for future reference and search
+            doc = Document(
+                page_content=comprehensive_report,
+                metadata={
+                    "type": "market_research",
+                    "manuscript_id": manuscript_id,
+                    "title": title,
+                    "genre": genre,
+                    "demographic": demographic,
+                    "themes": ", ".join(themes),
+                },
+            )
+
+            self.document_store.db.store_documents_with_embeddings("research", [doc])
+
+            # Return the complete research package
             return {
                 "manuscript_id": manuscript_id,
-                "status": "inference_failed",
-                "message": "Failed to infer genre and target audience.",
+                "status": "success",
+                "message": "Completed comprehensive market research.",
+                "research_insights": {
+                    "genre": genre,
+                    "target_demographic": demographic,
+                    "key_themes": themes,
+                    "market_analysis_summary": market_research.get("market_analysis", "")[
+                        :500
+                    ]
+                    + "...",
+                    "comprehensive_report": comprehensive_report,
+                },
+                "target_audience": {
+                    "demographic": demographic,
+                    "profile": demographic_analysis.get("demographic_profile", ""),
+                    "reading_preferences": self._extract_preferences(
+                        demographic_analysis.get("demographic_profile", "")
+                    ),
+                    "content_expectations": self._extract_expectations(
+                        demographic_analysis.get("demographic_profile", "")
+                    ),
+                    "genre": genre,
+                },
             }
-
-        # Extract key information
-        genre = genre_audience.get("primary_genre", "fiction")
-        demographic = genre_audience.get("target_demographic", "general readers")
-        themes = []
-
-        # Extract themes
-        themes_text = genre_audience.get("key_themes", "")
-        theme_matches = re.findall(
-            r'["\']([^"\']+)["\']|(\w+(?:\s+\w+){0,2})', themes_text
-        )
-        for match in theme_matches:
-            theme = match[0] if match[0] else match[1]
-            if theme and len(theme) > 3 and theme.lower() not in ["and", "the", "with"]:
-                themes.append(theme)
-
-        if not themes:
-            themes = ["adventure", "relationships", "personal growth"]  # Default themes
-
-        # Step 2: Research similar books
-        market_research = self.research_similar_books(genre, themes)
-
-        # Step 3: Analyze target demographic
-        demographic_analysis = self.analyze_target_demographic(demographic, genre)
-
-        # Step 4: Generate comprehensive insights
-        prompt = ChatPromptTemplate.from_template(
-            """
-        You are a Publishing Consultant preparing a comprehensive market research report for an author.
-        
-        Manuscript Title: {title}
-        Genre: {genre}
-        Target Demographic: {demographic}
-        Key Themes: {themes}
-        
-        Market Analysis:
-        {market_analysis}
-        
-        Demographic Profile:
-        {demographic_profile}
-        
-        Based on all this research, prepare a comprehensive report covering:
-        
-        1. Market Overview: Current state of the {genre} market
-        2. Competition: How similar books are performing and positioning
-        3. Target Audience: Detailed profile of the ideal reader
-        4. Market Opportunities: Gaps or trends the author could leverage
-        5. Positioning Recommendations: How to position this book for success
-        6. Content Recommendations: Specific elements to include or emphasize to appeal to the target audience
-        7. Marketing Considerations: Channels and approaches likely to reach this audience
-        
-        Your report should provide actionable insights that will guide decisions about character development,
-        dialogue style, world-building, and language choices to maximize appeal to the target audience.
-        """
-        )
-
-        # Create the chain
-        chain = (
-            {
-                "title": lambda _: title,
-                "genre": lambda _: genre,
-                "demographic": lambda _: demographic,
-                "themes": lambda _: ", ".join(themes),
-                "market_analysis": lambda _: market_research.get("market_analysis", ""),
-                "demographic_profile": lambda _: demographic_analysis.get(
-                    "demographic_profile", ""
-                ),
-            }
-            | prompt
-            | self.llm
-            | StrOutputParser()
-        )
-
-        # Run the chain
-        comprehensive_report = chain.invoke("Generate market report")
-
-        # Store the research in the database
-        research_data = {
-            "title": f"Market Research Report for '{title}'",
-            "genre_analysis": genre_audience,
-            "market_research": market_research,
-            "demographic_analysis": demographic_analysis,
-            "comprehensive_report": comprehensive_report,
-        }
-
-        self.document_store.store_research_document(
-            manuscript_id, "market_research", research_data
-        )
-
-        # Store in MongoDB Atlas Vector store for future reference and search
-        doc = Document(
-            page_content=comprehensive_report,
-            metadata={
-                "type": "market_research",
-                "manuscript_id": manuscript_id,
-                "title": title,
-                "genre": genre,
-                "demographic": demographic,
-                "themes": ", ".join(themes),
-            },
-        )
-
-        self.document_store.db.store_documents_with_embeddings("research", [doc])
-
-        # Return the complete research package
-        return {
-            "manuscript_id": manuscript_id,
-            "status": "success",
-            "message": "Completed comprehensive market research.",
-            "research_insights": {
-                "genre": genre,
-                "target_demographic": demographic,
-                "key_themes": themes,
-                "market_analysis_summary": market_research.get("market_analysis", "")[
-                    :500
-                ]
-                + "...",
-                "comprehensive_report": comprehensive_report,
-            },
-            "target_audience": {
-                "demographic": demographic,
-                "profile": demographic_analysis.get("demographic_profile", ""),
-                "reading_preferences": self._extract_preferences(
-                    demographic_analysis.get("demographic_profile", "")
-                ),
-                "content_expectations": self._extract_expectations(
-                    demographic_analysis.get("demographic_profile", "")
-                ),
-                "genre": genre,
-            },
-        }
+        except Exception as e:
+            logger.error(f"Error in market research: {e}")
+            return self.handle_error(e)
 
     def _extract_preferences(self, profile_text: str) -> Dict[str, Any]:
         """Extract reading preferences from the demographic profile."""

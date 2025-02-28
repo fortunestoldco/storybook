@@ -107,8 +107,8 @@ class LanguagePolisher(BaseAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in polish_language: {str(e)}")
-            return {"error": f"Failed to polish manuscript: {str(e)}"}
+            logger.error(f"Error in polish_language: {e}")
+            return self.handle_error(e)
 
     def _analyze_language_style(
         self, content: str, target_audience: Optional[Dict[str, Any]] = None

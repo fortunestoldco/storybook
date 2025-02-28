@@ -3,6 +3,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 import logging
 import json
+import re
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -12,6 +13,7 @@ from langchain_openai import OpenAIEmbeddings
 from storybook.agents.base import BaseAgent
 from storybook.config import create_llm, get_llm
 from storybook.db.document_store import DocumentStore
+from storybook.db.mongodb_store import MongoDBStore  # Add missing import
 from storybook.tools.document_tools import DocumentTools
 
 logger = logging.getLogger(__name__)

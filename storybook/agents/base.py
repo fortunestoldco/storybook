@@ -38,6 +38,8 @@ class BaseAgent:
     def validate_input(self, **kwargs) -> bool:
         """Validate input parameters. Override in subclasses."""
         return True
+
+    def handle_error(self, error: Exception) -> Dict[str, Any]:
         """Handle errors in agent execution."""
         logger.error(f"Agent error: {str(error)}")
         return {
