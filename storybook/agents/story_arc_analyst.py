@@ -1,7 +1,136 @@
-            "pacing_balance": balance_match.group(1).strip() if balance_match else "",
-            "tension_graph": tension_match.group(1).strip() if tension_match else "",
-            "strengths": strengths_match.group(1).strip() if strengths_match else "",
-            "issues": issues_match.group(1).strip() if issues_match else "",
+from __future__ import annotations
+
+# Standard library imports
+from typing import Dict, List, Any, Optional
+import logging
+import json
+import re
+
+# Third-party imports
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.documents import Document
+
+# Local imports
+from storybook.agents.base import BaseAgent
+from storybook.config import create_llm, get_llm
+from storybook.db.document_store import DocumentStore
+
+logger = logging.getLogger(__name__)
+
+class StoryArcAnalyst(BaseAgent):
+    """Agent responsible for analyzing and improving story arcs."""
+
+    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        """Initialize with optional LLM configuration."""
+        super().__init__(llm_config)
+        self.document_store = DocumentStore()
+
+    def analyze_story_arc(
+        self,
+        manuscript_id: str,
+        target_audience: Optional[Dict[str, Any]] = None,
+        research_insights: Optional[Dict[str, Any]] = None,
+        llm_config: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Analyze the story arc and provide improvement suggestions."""
+        try:
+            if llm_config:
+                self.llm = create_llm(llm_config)
+
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
+
+            # Analyze story arc components
+            arc_analysis = self._analyze_arc_components(
+                manuscript["content"],
+                target_audience=target_audience
+            )
+
+            # Evaluate pacing and balance
+            pacing_analysis = self._evaluate_pacing(
+                manuscript["content"],
+                arc_analysis,
+                target_audience=target_audience
+            )
+
+            return {
+                "manuscript_id": manuscript_id,
+                "arc_analysis": arc_analysis,
+                "pacing_analysis": pacing_analysis,
+                "recommendations": self._generate_recommendations(
+                    arc_analysis,
+                    pacing_analysis,
+                    target_audience
+                )
+            }
+
+        except Exception as e:
+            logger.error(f"Error in analyze_story_arc: {str(e)}")
+            return self.handle_error(e)
+
+    def _extract_arc_metrics(self, analysis_text: str) -> Dict[str, str]:
+        """Extract metrics from analysis text using regex."""
+        metrics = {}
+        
+        # Extract pacing balance
+        balance_match = re.search(r"Pacing Balance:\s*(.*?)(?=\n|$)", analysis_text)
+        metrics["pacing_balance"] = balance_match.group(1).strip() if balance_match else ""
+        
+        # Extract tension curve
+        tension_match = re.search(r"Tension Curve:\s*(.*?)(?=\n|$)", analysis_text)
+        metrics["tension_curve"] = tension_match.group(1).strip() if tension_match else ""
+        
+        return metrics
+
+    def _analyze_arc_components(self, content: str, target_audience: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Analyze major components of the story arc."""
+        try:
+            return {
+                "setup": self._analyze_section(content[:len(content)//4]),
+                "rising_action": self._analyze_section(content[len(content)//4:len(content)//2]),
+                "climax": self._analyze_section(content[len(content)//2:3*len(content)//4]),
+                "resolution": self._analyze_section(content[3*len(content)//4:])
+            }
+        except Exception as e:
+            logger.error(f"Error analyzing arc components: {str(e)}")
+            return {}
+
+    def _analyze_section(self, section: str) -> Dict[str, Any]:
+        """Analyze a specific section of the story."""
+        try:
+            prompt = ChatPromptTemplate.from_template(
+                """Analyze this section of the story and provide:
+                1. Key events
+                2. Emotional intensity (1-10)
+                3. Pacing (slow/medium/fast)
+                4. Character development
+                5. Plot advancement
+
+                Section:
+                {section}
+                """
+            )
+            
+            chain = prompt | self.llm | StrOutputParser()
+            result = chain.invoke({"section": section[:2000]})  # Analyze first 2000 chars
+            
+            return self._parse_section_analysis(result)
+            
+        except Exception as e:
+            logger.error(f"Error analyzing section: {str(e)}")
+            return {}
+
+    def _parse_section_analysis(self, analysis: str) -> Dict[str, Any]:
+        """Parse the section analysis into structured data."""
+        return {
+            "key_events": self._extract_key_events(analysis),
+            "emotional_intensity": self._extract_intensity(analysis),
+            "pacing": self._extract_pacing(analysis),
+            "character_development": self._extract_character_dev(analysis),
+            "plot_advancement": self._extract_plot_advancement(analysis)
         }
 
     def _generate_improvement_plan(
