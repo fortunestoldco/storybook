@@ -534,3 +534,44 @@ class LanguagePolisher(BaseAgent):
         """Apply predefined style rules to the text.""" 
         # Implementation for applying style rules
         pass
+
+    def _analyze_block(self, block: str) -> Dict[str, Any]:
+        """Analyze a block of text for style and language patterns."""
+        try:
+            if len(block.strip().split("\n")) > 1:  # Fixed syntax error here
+                # Process multi-line block
+                return {
+                    "length": len(block),
+                    "sentences": len(re.findall(r'[.!?]+', block)),
+                    "paragraphs": len(block.strip().split("\n\n")),
+                    "patterns": self._extract_patterns(block)
+                }
+            return {}
+        except Exception as e:
+            logger.error(f"Error analyzing block: {str(e)}")
+            return {}
+
+    def _extract_patterns(self, text: str) -> Dict[str, List[str]]:
+        """Extract common language patterns from text."""
+        patterns = {
+            "repetitive_words": [],
+            "complex_phrases": [],
+            "weak_constructions": []
+        }
+        try:
+            # Extract patterns using regex
+            words = re.findall(r'\b\w+\b', text.lower())
+            word_freq = {}
+            for word in words:
+                word_freq[word] = word_freq.get(word, 0) + 1
+            
+            # Find repetitive words
+            patterns["repetitive_words"] = [
+                word for word, count in word_freq.items()
+                if count > 3 and len(word) > 3
+            ]
+
+            return patterns
+        except Exception as e:
+            logger.error(f"Error extracting patterns: {str(e)}")
+            return patterns
