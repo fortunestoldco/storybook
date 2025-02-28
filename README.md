@@ -92,6 +92,49 @@ python scripts/download_models.py
 - POST `/transform`: Execute the transformation workflow
 - GET `/health`: Health check endpoint
 
+## LLM Configuration
+
+Storybook supports multiple LLM providers:
+
+- OpenAI (GPT-4, GPT-3.5)
+- Anthropic (Claude-3)
+- Replicate (Custom models)
+- Ollama (Local models)
+- HuggingFace (Custom models)
+- LlamaCpp (Local models)
+
+### Example Configuration
+
+```json
+{
+    "agent_config": {
+        "research": {
+            "provider": "anthropic",
+            "config": {
+                "model_name": "claude-3-sonnet",
+                "temperature": 0.7,
+                "max_tokens": 4000
+            }
+        },
+        "writing": {
+            "provider": "openai",
+            "config": {
+                "model_name": "gpt-4",
+                "temperature": 0.9
+            }
+        },
+        "editorial": {
+            "provider": "llamacpp",
+            "config": {
+                "model_path": "./models/llama-2-7b.Q4_K_M.gguf",
+                "temperature": 0.3,
+                "n_gpu_layers": 1
+            }
+        }
+    }
+}
+```
+
 ## License
 
 MIT
