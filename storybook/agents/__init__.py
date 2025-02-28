@@ -16,6 +16,19 @@ from storybook.agents.language_polisher import LanguagePolisher
 from storybook.agents.quality_reviewer import QualityReviewer
 from storybook.agents.market_researcher import MarketResearcher
 from storybook.agents.content_analyzer import ContentAnalyzer
+from .base_agent import BaseAgent
+from .project_management.project_lead_agent import ProjectLeadAgent
+from .project_management.market_research_agent import MarketResearchAgent
+from .project_management.novel_identity_agent import NovelIdentityAgent
+from .cultural_relevance.zeitgeist_analysis_agent import ZeitgeistAnalysisAgent
+from .cultural_relevance.trend_forecasting_agent import TrendForecastingAgent
+from .cultural_relevance.cultural_conversation_agent import CulturalConversationAgent
+from .story_architecture.structure_specialist_agent import StructureSpecialistAgent
+from .story_architecture.plot_development_agent import PlotDevelopmentAgent
+from .story_architecture.genre_innovation_agent import GenreInnovationAgent
+from .writing.chapter_writer_agent import ChapterWriterAgent
+from .writing.continuity_manager import ContinuityManager
+from .writing.description_specialist import DescriptionSpecialist
 
 logger = logging.getLogger(__name__)
 
@@ -30,5 +43,17 @@ __all__ = [
     "LanguagePolisher",
     "QualityReviewer",
     "MarketResearcher",
-    "ContentAnalyzer"
+    "ContentAnalyzer",
+    'ProjectLeadAgent',
+    'MarketResearchAgent',
+    'NovelIdentityAgent',
+    'ZeitgeistAnalysisAgent',
+    'TrendForecastingAgent',
+    'CulturalConversationAgent',
+    'StructureSpecialistAgent',
+    'PlotDevelopmentAgent',
+    'GenreInnovationAgent',
+    'ChapterWriterAgent',
+    'ContinuityManager',
+    'DescriptionSpecialist'
 ]

@@ -5,47 +5,42 @@ from pathlib import Path
 from langgraph.graph import StateGraph
 from langgraph.channels import LastValue
 
-# Project Management
-from .agents.project_management.project_lead_agent import ProjectLeadAgent
-from .agents.project_management.market_research_agent import MarketResearchAgent
-from .agents.project_management.novel_identity_agent import NovelIdentityAgent
-
-# Cultural Relevance
-from .agents.cultural_relevance.zeitgeist_analysis_agent import ZeitgeistAnalysisAgent
-from .agents.cultural_relevance.trend_forecasting_agent import TrendForecastingAgent
-from .agents.cultural_relevance.cultural_conversation_agent import CulturalConversationAgent
-
-# Story Architecture
-from .agents.story_architecture.structure_specialist_agent import StructureSpecialistAgent
-from .agents.story_architecture.plot_development_agent import PlotDevelopmentAgent
-from .agents.story_architecture.genre_innovation_agent import GenreInnovationAgent
-from .agents.story_architecture.architecture_coordinator import ArchitectureCoordinator
-
-# Core Creative
-from .agents.character_analyst import CharacterAnalyst
-from .agents.subplot_weaver import SubplotWeaver
-from .agents.world_builder import WorldBuilder
-
-# Writing
-from .agents.writing.chapter_writer_agent import ChapterWriterAgent
-from .agents.writing.continuity_manager import ContinuityManager
-from .agents.writing.description_specialist import DescriptionSpecialist
-
-# Research Team
-from .agents.research.historical_research_agent import HistoricalResearchAgent
-from .agents.research.technical_domain_agent import TechnicalDomainAgent
-from .agents.research.cultural_authenticity_agent import CulturalAuthenticityAgent
-from .agents.research.research_supervisor_agent import ResearchSupervisorAgent
-
-# Creative Coordinator
-from .agents.creative.creative_coordinator import CreativeCoordinator
-
-from .models.schema import StoryInput, StoryState, AgentConfig
-from .llm.provider import LLMProvider
+from storybook.models.schema import StoryInput, StoryState, AgentConfig
+from storybook.llm.provider import LLMProvider
+from storybook.agents import (
+    ProjectLeadAgent,
+    MarketResearchAgent,
+    NovelIdentityAgent,
+    ZeitgeistAnalysisAgent,
+    TrendForecastingAgent,
+    CulturalConversationAgent,
+    StructureSpecialistAgent,
+    PlotDevelopmentAgent,
+    GenreInnovationAgent,
+    ChapterWriterAgent,
+    ContinuityManager,
+    DescriptionSpecialist
+)
 
 def build_storybook(manuscript_text: str, config: Optional[Dict[str, Any]] = None) -> StateGraph:
     """Build the storybook processing graph."""
     workflow = StateGraph()
+    
+    # Create agent mapping
+    agent_class_map = {
+        "project_lead": ProjectLeadAgent,
+        "market_research": MarketResearchAgent,
+        "novel_identity": NovelIdentityAgent,
+        "zeitgeist": ZeitgeistAnalysisAgent,
+        "trend_forecaster": TrendForecastingAgent,
+        "cultural_conversation": CulturalConversationAgent,
+        "structure_specialist": StructureSpecialistAgent,
+        "plot_development": PlotDevelopmentAgent,
+        "genre_innovation": GenreInnovationAgent,
+        "chapter_writer": ChapterWriterAgent,
+        "continuity_manager": ContinuityManager,
+        "description_specialist": DescriptionSpecialist
+    }
     
     # Create story input with only manuscript text required
     story_input = StoryInput(
