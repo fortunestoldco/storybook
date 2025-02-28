@@ -1,21 +1,16 @@
-﻿from typing import Dict, List, Any, Optional
+﻿from __future__ import annotations
+
+# Standard library imports
+from typing import Dict, List, Any, Optional
 import logging
+
+# Third-party imports
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langserve import add_routes
 from pydantic import BaseModel, Field
-from __future__ import annotations
 
-from importlib.metadata import version
-from typing import Any, Generator, Iterable, Iterator, List, Optional, Sequence, Union
-
-from langchain_core.documents import Document
-from langchain_core.stores import BaseStore
-from pymongo import MongoClient
-from pymongo.collection import Collection
-from pymongo.driver_info import DriverInfo
-
-from langchain_mongodb.utils import make_serializable
+# Local imports
 from storybook.graph import storybook
 from storybook.db.document_store import DocumentStore
 

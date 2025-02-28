@@ -1,18 +1,16 @@
 ﻿from __future__ import annotations
-from importlib.metadata import version
-from typing import Any, Generator, Iterable, Iterator, List, Optional, Sequence, Union
 
+# Standard library imports
+from typing import Any, Dict, List, Optional
+from datetime import datetime
+import logging
+
+# Third-party imports
 from langchain_core.documents import Document
-from langchain_core.stores import BaseStore
-from pymongo import MongoClient
-from pymongo.collection import Collection
-from pymongo.driver_info import DriverInfo
-
-from langchain_mongodb.utils import make_serializable
-from langchain_community.document_loaders.web_base import WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_community.document_loaders.web_base import WebBaseLoader
 
+# Local imports
 from storybook.db.mongodb_client import MongoDBStore
 from storybook.config import (
     COLLECTION_MANUSCRIPTS,
@@ -213,6 +211,4 @@ class DocumentStore:
 
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format."""
-        from datetime import datetime
-
         return datetime.now().isoformat()

@@ -5,7 +5,7 @@ from storybook.graph import (
     start_workflow, conduct_market_research, analyze_manuscript, initialize_graph,
     develop_characters, enhance_dialogue, build_world, integrate_subplots,
     evaluate_story_arcs, check_continuity, polish_language, review_quality,
-    finalize, build_storybook
+    finalize, build_storybook, check_analysis_progress, route_after_quality_review
 )
 from storybook.graph import NovelGraphState
 
@@ -255,3 +255,36 @@ class TestGraph:
         
         for node in essential_nodes:
             assert node in nodes
+
+    def test_check_analysis_progress(self, mock_agents):
+        """Test the analysis progress check function"""
+        pass  # Missing implementation
+
+    def test_route_after_quality_review(self, mock_agents):
+        """Test the quality review routing function"""
+        pass  # Missing implementation
+ 
+def test_check_analysis_progress():
+    incomplete_state = {"analysis_results": {"sentiment": "positive"}}
+    assert check_analysis_progress(incomplete_state) == "analysis"
+    
+    complete_state = {
+        "analysis_results": {
+            "sentiment": "positive",
+            "readability": "good",
+            "content_structure": "well-organized",
+            "genre_match": "high"
+        }
+    }
+    assert check_analysis_progress(complete_state) == "initialize"
+
+def test_route_after_quality_review():
+    incomplete_state = {"final_review": {}}
+    assert route_after_quality_review(incomplete_state) == "quality_review"
+    
+    complete_state = {"final_review": {"review": "Complete review"}}
+    assert route_after_quality_review(complete_state) == "finalize"
+
+def test_build_storybook():
+    workflow = build_storybook()
+    assert workflow is not None

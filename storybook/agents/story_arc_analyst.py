@@ -1,12 +1,18 @@
+from __future__ import annotations
+
+# Standard library imports
 from typing import Dict, List, Any, Optional
 import logging
 import json
 import re
 
+# Third-party imports
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+from langchain_core.documents import Document
 
+# Local imports
 from storybook.config import get_llm
 from storybook.db.document_store import DocumentStore
 
@@ -27,57 +33,62 @@ class StoryArcAnalyst:
         research_insights: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Analyze and refine the story arcs in the manuscript."""
-        manuscript = self.document_store.get_manuscript(manuscript_id)
-        if not manuscript:
-            return {"error": f"Manuscript {manuscript_id} not found"}
+        try:
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
 
-        # Analyze story structure
-        structure_analysis = self._analyze_story_structure(
-            manuscript["content"], target_audience
-        )
+            # Analyze story structure
+            structure_analysis = self._analyze_story_structure(
+                manuscript["content"], target_audience
+            )
 
-        # Analyze character arcs
-        character_arcs = self._analyze_character_arcs(
-            manuscript_id, manuscript["content"], target_audience
-        )
+            # Analyze character arcs
+            character_arcs = self._analyze_character_arcs(
+                manuscript_id, manuscript["content"], target_audience
+            )
 
-        # Evaluate pacing
-        pacing_analysis = self._analyze_pacing(
-            manuscript["content"], structure_analysis, target_audience
-        )
+            # Evaluate pacing
+            pacing_analysis = self._analyze_pacing(
+                manuscript["content"], structure_analysis, target_audience
+            )
 
-        # Generate improvement recommendations
-        improvement_plan = self._generate_improvement_plan(
-            structure_analysis,
-            character_arcs,
-            pacing_analysis,
-            target_audience,
-            research_insights,
-        )
+            # Generate improvement recommendations
+            improvement_plan = self._generate_improvement_plan(
+                structure_analysis,
+                character_arcs,
+                pacing_analysis,
+                target_audience,
+                research_insights,
+            )
 
-        # Apply story arc refinements
-        updated_content = self._apply_story_arc_refinements(
-            manuscript["content"], improvement_plan, target_audience
-        )
+            # Apply story arc refinements
+            updated_content = self._apply_story_arc_refinements(
+                manuscript["content"], improvement_plan, target_audience
+            )
 
-        # Store the updated manuscript
-        self.document_store.update_manuscript(
-            manuscript_id, {"content": updated_content}
-        )
+            # Store the updated manuscript
+            self.document_store.update_manuscript(
+                manuscript_id, {"content": updated_content}
+            )
 
-        # Compile complete analysis
-        analysis = {
-            "structure_analysis": structure_analysis,
-            "character_arcs": character_arcs,
-            "pacing_analysis": pacing_analysis,
-            "improvement_plan": improvement_plan,
-        }
+            # Compile complete analysis
+            analysis = {
+                "structure_analysis": structure_analysis,
+                "character_arcs": character_arcs,
+                "pacing_analysis": pacing_analysis,
+                "improvement_plan": improvement_plan,
+            }
 
-        return {
-            "manuscript_id": manuscript_id,
-            "message": "Completed story arc analysis and refinement.",
-            "analysis": analysis,
-        }
+            return {
+                "manuscript_id": manuscript_id,
+                "message": "Completed story arc analysis and refinement.",
+                "analysis": analysis,
+            }
+
+        except Exception as e:
+            logger.error(f"Error in refine_story_arcs: {str(e)}")
+            return {"error": f"Failed to analyze manuscript: {str(e)}"}
 
     def _analyze_story_structure(
         self, content: str, target_audience: Optional[Dict[str, Any]] = None
@@ -143,7 +154,6 @@ class StoryArcAnalyst:
         structure_analysis = chain.invoke("Analyze story structure")
 
         # Parse the analysis into sections
-import re
 
         # Extract overall structure
         structure_match = re.search(
@@ -257,7 +267,6 @@ import re
             character_names = chain.invoke("Extract characters")
 
             # Parse the character names
-import re
 
             name_matches = re.findall(
                 r"(?:^|\n)\s*-?\s*(\w+(?:\s+\w+){0,2})", character_names
@@ -278,32 +287,15 @@ import re
         character_arcs = []
         for character in characters[:5]:  # Limit to top 5 characters
             # Create the prompt for character arc analysis
-            arc_prompt = ChatPromptTemplate.from_template(
+            prompt = ChatPromptTemplate.from_template(
                 """
-            You are a Character Arc Analyst. Analyze the arc of the following character throughout the manuscript.
+            You are a Character Arc Analyst. Analyze the arc of the following character 
+            throughout the manuscript.
             
             Character Name: {character_name}
             Character Description: {character_description}
             Character Personality: {character_personality}
             Character Motivations: {character_motivations}
-            
-            Manuscript Sample:
-            {manuscript_sample}
-            
-            {audience_context}
-            
-            Analyze this character's arc by addressing:
-            
-            1. Starting State: The character's condition/mindset at the beginning
-            2. Key Moments: Major moments that change or challenge this character
-            3. Internal Journey: How the character grows or changes emotionally/psychologically
-            4. External Journey: How the character's circumstances or status changes
-            5. Resolution: Where the character ends up at the conclusion
-            6. Arc Type: Identify the type of character arc (e.g., positive, negative, flat, circular)
-            7. Arc Effectiveness: How compelling and believable is this character's journey?
-            8. Improvement Opportunities: How could this character's arc be strengthened?
-            
-            Provide specific examples from the text where possible.
             """
             )
 
@@ -342,7 +334,7 @@ import re
                     "manuscript_sample": lambda _: sample_text,
                     "audience_context": lambda _: audience_context,
                 }
-                | arc_prompt
+                | prompt
                 | self.llm
                 | StrOutputParser()
             )
@@ -418,7 +410,16 @@ import re
         structure_analysis: Dict[str, Any],
         target_audience: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """Analyze the pacing of the story."""
+        """Analyze the pacing of the story.
+        
+        Args:
+            content: The manuscript content to analyze
+            structure_analysis: Dictionary containing structural analysis results
+            target_audience: Optional dictionary containing target audience information
+            
+        Returns:
+            Dict containing pacing analysis results
+        """
         # Create sampling for analysis
         # We'll use larger chunks to better analyze pacing
         chunk_size = min(10000, len(content) // 5)
@@ -513,7 +514,7 @@ import re
             r"Low-Intensity Sections:?\s*(.*?)(?=\n\n|\n\d\.|\Z)",
             pacing_analysis,
             re.DOTALL
-        )
+        )  # Fix indentation
         balance_match = re.search(
             r"Pacing Balance:?\s*(.*?)(?=\n\n|\n\d\.|\Z)", pacing_analysis, re.DOTALL
         )
@@ -726,7 +727,7 @@ import re
         self,
         content: str,
         improvement_plan: Dict[str, Any],
-        target_audience: Optional[Dict[str, Any]] = None,
+        target_audience: Optional[Dict[str, Any]] = None
     ) -> str:
         """Apply story arc refinements to the manuscript."""
         # Extract key scene changes from the improvement plan

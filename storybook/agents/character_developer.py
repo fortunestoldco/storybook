@@ -3,11 +3,13 @@ from typing import Dict, List, Any, Optional
 import logging
 import json
 import re
+from datetime import datetime  # Add for timestamp operations
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_mongodb.docstores import MongoDBDocStore
+from langchain_core.documents import Document  # Add for document operations
 
 from storybook.config import get_llm, MONGODB_URI
 from storybook.db.document_store import DocumentStore

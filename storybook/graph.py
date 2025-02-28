@@ -1,12 +1,16 @@
-﻿from typing import Dict, List, Annotated, TypedDict, Any, Union, Literal
+﻿from __future__ import annotations
+
+# Standard library imports
+from typing import Dict, List, Any, Optional, Union, Literal
 import logging
 
+# Third-party imports
 from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import HumanMessage, BaseMessage
 from langchain_core.documents import Document 
-from langchain_core.callbacks import CallbackManagerForLLMRun
 from pydantic import BaseModel, Field
 
+# Local imports
 from storybook.agents.character_developer import CharacterDeveloper
 from storybook.agents.dialogue_enhancer import DialogueEnhancer
 from storybook.agents.world_builder import WorldBuilder

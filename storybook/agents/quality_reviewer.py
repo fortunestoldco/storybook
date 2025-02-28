@@ -10,7 +10,7 @@ import re
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langchain_core.documents import Document  # Missing import for document operations
+from langchain_core.documents import Document  # Already correctly imported
 
 # Local imports
 from storybook.config import get_llm

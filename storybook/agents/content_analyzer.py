@@ -3,7 +3,7 @@ from typing import Dict, List, Any, Optional
 import logging
 import json
 import re
-import datetime  # For _get_timestamp method
+import datetime
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -14,7 +14,7 @@ from langchain_openai import OpenAIEmbeddings
 
 from storybook.config import get_llm
 from storybook.db.document_store import DocumentStore
-from storybook.db.mongodb_store import MongoDBStore  # Missing import
+from storybook.db.mongodb_store import MongoDBStore
 from storybook.tools.document_tools import DocumentTools
 
 logger = logging.getLogger(__name__)

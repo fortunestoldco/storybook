@@ -8,6 +8,7 @@ from langchain_community.llms import Replicate
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough  # Missing import
+from langchain_core.documents import Document  # Add for MongoDB operations
 
 from storybook.config import get_llm
 from storybook.db.document_store import DocumentStore

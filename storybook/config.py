@@ -1,17 +1,11 @@
 ﻿from __future__ import annotations
 
-from importlib.metadata import version
-from typing import Any, Generator, Iterable, Iterator, List, Optional, Sequence, Union
+# Standard library imports
+from typing import Any, Optional
 import os
 
+# Third-party imports
 from langchain_core.documents import Document
-from langchain_core.stores import BaseStore
-from pymongo import MongoClient
-from pymongo.collection import Collection
-from pymongo.driver_info import DriverInfo
-
-from langchain_mongodb.utils import make_serializable
-from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.llms import Replicate
 from langchain_core.prompts import PromptTemplate

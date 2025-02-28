@@ -8,7 +8,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_community.tools import TavilySearchResults
-from langchain_community.utilities import TavilySearchAPIWrapper  # Missing import
+from langchain_community.utilities import TavilySearchAPIWrapper  # Add missing import
 from langchain_core.documents import Document
 
 from storybook.config import get_llm, TAVILY_API_KEY

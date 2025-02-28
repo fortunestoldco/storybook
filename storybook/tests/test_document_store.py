@@ -51,6 +51,10 @@ class TestDocumentStore:
             
             yield mock_loader_instance
     
+    @pytest.fixture
+    def document_store(self):
+        return DocumentStore()
+    
     def test_init(self, mock_mongodb_store, mock_text_splitter):
         # Test initialization
         store = DocumentStore()
@@ -58,6 +62,27 @@ class TestDocumentStore:
         # Verify store components
         assert store.db == mock_mongodb_store
         assert store.text_splitter == mock_text_splitter
+    
+    def test_store_manuscript(self, document_store):
+        manuscript = {
+            "title": "Test Novel",
+            "content": "Test content",
+            "metadata": {"author": "Test Author"}
+        }
+        
+        result = document_store.store_manuscript(manuscript)
+        
+        assert isinstance(result, str)
+        assert len(result) > 0
+    
+    def test_get_manuscript(self, document_store):
+        manuscript_id = "test_123"
+        
+        result = document_store.get_manuscript(manuscript_id)
+        
+        assert isinstance(result, dict)
+        assert "title" in result
+        assert "content" in result
     
     def test_store_manuscript(self, mock_mongodb_store):
         # Setup
