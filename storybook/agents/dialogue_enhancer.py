@@ -1,16 +1,15 @@
 from __future__ import annotations
 from typing import Dict, List, Any, Optional
 import logging
-import json
 import re
 
-from langchain_community.llms import Replicate
-from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough  # Missing import
-from langchain_core.documents import Document  # Add for MongoDB operations
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.documents import Document
 
-from storybook.config import get_llm
+from storybook.agents.base import BaseAgent
+from storybook.config import create_llm, get_llm
 from storybook.db.document_store import DocumentStore
 
 logger = logging.getLogger(__name__)

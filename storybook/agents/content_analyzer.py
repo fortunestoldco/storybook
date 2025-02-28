@@ -1,23 +1,18 @@
 from __future__ import annotations
-
-# Standard library imports
 from typing import Dict, List, Any, Optional
+from datetime import datetime
 import logging
 import json
-import re
-from datetime import datetime
 
-# Third-party imports
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.documents import Document
-from langchain_mongodb.docstores import MongoDBDocStore
+from langchain_openai import OpenAIEmbeddings
 
-# Local imports
-from storybook.config import create_llm, get_llm
-from storybook.db.mongodb_client import MongoDBStore  # Fixed import path
-from storybook.db.document_store import DocumentStore
 from storybook.agents.base import BaseAgent
+from storybook.config import create_llm, get_llm
+from storybook.db.document_store import DocumentStore
+from storybook.tools.document_tools import DocumentTools
 
 logger = logging.getLogger(__name__)
 

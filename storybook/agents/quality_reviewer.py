@@ -1,28 +1,26 @@
 from __future__ import annotations
-
-# Standard library imports
 from typing import Dict, List, Any, Optional
 import logging
-import json
 import re
 
-# Third-party imports
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langchain_core.documents import Document  # Already correctly imported
+from langchain_core.documents import Document
 
-# Local imports
-from storybook.config import get_llm
+from storybook.agents.base import BaseAgent
+from storybook.config import create_llm, get_llm
 from storybook.db.document_store import DocumentStore
 
 logger = logging.getLogger(__name__)
 
 
-class QualityReviewer:
+class QualityReviewer(BaseAgent):  # Add inheritance
     """Agent responsible for final quality review and manuscript finalization."""
 
-    def __init__(self):
+    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        """Initialize with optional LLM configuration."""
+        super().__init__(llm_config)  # Add super call
         self.llm = get_llm(temperature=0.5, use_replicate=True)
         self.document_store = DocumentStore()
 

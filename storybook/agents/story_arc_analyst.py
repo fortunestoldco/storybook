@@ -1,21 +1,17 @@
 from __future__ import annotations
-
-# Standard library imports
 from typing import Dict, List, Any, Optional
 import logging
 import json
 import re
 
-# Third-party imports
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import Document
 
-# Local imports
+from storybook.agents.base import BaseAgent
 from storybook.config import create_llm, get_llm
 from storybook.db.document_store import DocumentStore
-from storybook.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +82,7 @@ class StoryArcAnalyst(BaseAgent):
             }
         except Exception as e:
             logger.error(f"Error in refine_story_arcs: {str(e)}")
-            return {"error": f"Failed to analyze manuscript: {str(e)}")}
+            return {"error": f"Failed to analyze manuscript: {str(e)}"}
 
     def _analyze_story_structure(
         self, content: str, target_audience: Optional[Dict[str, Any]] = None, llm_config: Optional[Dict[str, Any]] = None
