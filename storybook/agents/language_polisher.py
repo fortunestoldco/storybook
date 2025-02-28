@@ -1,13 +1,18 @@
 from __future__ import annotations
+
+# Standard library imports
 from typing import Dict, List, Any, Optional
 import logging
+import json
 import re
 
+# Third-party imports
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import Document
 
+# Local imports
 from storybook.agents.base import BaseAgent
 from storybook.config import create_llm, get_llm
 from storybook.db.document_store import DocumentStore
@@ -103,12 +108,12 @@ class LanguagePolisher(BaseAgent):
 
         except Exception as e:
             logger.error(f"Error in polish_language: {str(e)}")
-            return {"error": f"Failed to polish manuscript: {str(e)}")}
+            return {"error": f"Failed to polish manuscript: {str(e)}"}  # Fixed syntax error here
 
     def _analyze_language_style(
         self, content: str, target_audience: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """Analyze the language and writing style of the manuscript."""
+        """Analyze the language and writing style of the manuscript.""" 
         # Sample representative sections
         sample_size = min(5000, len(content) // 4)
         beginning = content[:sample_size]
@@ -251,7 +256,7 @@ class LanguagePolisher(BaseAgent):
         target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """Identify specific areas for language improvement."""
+        """Identify specific areas for language improvement.""" 
         # Extract weaknesses from the style analysis
         weaknesses = style_analysis.get("weaknesses", "")
 
@@ -383,7 +388,7 @@ class LanguagePolisher(BaseAgent):
         style_analysis: Dict[str, Any],
         target_audience: Optional[Dict[str, Any]] = None,
     ) -> tuple:
-        """Polish selected sections of the manuscript based on identified improvement areas."""
+        """Polish selected sections of the manuscript based on identified improvement areas.""" 
         # Break the content into paragraphs
         paragraphs = content.split("\n\n")
 
@@ -517,7 +522,7 @@ class LanguagePolisher(BaseAgent):
         return updated_content, improved_sections
 
     def _extract_style_patterns(self, content: str) -> Dict[str, List[str]]:
-        """Extract common style patterns from the text."""
+        """Extract common style patterns from the text.""" 
         # Implementation for style pattern extraction
         pass
 
@@ -526,7 +531,7 @@ class LanguagePolisher(BaseAgent):
         content: str,
         style_rules: Dict[str, Any]
     ) -> str:
-        """Apply predefined style rules to the text."""
+        """Apply predefined style rules to the text.""" 
         # Implementation for applying style rules
         pass
 
@@ -536,7 +541,7 @@ class LanguagePolisher(BaseAgent):
         other_params: Any,
         llm_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """Method docstring."""
+        """Method docstring.""" 
         try:
             # Update LLM if new config provided at runtime
             if llm_config:
