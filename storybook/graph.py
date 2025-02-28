@@ -7,8 +7,8 @@ from pathlib import Path
 
 from langchain.schema import Document
 from langgraph.graph import Graph
-from langgraph.channels import LastValue, Channel
-from langgraph.pregel import BaseChannel
+from langgraph.channels import LastValue
+from langgraph.pregel import channels  # Changed from BaseChannel
 from langchain_core.tools import BaseTool
 
 from storybook.agents import (
@@ -41,7 +41,7 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
     
     workflow = Graph()
 
-    # Create channels for state management
+    # Create channels for state management using correct imports
     channels = {
         "manuscript": LastValue(),
         "characters": LastValue(default=[]),
