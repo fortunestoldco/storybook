@@ -20,16 +20,14 @@ from storybook.db.document_store import DocumentStore
 logger = logging.getLogger(__name__)
 
 
-class ContinuityEditor:
+class ContinuityEditor(BaseAgent):
     """Agent responsible for identifying and fixing continuity issues."""
 
-    def __init__(self):
-        self.llm = get_llm(
-            temperature=0.3, use_replicate=True
-        )  # Lower temperature for more consistent analysis
+    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        super().__init__(llm_config)
         self.document_store = DocumentStore()
 
-    def check_and_fix_continuity(self, manuscript_id: str) -> Dict[str, Any]:
+    def check_and_fix_continuity(self, manuscript_id: str, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Identify and fix continuity issues in the manuscript."""
         manuscript = self.document_store.get_manuscript(manuscript_id)
         if not manuscript:
@@ -319,3 +317,17 @@ class ContinuityEditor:
 
         # Extract the paragraph
         return content[para_start:para_end].strip()
+
+    def method_name(
+        self,
+        manuscript_id: str,
+        other_params: Any,
+        llm_config: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Method docstring."""
+        try:
+            # Update LLM if new config provided at runtime
+            if llm_config:
+                self.llm = create_llm(llm_config)
+                
+            # ... rest of method implementation ...

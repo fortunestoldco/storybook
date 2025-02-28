@@ -14,11 +14,11 @@ from storybook.db.document_store import DocumentStore
 logger = logging.getLogger(__name__)
 
 
-class WorldBuilder:
-    """Agent responsible for world-building and enhancing settings."""
+class WorldBuilder(BaseAgent):
+    """Agent responsible for world-building."""
 
-    def __init__(self):
-        self.llm = get_llm(temperature=0.7, use_replicate=True)
+    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        super().__init__(llm_config)
         self.document_store = DocumentStore()
 
     def build_world(
@@ -26,8 +26,12 @@ class WorldBuilder:
         manuscript_id: str,
         target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None,
+        llm_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Identify and enhance settings and world-building elements."""
+        if "llm_config" in kwargs:
+            self.llm = create_llm(kwargs["llm_config"])
+            
         manuscript = self.document_store.get_manuscript(manuscript_id)
         if not manuscript:
             return {"error": f"Manuscript {manuscript_id} not found"}

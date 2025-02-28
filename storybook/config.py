@@ -1,7 +1,7 @@
 ﻿from __future__ import annotations
 
 # Standard library imports
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 import os
 
 # Third-party imports
@@ -52,6 +52,29 @@ def get_llm(
             temperature=temperature,
             api_key=OPENAI_API_KEY,
         )
+
+def create_llm(llm_config: Dict[str, Any]) -> BaseChatModel:
+    """Create an LLM instance based on configuration."""
+    provider = llm_config.get("provider", "openai")
+    config = llm_config.get("config", {})
+
+    if provider == LLMProvider.OPENAI:
+        return ChatOpenAI(
+            model_name=config.get("model_name", "gpt-4"),
+            temperature=config.get("temperature", 0.7),
+            max_tokens=config.get("max_tokens"),
+            streaming=config.get("streaming", False),
+        )
+    elif provider == LLMProvider.ANTHROPIC:
+        return ChatAnthropic(
+            model_name=config.get("model_name", "claude-3-sonnet"),
+            temperature=config.get("temperature", 0.7),
+            max_tokens=config.get("max_tokens"),
+            streaming=config.get("streaming", False),
+        )
+    # Add other providers...
+
+    raise ValueError(f"Unsupported LLM provider: {provider}")
 
 # Collection Names
 COLLECTION_MANUSCRIPTS = os.getenv("COLLECTION_MANUSCRIPTS", "manuscripts")

@@ -31,6 +31,7 @@ class QualityReviewer:
         manuscript_id: str,
         target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None,
+        llm_config: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Perform final quality review and finalize the manuscript."""
         manuscript = self.document_store.get_manuscript(manuscript_id)

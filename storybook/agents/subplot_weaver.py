@@ -14,13 +14,11 @@ from storybook.db.document_store import DocumentStore
 logger = logging.getLogger(__name__)
 
 
-class SubplotWeaver:
+class SubplotWeaver(BaseAgent):
     """Agent responsible for subplot integration and development."""
 
-    def __init__(self):
-        self.llm = get_llm(
-            temperature=0.8, use_replicate=True
-        )  # Higher creativity for subplots
+    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        super().__init__(llm_config)
         self.document_store = DocumentStore()
 
     def weave_subplots(
@@ -29,6 +27,7 @@ class SubplotWeaver:
         characters: List[Dict[str, Any]],
         target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None,
+        llm_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Identify and integrate subplots in the manuscript."""
         manuscript = self.document_store.get_manuscript(manuscript_id)

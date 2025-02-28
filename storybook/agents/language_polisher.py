@@ -15,11 +15,11 @@ from storybook.db.document_store import DocumentStore  # Missing import
 logger = logging.getLogger(__name__)
 
 
-class LanguagePolisher:
+class LanguagePolisher(BaseAgent):
     """Agent responsible for enhancing language, style, and prose quality."""
 
-    def __init__(self):
-        self.llm = get_llm(temperature=0.5, use_replicate=True)
+    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        super().__init__(llm_config)
         self.document_store = DocumentStore()
 
     def polish_language(
@@ -27,6 +27,7 @@ class LanguagePolisher:
         manuscript_id: str,
         target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None,
+        llm_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Polish the language and prose quality of the manuscript."""
         manuscript = self.document_store.get_manuscript(manuscript_id)
@@ -474,3 +475,17 @@ class LanguagePolisher:
         updated_content = "\n\n".join(paragraphs)
 
         return updated_content, improved_sections
+
+    def method_name(
+        self,
+        manuscript_id: str,
+        other_params: Any,
+        llm_config: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Method docstring."""
+        try:
+            # Update LLM if new config provided at runtime
+            if llm_config:
+                self.llm = create_llm(llm_config)
+                
+            # ... rest of method implementation ...

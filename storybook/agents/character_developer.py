@@ -21,101 +21,99 @@ from storybook.db.document_store import DocumentStore
 logger = logging.getLogger(__name__)
 
 
-class CharacterDeveloper:
+class CharacterDeveloper(BaseAgent):
     """Agent responsible for developing and enhancing characters."""
 
-    def __init__(self):
-        self.llm = get_llm(temperature=0.8, use_replicate=True)
-        self.doc_store = MongoDBDocStore(connection_string=MONGODB_URI)
+    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        """Initialize with optional LLM configuration."""
+        super().__init__(llm_config)
+        self.document_store = DocumentStore()
 
-    def enhance_characters(
-        self,
-        manuscript_id: str,
-        target_audience: Optional[Dict[str, Any]] = None,
-        research_insights: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+    def enhance_characters(self, manuscript_id: str, target_audience: Optional[Dict[str, Any]] = None, research_insights: Optional[Dict[str, Any]] = None, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Identify and enhance all characters in the manuscript."""
-        manuscript = self.document_store.get_manuscript(manuscript_id)
-        if not manuscript:
-            return {"error": f"Manuscript {manuscript_id} not found"}
-
-        # Extract character names
-        prompt = ChatPromptTemplate.from_template(
-            """
-        You are a Character Identification Specialist. Your task is to analyze the manuscript excerpt below 
-        and identify all character names mentioned. Focus on characters who appear to be important to the story, 
-        not just passing mentions.
-        
-        Manuscript: {manuscript_content}
-        
-        {audience_context}
-        
-        List each character's full name and a brief note about their apparent role.
-        Format your response as a JSON list of objects with "name" and "apparent_role" keys.
-        Example:
-        [
-          {"name": "John Smith", "apparent_role": "protagonist, detective"},
-          {"name": "Mary Johnson", "apparent_role": "victim's sister"}
-        ]
-        """
-        )
-
-        # Add audience context if available
-        audience_context = ""
-        if target_audience:
-            audience_context = f"""
-            Target Audience Information:
-            - Demographic: {target_audience.get('demographic', 'General readers')}
-            - Reading Preferences: {target_audience.get('reading_preferences', {}).get('reading', 'Various preferences')}
-            - Character Preferences: {target_audience.get('reading_preferences', {}).get('characters', 'Various character types')}
-            
-            Consider the target audience preferences when analyzing character roles and potential.
-            """
-
-        chain = (
-            {
-                "manuscript_content": lambda _: manuscript.get("content", ""),
-                "audience_context": lambda _: audience_context,
-            }
-            | prompt
-            | self.llm
-            | StrOutputParser()
-        )
-
-        # Extract the characters
-        characters_str = chain.invoke("Extract characters")
         try:
-            characters_list = json.loads(characters_str)
-        except json.JSONDecodeError:
-            logger.error(f"Failed to parse characters JSON: {characters_str}")
-            # Fallback parsing
-            import re
+            # Update LLM if new config provided at runtime
+            if llm_config:
+                self.llm = create_llm(llm_config)
 
-            character_matches = re.findall(r'"name":\s*"([^"]+)"', characters_str)
-            characters_list = [
-                {"name": name, "apparent_role": "unknown"} for name in character_matches
+            manuscript = self.document_store.get_manuscript(manuscript_id)
+            if not manuscript:
+                return {"error": f"Manuscript {manuscript_id} not found"}
+
+            # Extract character names
+            prompt = ChatPromptTemplate.from_template(
+                """
+            You are a Character Identification Specialist. Your task is to analyze the manuscript excerpt below 
+            and identify all character names mentioned. Focus on characters who appear to be important to the story, 
+            not just passing mentions.
+            
+            Manuscript: {manuscript_content}
+            
+            {audience_context}
+            
+            List each character's full name and a brief note about their apparent role.
+            Format your response as a JSON list of objects with "name" and "apparent_role" keys.
+            Example:
+            [
+              {"name": "John Smith", "apparent_role": "protagonist, detective"},
+              {"name": "Mary Johnson", "apparent_role": "victim's sister"}
             ]
-
-        # Create detailed profiles for each character
-        enhanced_characters = []
-        for character in characters_list:
-            profile = self.create_character_profile(
-                manuscript_id,
-                character["name"],
-                target_audience=target_audience,
-                research_insights=research_insights,
+            """
             )
-            enhanced_characters.append(profile)
 
-        return {"manuscript_id": manuscript_id, "characters": enhanced_characters}
+            # Add audience context if available
+            audience_context = ""
+            if target_audience:
+                audience_context = f"""
+                Target Audience Information:
+                - Demographic: {target_audience.get('demographic', 'General readers')}
+                - Reading Preferences: {target_audience.get('reading_preferences', {}).get('reading', 'Various preferences')}
+                - Character Preferences: {target_audience.get('reading_preferences', {}).get('characters', 'Various character types')}
+                
+                Consider the target audience preferences when analyzing character roles and potential.
+                """
 
-    def create_character_profile(
-        self,
-        manuscript_id: str,
-        character_name: str,
-        target_audience: Optional[Dict[str, Any]] = None,
-        research_insights: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+            chain = (
+                {
+                    "manuscript_content": lambda _: manuscript.get("content", ""),
+                    "audience_context": lambda _: audience_context,
+                }
+                | prompt
+                | self.llm
+                | StrOutputParser()
+            )
+
+            # Extract the characters
+            characters_str = chain.invoke("Extract characters")
+            try:
+                characters_list = json.loads(characters_str)
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse characters JSON: {characters_str}")
+                # Fallback parsing
+                import re
+
+                character_matches = re.findall(r'"name":\s*"([^"]+)"', characters_str)
+                characters_list = [
+                    {"name": name, "apparent_role": "unknown"} for name in character_matches
+                ]
+
+            # Create detailed profiles for each character
+            enhanced_characters = []
+            for character in characters_list:
+                profile = self.create_character_profile(
+                    manuscript_id,
+                    character["name"],
+                    target_audience=target_audience,
+                    research_insights=research_insights,
+                )
+                enhanced_characters.append(profile)
+
+            return {"manuscript_id": manuscript_id, "characters": enhanced_characters}
+        except Exception as e:
+            logger.error(f"Error enhancing characters: {e}")
+            return {"error": str(e)}
+
+    def create_character_profile(self, manuscript_id: str, character_name: str, target_audience: Optional[Dict[str, Any]] = None, research_insights: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Create a detailed character profile."""
         # Get relevant manuscript parts
         manuscript = self.document_store.get_manuscript(manuscript_id)

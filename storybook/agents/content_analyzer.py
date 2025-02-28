@@ -14,27 +14,23 @@ from langchain_core.documents import Document
 from langchain_mongodb.docstores import MongoDBDocStore
 
 # Local imports
-from storybook.config import get_llm
+from storybook.config import create_llm, get_llm
 from storybook.db.mongodb_client import MongoDBStore  # Fixed import path
 from storybook.db.document_store import DocumentStore
+from storybook.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
 
-class ContentAnalyzer:
-    """Agent responsible for analyzing manuscript content using NLP techniques."""
+class ContentAnalyzer(BaseAgent):
+    """Agent responsible for analyzing manuscript content."""
 
-    def __init__(self):
-        self.llm = get_llm(
-            temperature=0.4, use_replicate=True
-        )  # Lower temperature for more consistent analysis
-        self.document_store = DocumentStore()
+    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        """Initialize ContentAnalyzer with optional LLM configuration."""
+        super().__init__(llm_config)  # Initialize base agent
         self.document_tools = DocumentTools()
         self.embeddings = OpenAIEmbeddings()
         self.db = MongoDBStore()
-        # Remove direct vector store initialization
-        # self.vector_store = MongoDBAtlasVectorSearch(...)
-        # Use self.db.vector_store instead for vector operations
 
     def get_tools(self):
         """Get tools available to this agent."""
@@ -43,39 +39,45 @@ class ContentAnalyzer:
             self.document_tools.get_manuscript_search_tool(),
         ]
 
-    def analyze_content(self, manuscript_id: str) -> Dict[str, Any]:
-        """Analyze manuscript content using NLP techniques."""
-        logger.info(f"Analyzing content for manuscript {manuscript_id}")
-        
-        # Get manuscript content from document store
-        document = self.document_store.get_manuscript(manuscript_id)
-        if not document:
-            raise ValueError(f"Manuscript {manuscript_id} not found")
-        
-        content = document.get("content", "")
-        
-        # Perform comprehensive content analysis
-        analysis = {
-            "sentiment": self._analyze_sentiment(content),
-            "readability": self._analyze_readability(content),
-            "content_structure": self._analyze_structure(content),
-            "genre_match": self._analyze_genre(content),
-            "themes": self._identify_themes(content),
-            "key_elements": {
-                "plot_points": self._extract_plot_points(content),
-                "characters": self._extract_characters(content),
-                "settings": self._extract_settings(content),
+    def analyze_content(self, manuscript_id: str, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Analyze manuscript content with optional runtime LLM configuration."""
+        try:
+            # Update LLM if new config provided
+            if llm_config:
+                self.llm = create_llm(llm_config)
+                
+            logger.info(f"Analyzing content for manuscript {manuscript_id}")
+            
+            # Get manuscript content from document store
+            document = self.document_store.get_manuscript(manuscript_id)
+            if not document:
+                raise ValueError(f"Manuscript {manuscript_id} not found")
+            
+            content = document.get("content", "")
+            
+            # Perform comprehensive content analysis
+            analysis = {
+                "sentiment": self._analyze_sentiment(content),
+                "readability": self._analyze_readability(content),
+                "content_structure": self._analyze_structure(content),
+                "genre_match": self._analyze_genre(content),
+                "themes": self._identify_themes(content),
+                "key_elements": {
+                    "plot_points": self._extract_plot_points(content),
+                    "characters": self._extract_characters(content),
+                    "settings": self._extract_settings(content),
+                }
             }
-        }
-        
-        return {
-            "analysis": analysis,
-            "message": "Content analysis completed successfully"
-        }
+            
+            return {
+                "analysis": analysis,
+                "message": "Content analysis completed successfully"
+            }
+        except Exception as e:
+            logger.error(f"Error analyzing content for manuscript {manuscript_id}: {e}")
+            return {"error": str(e)}
 
-    def analyze_progress(
-        self, manuscript_id: str, previous_analysis: Dict[str, Any], stage: str
-    ) -> Dict[str, Any]:
+    def analyze_progress(self, manuscript_id: str, previous_analysis: Dict[str, Any], stage: str) -> Dict[str, Any]:
         """Analyze progress made after a specific stage of the transformation."""
         manuscript = self.document_store.get_manuscript(manuscript_id)
         if not manuscript:

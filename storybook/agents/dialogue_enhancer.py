@@ -16,11 +16,11 @@ from storybook.db.document_store import DocumentStore
 logger = logging.getLogger(__name__)
 
 
-class DialogueEnhancer:
+class DialogueEnhancer(BaseAgent):
     """Agent responsible for enhancing dialogue in the manuscript."""
 
-    def __init__(self):
-        self.llm = get_llm(temperature=0.7, use_replicate=True)
+    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        super().__init__(llm_config)
         self.document_store = DocumentStore()
 
     def enhance_dialogue(
@@ -29,6 +29,7 @@ class DialogueEnhancer:
         characters: List[Dict[str, Any]],
         target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None,
+        llm_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Enhance dialogue throughout the manuscript."""
         manuscript = self.document_store.get_manuscript(manuscript_id)

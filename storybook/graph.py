@@ -28,13 +28,75 @@ from storybook.db.document_store import DocumentStore
 
 logger = logging.getLogger(__name__)
 
+from enum import Enum
+from typing import Literal, Union
 
-class LLMConfig(TypedDict):
-    """LLM configuration for different teams."""
-    model_name: str  # e.g., "gpt-4", "claude-3", "llama-70b"
+class LLMProvider(str, Enum):
+    """Supported LLM providers."""
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    REPLICATE = "replicate"
+    OLLAMA = "ollama"
+    HUGGINGFACE = "huggingface"
+    LLAMACPP = "llamacpp"
+
+class OpenAIConfig(TypedDict):
+    """OpenAI-specific configuration."""
+    model_name: str  # gpt-4, gpt-3.5-turbo, etc.
     temperature: Optional[float]
     max_tokens: Optional[int]
     streaming: Optional[bool]
+
+class AnthropicConfig(TypedDict):
+    """Anthropic-specific configuration."""
+    model_name: str  # claude-3-sonnet, claude-3-opus, etc.
+    temperature: Optional[float]
+    max_tokens: Optional[int]
+    streaming: Optional[bool]
+
+class ReplicateConfig(TypedDict):
+    """Replicate-specific configuration."""
+    model_name: str  # Full model string
+    temperature: Optional[float]
+    max_new_tokens: Optional[int]
+    streaming: Optional[bool]
+
+class OllamaConfig(TypedDict):
+    """Ollama-specific configuration."""
+    model_name: str  # mistral, llama2, etc.
+    temperature: Optional[float]
+    num_ctx: Optional[int]
+    num_gpu: Optional[int]
+    seed: Optional[int]
+    streaming: Optional[bool]
+
+class HuggingFaceConfig(TypedDict):
+    """HuggingFace-specific configuration."""
+    model_name: str  # HF model ID
+    temperature: Optional[float]
+    max_new_tokens: Optional[int]
+    streaming: Optional[bool]
+    trust_remote_code: Optional[bool]
+
+class LlamaCppConfig(TypedDict):
+    """Llama.cpp-specific configuration."""
+    model_path: str  # Path to GGUF model
+    n_gpu_layers: Optional[int]
+    temperature: Optional[float]
+    n_ctx: Optional[int]
+    streaming: Optional[bool]
+
+class LLMConfig(TypedDict):
+    """Enhanced LLM configuration supporting multiple providers."""
+    provider: LLMProvider
+    config: Union[
+        OpenAIConfig,
+        AnthropicConfig,
+        ReplicateConfig,
+        OllamaConfig,
+        HuggingFaceConfig,
+        LlamaCppConfig
+    ]
 
 class AgentConfig(TypedDict):
     """Agent configuration for different teams."""
@@ -97,18 +159,33 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
     # Get or create default agent configuration
     agent_config = state.get("agent_config", {
         "research": {
-            "model_name": "gpt-4",
-            "temperature": 0.7
+            "provider": "openai",
+            "config": {
+                "model_name": "gpt-4",
+                "temperature": 0.7,
+                "max_tokens": 2000
+            }
         },
         "writing": {
-            "model_name": "claude-3",
-            "temperature": 0.9
+            "provider": "anthropic",
+            "config": {
+                "model_name": "claude-3-opus",
+                "temperature": 0.9,
+                "max_tokens": 4000
+            }
         },
         "editorial": {
-            "model_name": "gpt-4",
-            "temperature": 0.3
+            "provider": "openai",
+            "config": {
+                "model_name": "gpt-4",
+                "temperature": 0.3,
+                "max_tokens": 2000
+            }
         }
     })
+    
+    # Validate provider configurations
+    validate_agent_config(agent_config)
 
     # Initialize document store
     document_store = DocumentStore()
@@ -169,10 +246,12 @@ def start_workflow(state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def conduct_market_research(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Conduct market research on publishing trends and target audience."""
+    """Conduct market research using configured LLM."""
+    agent = MarketResearcher(
+        llm_config=state.get("agent_config", {}).get("research")
+    )
     logger.info(f"Conducting market research for manuscript {state['manuscript_id']}")
 
-    agent = MarketResearcher()
     result = agent.research_market(state["manuscript_id"], state["title"])
 
     # Update state with research insights
@@ -201,10 +280,12 @@ def conduct_market_research(state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def analyze_manuscript(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Analyze manuscript content using NLP techniques."""
+    """Analyze manuscript using configured LLM."""
+    agent = ContentAnalyzer(
+        llm_config=state.get("agent_config", {}).get("research")
+    )
     logger.info(f"Analyzing manuscript {state['manuscript_id']}")
 
-    agent = ContentAnalyzer()
     result = agent.analyze_content(state["manuscript_id"])
 
     # Update state with analysis results
@@ -246,10 +327,12 @@ def initialize_graph(state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def develop_characters(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Develop and enhance characters in the manuscript."""
+    """Develop characters using configured LLM."""
+    agent = CharacterDeveloper(
+        llm_config=state.get("agent_config", {}).get("writing")
+    )
     logger.info(f"Developing characters for manuscript {state['manuscript_id']}")
 
-    agent = CharacterDeveloper()
     result = agent.enhance_characters(
         state["manuscript_id"],
         target_audience=state.get("target_audience", {}),
@@ -1067,3 +1150,4 @@ def save_graph_visualization(output_path: str = "graph.png") -> None:
 # Generate visualization when module is run directly
 if __name__ == "__main__":
     save_graph_visualization("docs/storybook_graph.png")
+`````

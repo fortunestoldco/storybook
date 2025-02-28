@@ -36,7 +36,7 @@ class MarketResearcher:
             self.research_tools.get_web_crawl_tool(),
         ]
 
-    def infer_genre_and_audience(self, manuscript_id: str) -> Dict[str, Any]:
+    def infer_genre_and_audience(self, manuscript_id: str, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Infer the genre and target audience of the manuscript."""
         manuscript = self.document_store.get_manuscript(manuscript_id)
         if not manuscript:
@@ -286,10 +286,10 @@ class MarketResearcher:
             "demographic_profile": demographic_profile,
         }
 
-    def research_market(self, manuscript_id: str, title: str) -> Dict[str, Any]:
+    def research_market(self, manuscript_id: str, title: str, llm_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Conduct comprehensive market research for the manuscript."""
         # Step 1: Infer genre and target audience
-        genre_audience = self.infer_genre_and_audience(manuscript_id)
+        genre_audience = self.infer_genre_and_audience(manuscript_id, llm_config)
 
         if not genre_audience:
             return {
