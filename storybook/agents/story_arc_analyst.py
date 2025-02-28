@@ -13,17 +13,19 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import Document
 
 # Local imports
-from storybook.config import get_llm
+from storybook.config import create_llm, get_llm
 from storybook.db.document_store import DocumentStore
+from storybook.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
 
-class StoryArcAnalyst:
+class StoryArcAnalyst(BaseAgent):
     """Agent responsible for analyzing and refining story arcs."""
 
-    def __init__(self):
-        self.llm = get_llm(temperature=0.7, use_replicate=True)
+    def __init__(self, llm_config: Optional[Dict[str, Any]] = None):
+        """Initialize with optional LLM configuration."""
+        super().__init__(llm_config)
         self.document_store = DocumentStore()
 
     def refine_story_arcs(
@@ -31,28 +33,29 @@ class StoryArcAnalyst:
         manuscript_id: str,
         target_audience: Optional[Dict[str, Any]] = None,
         research_insights: Optional[Dict[str, Any]] = None,
+        llm_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Analyze and refine the story arcs in the manuscript."""
         try:
+            # Update LLM if new config provided
+            if llm_config:
+                self.llm = create_llm(llm_config)
+                
             manuscript = self.document_store.get_manuscript(manuscript_id)
             if not manuscript:
                 return {"error": f"Manuscript {manuscript_id} not found"}
-
             # Analyze story structure
             structure_analysis = self._analyze_story_structure(
-                manuscript["content"], target_audience
+                manuscript["content"], target_audience, llm_config
             )
-
             # Analyze character arcs
             character_arcs = self._analyze_character_arcs(
-                manuscript_id, manuscript["content"], target_audience
+                manuscript_id, manuscript["content"], target_audience, llm_config
             )
-
             # Evaluate pacing
             pacing_analysis = self._analyze_pacing(
-                manuscript["content"], structure_analysis, target_audience
+                manuscript["content"], structure_analysis, target_audience, llm_config
             )
-
             # Generate improvement recommendations
             improvement_plan = self._generate_improvement_plan(
                 structure_analysis,
@@ -61,17 +64,14 @@ class StoryArcAnalyst:
                 target_audience,
                 research_insights,
             )
-
             # Apply story arc refinements
             updated_content = self._apply_story_arc_refinements(
                 manuscript["content"], improvement_plan, target_audience
             )
-
             # Store the updated manuscript
             self.document_store.update_manuscript(
                 manuscript_id, {"content": updated_content}
             )
-
             # Compile complete analysis
             analysis = {
                 "structure_analysis": structure_analysis,
@@ -79,21 +79,21 @@ class StoryArcAnalyst:
                 "pacing_analysis": pacing_analysis,
                 "improvement_plan": improvement_plan,
             }
-
             return {
                 "manuscript_id": manuscript_id,
                 "message": "Completed story arc analysis and refinement.",
                 "analysis": analysis,
             }
-
         except Exception as e:
             logger.error(f"Error in refine_story_arcs: {str(e)}")
-            return {"error": f"Failed to analyze manuscript: {str(e)}"}
+            return {"error": f"Failed to analyze manuscript: {str(e)}")}
 
     def _analyze_story_structure(
-        self, content: str, target_audience: Optional[Dict[str, Any]] = None
+        self, content: str, target_audience: Optional[Dict[str, Any]] = None, llm_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Analyze the story structure and identify key plot points."""
+        if llm_config:
+            self.llm = create_llm(llm_config)
         # Create sampling for analysis
         sample_size = min(8000, len(content) // 3)
         beginning = content[:sample_size]
@@ -217,8 +217,11 @@ class StoryArcAnalyst:
         manuscript_id: str,
         content: str,
         target_audience: Optional[Dict[str, Any]] = None,
+        llm_config: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         """Analyze the arcs of main characters throughout the story."""
+        if llm_config:
+            self.llm = create_llm(llm_config)
         # Get character information
         characters = []
         character_docs = self.document_store.db.query_documents(
@@ -267,7 +270,6 @@ class StoryArcAnalyst:
             character_names = chain.invoke("Extract characters")
 
             # Parse the character names
-
             name_matches = re.findall(
                 r"(?:^|\n)\s*-?\s*(\w+(?:\s+\w+){0,2})", character_names
             )
@@ -409,6 +411,7 @@ class StoryArcAnalyst:
         content: str,
         structure_analysis: Dict[str, Any],
         target_audience: Optional[Dict[str, Any]] = None,
+        llm_config: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Analyze the pacing of the story.
 
@@ -420,6 +423,8 @@ class StoryArcAnalyst:
         Returns:
             Dict containing pacing analysis results
         """
+        if llm_config:
+            self.llm = create_llm(llm_config)
         # Create sampling for analysis
         # We'll use larger chunks to better analyze pacing
         chunk_size = min(10000, len(content) // 5)
@@ -513,8 +518,8 @@ class StoryArcAnalyst:
         low_intensity_match = re.search(
             r"Low-Intensity Sections:?\s*(.*?)(?=\n\n|\n\d\.|\Z)",
             pacing_analysis,
-            re.DOTALL,
-        )  # Fix indentation
+            re.DOTALL
+        )
         balance_match = re.search(
             r"Pacing Balance:?\s*(.*?)(?=\n\n|\n\d\.|\Z)", pacing_analysis, re.DOTALL
         )

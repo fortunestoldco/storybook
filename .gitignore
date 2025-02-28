@@ -171,3 +171,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Environment variables
+.env
+
+# Model files
+models/
+*.gguf
