@@ -1,18 +1,22 @@
 from datetime import datetime
 from typing import Dict, Any, List, Optional
-from langchain_core.pydantic_v1 import BaseModel
+from pydantic import BaseModel
 
 class ManuscriptState(BaseModel):
     """Core manuscript state."""
     text: str
     timestamp: datetime
     metadata: Dict[str, Any]
+    
+    model_config = {"arbitrary_types_allowed": True}
 
 class AgentOutput(BaseModel):
     """Standard agent output structure."""
     content: Dict[str, Any]
-    timestamp: datetime
+    timestamp: datetime 
     agent_id: str
+    
+    model_config = {"arbitrary_types_allowed": True}
 
 class State(BaseModel):
     """Overall graph state."""
@@ -27,8 +31,12 @@ class State(BaseModel):
     language: Optional[AgentOutput] = None
     quality_review: Optional[AgentOutput] = None
     current_step: str = "start"
+    
+    model_config = {"arbitrary_types_allowed": True}
 
 class InputState(BaseModel):
     """Input state definition."""
     manuscript_text: str
     metadata: Dict[str, Any]
+    
+    model_config = {"arbitrary_types_allowed": True}

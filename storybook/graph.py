@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Dict, Any
 from langgraph.graph import StateGraph
 from langchain_core.runnables import RunnableConfig
-from pydantic import BaseModel  # Updated import
+from pydantic import BaseModel
 
 from storybook.state import State, InputState, AgentOutput
 from storybook.agents import (
@@ -86,23 +86,29 @@ async def review_quality(state: State, *, config: RunnableConfig) -> Dict[str, A
         "current_step": "complete"
     }
 
-# Build graph
-builder = StateGraph(State, input=InputState, config_schema=Configuration)
+def build_storybook(config: RunnableConfig) -> StateGraph:
+    """Build and return the storybook processing graph."""
+    # Initialize workflow
+    builder = StateGraph(State, input=InputState, config_schema=Configuration)
 
-# Add nodes with new names
-builder.add_node("research_market", research_market)
-builder.add_node("analyze_content", analyze_content)
-builder.add_node("develop_creative", develop_creative)
-builder.add_node("develop_story", develop_story)
-builder.add_node("review_quality", review_quality)
+    # Add nodes
+    builder.add_node("research_market", research_market)
+    builder.add_node("analyze_content", analyze_content)
+    builder.add_node("develop_creative", develop_creative)
+    builder.add_node("develop_story", develop_story)
+    builder.add_node("review_quality", review_quality)
 
-# Add edges with new node names
-builder.add_edge("__start__", "research_market")
-builder.add_edge("research_market", "analyze_content")
-builder.add_edge("analyze_content", "develop_creative")
-builder.add_edge("develop_creative", "develop_story")
-builder.add_edge("develop_story", "review_quality")
+    # Add edges
+    builder.add_edge("__start__", "research_market")
+    builder.add_edge("research_market", "analyze_content")
+    builder.add_edge("analyze_content", "develop_creative")
+    builder.add_edge("develop_creative", "develop_story")
+    builder.add_edge("develop_story", "review_quality")
 
-# Compile graph
-graph = builder.compile()
-graph.name = "StoryBookGraph"
+    # Compile and return graph
+    graph = builder.compile()
+    graph.name = "StoryBookGraph"
+    return graph
+
+# Export the graph builder function
+__all__ = ["build_storybook"]
