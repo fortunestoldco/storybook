@@ -4,7 +4,7 @@ from typing import Dict, Any, Literal, Union, Optional
 from langgraph.graph import StateGraph, END
 from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel
-from langgraph.checkpoint import MemorySaver
+from langgraph.checkpoint.memory import MemorySaver  # Updated import
 from langgraph.prebuilt import create_agent_supervisor
 
 from storybook.state import State, InputState, AgentOutput
