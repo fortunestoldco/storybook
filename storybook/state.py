@@ -2,6 +2,12 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional, Literal
 from pydantic import BaseModel, Field
 
+class LLMProvider(str, Literal):
+    """Available LLM providers."""
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    REPLICATE = "replicate"
+
 class ManuscriptState(BaseModel):
     """Core manuscript state."""
     title: str
@@ -35,12 +41,6 @@ class State(BaseModel):
     current_step: str = "start"
     
     model_config = {"arbitrary_types_allowed": True}
-
-class LLMProvider(str, Literal):
-    """Available LLM providers."""
-    OPENAI = "openai"
-    ANTHROPIC = "anthropic"
-    REPLICATE = "replicate"
 
 class InputState(BaseModel):
     """Input state definition."""
