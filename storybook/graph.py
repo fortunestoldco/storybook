@@ -40,33 +40,29 @@ def build_storybook(config: Optional[Dict[str, Any]] = None) -> StateGraph:
     
     # Define channel types
     channels = {
-        "manuscript": Channel(Dict[str, Any]),
-        "characters": Channel(List[Dict[str, Any]]),
-        "subplots": Channel(List[Dict[str, Any]]),
-        "state": Channel(str)
+        "manuscript": LastValue(Dict[str, Any]),
+        "characters": LastValue(List[Dict[str, Any]]),  # No default parameter
+        "subplots": LastValue(List[Dict[str, Any]]),
+        "state": LastValue(str)
     }
 
-    # Create the graph
+    # Create workflow graph
     workflow = StateGraph(channels=channels)
 
-    # Define the nodes and their connections
+    # Define node functions
     @workflow.node
     def analyze_characters(state):
-        # Character analysis implementation
-        characters = []  # Replace with actual character analysis
-        return {"characters": characters}
+        return {"characters": []}
 
     @workflow.node
     def generate_subplots(state):
-        # Subplot generation implementation
-        subplots = []  # Replace with actual subplot generation
-        return {"subplots": subplots}
+        return {"subplots": []}
 
-    # Define the flow
+    # Set up graph structure
     workflow.set_entry_point("analyze_characters")
     workflow.add_edge("analyze_characters", "generate_subplots")
     
-    # Set initial state
+    # Initialize state
     workflow.set_initial_state({
         "manuscript": {},
         "characters": [],
