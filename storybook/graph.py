@@ -2,8 +2,8 @@ from datetime import datetime
 import asyncio
 from typing import Dict, Any, Literal, Union, Optional
 from langchain import graphs
-from langchain.graphs import Graph as LangChainGraph
-from langgraph.graph import StateGraph, END
+from langchain_core.graphs import Graph as LangChainGraph
+from langgraph.graph import Graph, StateType
 from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel
 from langgraph.checkpoint.memory import MemorySaver
@@ -181,76 +181,30 @@ async def quality_reviewer_node(state: State, *, config: RunnableConfig) -> Dict
     except Exception as e:
         return {"error": f"Quality review failed: {str(e)}"}
 
-def build_storybook(config: Optional[Dict[str, Any]] = None) -> LangChainGraph:
-    """
-    Build and return a story graph based on the provided configuration.
+def build_storybook() -> Graph:
+    """Build the storybook workflow graph."""
     
-    Args:
-        config: Optional configuration dictionary
-        
-    Returns:
-        LangChainGraph: The constructed story graph
-    """
-    # Get default config or use provided config
-    config = config or get_default_config()
-    
-    # Ensure config is properly structured
-    if not isinstance(config, dict):
-        config = {"model": config} if isinstance(config, str) else {}
-    
-    # Merge with defaults if needed
-    default_values = {
-        "model": "gpt-3.5-turbo",
-        "temperature": 0.7,
-        "max_tokens": 1000,
-        "top_p": 0.95,
-        "frequency_penalty": 0,
-        "presence_penalty": 0
-    }
-    
-    for key, value in default_values.items():
-        if key not in config:
-            config[key] = value
+    workflow = Graph()
 
-    # Initialize graph builder
-    builder = StateGraph(State, input=InputState, config_schema=Configuration)
-    
-    # Add team workflow nodes
-    team_structure = {
-        "research_team_supervisor": ["marketresearch", "content_analyzer"],
-        "creative_team_supervisor": ["character_developer", "dialogue_enhancer", "world_builder", "subplot_weaver"],
-        "quality_team_supervisor": ["story_arc_analyst", "prosespecialist", "quality_reviewer"]
-    }
+    # Define the initial state
+    def initial_state() -> StateType:
+        return {
+            "manuscript": "",
+            "chapter": 0,
+            "revisions": [],
+        }
 
-    # Add all nodes
-    for supervisor, agents in team_structure.items():
-        builder.add_node(supervisor, globals()[supervisor])
-        for agent in agents:
-            agent_func = f"{agent}_node"
-            builder.add_node(agent, globals()[agent_func])
+    # Configure the graph
+    workflow.set_entry_point("start")
+    workflow.add_node("analyze")
+    workflow.add_node("revise")
+    workflow.add_node("review")
 
-    # Add team workflow edges
-    builder.add_edge("__start__", "research_team_supervisor")
-    builder.add_edge("research_team_supervisor", "creative_team_supervisor")
-    builder.add_edge("creative_team_supervisor", "quality_team_supervisor")
+    # Add edges
+    workflow.add_edge("start", "analyze")
+    workflow.add_edge("analyze", "revise")
+    workflow.add_edge("revise", "review")
 
-    def should_revise(state: State) -> str:
-        return "creative_team_supervisor" if state.quality_review.content.get("needs_revision", False) else "__end__"
-
-    builder.add_conditional_edges(
-        "quality_team_supervisor",
-        path=should_revise
-    )
-
-    # Fixed interrupt node names to match actual supervisor nodes
-    graph = builder.compile(
-        checkpointer=MemorySaver(),
-        debug=config.get("debug", False),
-        interrupt_after=["research_team_supervisor", "creative_team_supervisor", "quality_team_supervisor"]
-    )
-    
-    graph.name = "DetailedStoryBookGraph"
-    graph.stream_mode = "updates"
-    return graph
+    return workflow
 
 __all__ = ["build_storybook"]
