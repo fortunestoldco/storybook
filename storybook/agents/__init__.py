@@ -1,12 +1,12 @@
-from .characterdev import CharacterDeveloper
-from .dialogue import DialogueEnhancer
-from .worldbuild import WorldBuilder
-from .subplot import SubplotWeaver
-from .storyarc import StoryArcAnalyst
-from .continuity import ContinuityEditor
-from .review import QualityReviewer
-from .research import MarketResearcher
-from .content_analyzer import ContentAnalyzer
+from storybook.characterdev import CharacterDeveloper
+from storybook.dialogue import DialogueEnhancer
+from storybook.worldbuild import WorldBuilder
+from storybook.subplot import SubplotWeaver
+from storybook.storyarc import StoryArcAnalyst
+from storybook.continuity import ContinuityEditor
+from storybook.review import QualityReviewer
+from storybook.research import MarketResearcher
+from storybook.content import ContentAnalyzer
 
 __all__ = [
     'CharacterDeveloper',

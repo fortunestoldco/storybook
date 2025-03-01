@@ -34,5 +34,5 @@ def main():
     if launch_browser:
         _open_browser(f"http://localhost:{port}")
         # Add graph visualization if needed
-        # from .plot_graph import create_knowledge_graph, visualize_graph
+        # from storybook.plot_graph import create_knowledge_graph, visualize_graph
     # ...existing code...
