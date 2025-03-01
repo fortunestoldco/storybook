@@ -5,7 +5,7 @@ from langgraph.graph import StateGraph, END
 from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel
 from langgraph.checkpoint.memory import MemorySaver
-from langchain_core.graphs import Graph
+from langchain_core import Graph
 from storybook.config import Configuration, get_default_config
 
 from storybook.state import State, InputState, AgentOutput
