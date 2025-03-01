@@ -1,4 +1,4 @@
-from storybook.characterdev import CharacterDeveloper
+from storybook.characters import CharacterDeveloper
 from storybook.dialogue import DialogueEnhancer
 from storybook.worldbuild import WorldBuilder
 from storybook.subplot import SubplotWeaver

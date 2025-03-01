@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from langchain_core.documents import Document
 
-from storybook.agents.characterdev import CharacterDeveloper
+from storybook.agents.characters import CharacterDeveloper
 
 
 class TestCharacterDeveloper:
