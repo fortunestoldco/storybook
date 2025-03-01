@@ -184,6 +184,22 @@ source .venv/bin/activate
 pip install -r requirements-dev.txt
 ```
 
+## Troubleshooting
+
+### PowerShell Execution Policy
+
+If you see an error about scripts being disabled, you have two options:
+
+1. **Quick Fix (Recommended)**: Run this command in PowerShell as administrator:
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ```
+
+2. **One-time Bypass**: Run the activate script with a bypass:
+   ```powershell
+   PowerShell -ExecutionPolicy Bypass -File .\.venv\Scripts\Activate.ps1
+   ```
+
 ## License
 
 MIT

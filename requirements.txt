@@ -16,3 +16,4 @@ langchain-anthropic
 transformers
 llama-cpp-python
 ollama
+langchain>=0.0.200

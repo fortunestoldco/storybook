@@ -2,6 +2,7 @@ import atexit
 import threading
 import webbrowser
 from concurrent.futures import ThreadPoolExecutor
+from langchain import graphs
 
 # Add global executor
 _browser_executor = None
@@ -32,4 +33,6 @@ def main():
     # ...existing code...
     if launch_browser:
         _open_browser(f"http://localhost:{port}")
+        # Add graph visualization if needed
+        # from .plot_graph import create_knowledge_graph, visualize_graph
     # ...existing code...

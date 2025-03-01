@@ -1,12 +1,12 @@
-from .character_developer import CharacterDeveloper
-from .dialogue_enhancer import DialogueEnhancer
-from .world_builder import WorldBuilder
-from .subplot_weaver import SubplotWeaver
-from .story_arc_analyst import StoryArcAnalyst
-from .continuity_editor import ContinuityEditor
+from .characterdev import CharacterDeveloper
+from .dialogue import DialogueEnhancer
+from .worldbuild import WorldBuilder
+from .subplot import SubplotWeaver
+from .storyarc import StoryArcAnalyst
+from .continuity import ContinuityEditor
 from .language_polisher import LanguagePolisher
-from .quality_reviewer import QualityReviewer
-from .market_researcher import MarketResearcher
+from .review import QualityReviewer
+from .research import MarketResearcher
 from .content_analyzer import ContentAnalyzer
 
 __all__ = [
