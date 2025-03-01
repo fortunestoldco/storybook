@@ -1,15 +1,10 @@
 from datetime import datetime 
 import asyncio
-from typing import Dict, Any, Literal, Union, Optional
-from langchain import graphs
-from langchain_core.graphs import Graph as LangChainGraph
-from langgraph.graph import Graph, StateType
+from typing import Dict, Any
+from langgraph import Graph, StateType
 from langchain_core.runnables import RunnableConfig
-from pydantic import BaseModel
-from langgraph.checkpoint.memory import MemorySaver
-from storybook.config import Configuration, get_default_config
 
-from storybook.state import State, InputState, AgentOutput
+from storybook.state import State
 from storybook.agents import (
     MarketResearcher, ContentAnalyzer, CharacterDeveloper,
     DialogueEnhancer, WorldBuilder, SubplotWeaver,
@@ -192,18 +187,22 @@ def build_storybook() -> Graph:
             "manuscript": "",
             "chapter": 0,
             "revisions": [],
+            "status": "initialized"
         }
 
-    # Configure the graph
-    workflow.set_entry_point("start")
-    workflow.add_node("analyze")
-    workflow.add_node("revise")
-    workflow.add_node("review")
+    workflow.set_initial_state(initial_state)
+
+    # Add nodes
+    workflow.add_node("research", research_team_supervisor)
+    workflow.add_node("creative", creative_team_supervisor)
+    workflow.add_node("quality", quality_team_supervisor)
 
     # Add edges
-    workflow.add_edge("start", "analyze")
-    workflow.add_edge("analyze", "revise")
-    workflow.add_edge("revise", "review")
+    workflow.add_edge("research", "creative")
+    workflow.add_edge("creative", "quality")
+
+    # Set entry point
+    workflow.set_entry_point("research")
 
     return workflow
 
