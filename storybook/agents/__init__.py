@@ -1,12 +1,12 @@
-from agents.characters import CharacterDeveloper
-from agents.dialogue import DialogueEnhancer
-from agents.worldbuild import WorldBuilder
-from agents.subplot import SubplotWeaver
-from agents.storyarc import StoryArcAnalyst
-from agents.continuity import ContinuityEditor
-from agents.review import QualityReviewer
-from agents.research import MarketResearcher
-from agents.content import ContentAnalyzer
+from storybook.agents.characters import CharacterDeveloper
+from storybook.agents.dialogue import DialogueEnhancer
+from storybook.agents.worldbuild import WorldBuilder
+from storybook.agents.subplot import SubplotWeaver
+from storybook.agents.storyarc import StoryArcAnalyst
+from storybook.agents.continuity import ContinuityEditor
+from storybook.agents.review import QualityReviewer
+from storybook.agents.research import MarketResearcher
+from storybook.agents.content import ContentAnalyzer
 
 __all__ = [
     'CharacterDeveloper',
