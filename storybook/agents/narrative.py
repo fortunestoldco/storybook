@@ -10,29 +10,36 @@ from storybook.state import State, AgentOutput
 
 logger = logging.getLogger(__name__)
 
-class MarketResearchAgent(BaseAgent):
-    """Agent responsible for market research and analysis."""
+class NarrativeArcSurgeon(BaseAgent):
+    """Agent that analyzes and enhances narrative structure."""
 
     async def process_manuscript(self, state: State) -> Dict[str, Any]:
-        """Process manuscript for market analysis."""
+        """Process manuscript for narrative structure analysis."""
         try:
             manuscript_state = state.get_manuscript_state()
             
-            # Market analysis prompt
+            # Narrative analysis prompt
             prompt = ChatPromptTemplate.from_template(
-                """As a publishing industry analyst, research the current market for this manuscript.
-                Analyze:
-                1. Current bestseller trends
-                2. Reader demographics and preferences 
-                3. Market saturation and opportunities
-                4. Pricing and format trends
+                """Analyze the narrative structure of this manuscript with surgical precision.
+                Identify and evaluate:
+                1. Plot structure and major turning points
+                2. Pacing and tension graph
+                3. Subplot integration patterns
+                4. Scene sequencing effectiveness
+                5. Hook and resolution strategy
                 
                 Manuscript:
                 {manuscript}
                 
                 Title: {title}
                 
-                Provide detailed market analysis in JSON format.
+                Provide detailed analysis with specific recommendations in JSON format.
+                Include:
+                - Structural assessment
+                - Pacing analysis
+                - Scene breakdown
+                - Recommendations for improvement
+                - Tension mapping
                 """
             )
 
@@ -47,9 +54,9 @@ class MarketResearchAgent(BaseAgent):
             return AgentOutput(
                 content=analysis,
                 timestamp=datetime.now(),
-                agent_id="market_research"
+                agent_id="narrative"
             ).dict()
 
         except Exception as e:
-            logger.error(f"Market research failed: {str(e)}")
+            logger.error(f"Narrative analysis failed: {str(e)}")
             return self.handle_error(e)

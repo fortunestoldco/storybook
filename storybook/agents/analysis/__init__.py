@@ -1,5 +1,5 @@
 from .manuscript_parser import ManuscriptParser
-from .market_researcher import MarketResearcher
+from .marketresearch import MarketResearcher
 from .comparable_works import ComparableWorks
 from .nlp_analyzer import NLPAnalyzer
 

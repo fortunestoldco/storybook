@@ -12,7 +12,7 @@ from storybook.state import State, InputState, AgentOutput
 from storybook.agents import (
     MarketResearcher, ContentAnalyzer, CharacterDeveloper,
     DialogueEnhancer, WorldBuilder, SubplotWeaver,
-    StoryArcAnalyst, LanguagePolisher, QualityReviewer
+    StoryArcAnalyst, ProseSpecialist, QualityReviewer
 )
 
 async def research_team_supervisor(state: State, *, config: RunnableConfig, writer=None) -> Dict[str, Any]:
@@ -21,7 +21,7 @@ async def research_team_supervisor(state: State, *, config: RunnableConfig, writ
         if writer:
             writer({"status": "Starting research team analysis"})
         
-        market_result = await market_researcher_node(state, config=config)
+        market_result = await marketresearch_node(state, config=config)
         if "error" in market_result:
             raise ValueError(market_result["error"])
             
@@ -36,7 +36,7 @@ async def research_team_supervisor(state: State, *, config: RunnableConfig, writ
             "market_analysis": AgentOutput(
                 content=market_result["market_analysis"], 
                 timestamp=datetime.now(), 
-                agent_id="market_researcher"
+                agent_id="marketresearch"
             ),
             "content_analysis": AgentOutput(
                 content=content_result["content_analysis"], 
@@ -66,20 +66,20 @@ async def creative_team_supervisor(state: State, *, config: RunnableConfig) -> D
     }
 
 async def quality_team_supervisor(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
-    """Coordinates story arc, language, and quality review teams."""
+    """Coordinates story arc, prose, and quality review teams."""
     arc_result = await story_arc_analyst_node(state, config=config)
-    lang_result = await language_polisher_node(state, config=config)
+    prose_result = await prosespecialist_node(state, config=config)
     quality_result = await quality_reviewer_node(state, config=config)
     
     return {
         "story_arc": AgentOutput(content=arc_result["story_arc"], timestamp=datetime.now(), agent_id="story_arc_analyst"),
-        "language": AgentOutput(content=lang_result["language"], timestamp=datetime.now(), agent_id="language_polisher"),
+        "prose": AgentOutput(content=prose_result["prose"], timestamp=datetime.now(), agent_id="prosespecialist"),
         "quality_review": AgentOutput(content=quality_result["quality_review"], timestamp=datetime.now(), agent_id="quality_reviewer"),
         "current_step": "complete"
     }
 
 # Add individual agent node functions
-async def market_researcher_node(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
+async def marketresearch_node(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
     """Market researcher agent node."""
     try:
         manuscript_state = state.get_manuscript_state()
@@ -158,16 +158,16 @@ async def story_arc_analyst_node(state: State, *, config: RunnableConfig) -> Dic
     except Exception as e:
         return {"error": f"Story arc analysis failed: {str(e)}"}
 
-async def language_polisher_node(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
+async def prosespecialist_node(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
     try:
         manuscript_state = state.get_manuscript_state()
-        agent = LanguagePolisher(config)
+        agent = ProseSpecialist(config)
         result = await agent.process_manuscript(manuscript_state)
         if not result:
-            raise ValueError("Language polishing returned no results")
-        return {"language": result}
+            raise ValueError("Prose enhancement returned no results")
+        return {"prose": result}
     except Exception as e:
-        return {"error": f"Language polishing failed: {str(e)}"}
+        return {"error": f"Prose enhancement failed: {str(e)}"}
 
 async def quality_reviewer_node(state: State, *, config: RunnableConfig) -> Dict[str, Any]:
     try:
@@ -181,41 +181,43 @@ async def quality_reviewer_node(state: State, *, config: RunnableConfig) -> Dict
         return {"error": f"Quality review failed: {str(e)}"}
 
 def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
-    """Build the storybook workflow graph."""
-    # Use default config if none provided
-    if config is None:
-        config = get_default_config()
+    """Build the storybook processing graph."""
+    # Get default config or use provided config
+    config = config or get_default_config()
     
-    # Validate required configuration
-    required_fields = ['openai_api_key', 'model_name']
-    missing_fields = [field for field in required_fields if field not in config]
-    if missing_fields:
-        raise ValueError(f"Missing required configuration fields: {', '.join(missing_fields)}")
+    # Ensure config is properly structured
+    if not isinstance(config, dict):
+        config = {"model": config} if isinstance(config, str) else {}
+    
+    # Merge with defaults if needed
+    default_values = {
+        "model": "gpt-3.5-turbo",
+        "temperature": 0.7,
+        "max_tokens": 1000,
+        "top_p": 0.95,
+        "frequency_penalty": 0,
+        "presence_penalty": 0
+    }
+    
+    for key, value in default_values.items():
+        if key not in config:
+            config[key] = value
 
-    # Continue with graph building
+    # Initialize graph builder
     builder = StateGraph(State, input=InputState, config_schema=Configuration)
     
-    # Validate config
-    if not config:
-        raise ValueError("Configuration is required")
-    
-    # Add nodes
+    # Add team workflow nodes
     team_structure = {
-        "research_team_supervisor": ["market_researcher", "content_analyzer"],
+        "research_team_supervisor": ["marketresearch", "content_analyzer"],
         "creative_team_supervisor": ["character_developer", "dialogue_enhancer", "world_builder", "subplot_weaver"],
-        "quality_team_supervisor": ["story_arc_analyst", "language_polisher", "quality_reviewer"]
+        "quality_team_supervisor": ["story_arc_analyst", "prosespecialist", "quality_reviewer"]
     }
 
-    # Add all nodes with validation
+    # Add all nodes
     for supervisor, agents in team_structure.items():
-        if supervisor not in globals():
-            raise ValueError(f"Supervisor function {supervisor} not found")
         builder.add_node(supervisor, globals()[supervisor])
-        
         for agent in agents:
             agent_func = f"{agent}_node"
-            if agent_func not in globals():
-                raise ValueError(f"Agent function {agent_func} not found")
             builder.add_node(agent, globals()[agent_func])
 
     # Add team workflow edges

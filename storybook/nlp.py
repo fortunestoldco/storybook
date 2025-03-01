@@ -124,7 +124,7 @@ async def analyze_narrative_structure(state: EnhancedState, config: RunnableConf
     
     # Create structured report
     report = AnalysisReport(
-        agent_id="narrative_arc_surgeon",
+        agent_id="narrative",
         report_id=f"NAS-{uuid4().hex[:6].upper()}",
         content=analysis.content,
         timestamp=datetime.now().isoformat(),
@@ -148,7 +148,7 @@ async def analyze_character_resonance(state: EnhancedState, config: RunnableConf
     agent = CharacterResonanceAnalyzer(config)
     
     # Pass in narrative analysis results for context
-    narrative_report = next((r for r in state.project.reports if r.agent_id == "narrative_arc_surgeon"), None)
+    narrative_report = next((r for r in state.project.reports if r.agent_id == "narrative"), None)
     
     analysis = await agent.analyze_characters(
         manuscript=state.project.manuscript,
@@ -186,7 +186,7 @@ async def analyze_emotional_impact(state: EnhancedState, config: RunnableConfig)
     analysis = await agent.analyze_emotional_impact(
         manuscript=state.project.manuscript,
         character_analysis=previous_reports.get("character_resonance_analyzer"),
-        narrative_analysis=previous_reports.get("narrative_arc_surgeon")
+        narrative_analysis=previous_reports.get("narrative")
     )
     
     # Create structured report
@@ -278,7 +278,7 @@ async def analyze_reader_engagement(state: EnhancedState, config: RunnableConfig
     
     analysis = await agent.predict_engagement(
         manuscript=state.project.manuscript,
-        narrative_analysis=previous_reports.get("narrative_arc_surgeon"),
+        narrative_analysis=previous_reports.get("narrative"),
         character_analysis=previous_reports.get("character_resonance_analyzer"),
         emotional_analysis=previous_reports.get("emotional_impact_optimizer")
     )
