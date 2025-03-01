@@ -10,7 +10,7 @@ from storybook.state import State, AgentOutput
 
 logger = logging.getLogger(__name__)
 
-class ProseElevationSpecialist(BaseAgent):
+class ProseSpecialist(BaseAgent):
     """Agent that enhances prose quality and style."""
 
     async def process_manuscript(self, state: State) -> Dict[str, Any]:
