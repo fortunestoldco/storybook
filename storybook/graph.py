@@ -1,11 +1,12 @@
 from datetime import datetime 
 import asyncio
 from typing import Dict, Any, Literal, Union, Optional
+from langchain import graphs
+from langchain.graphs import Graph as LangChainGraph
 from langgraph.graph import StateGraph, END
 from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel
 from langgraph.checkpoint.memory import MemorySaver
-from langchain_core import Graph
 from storybook.config import Configuration, get_default_config
 
 from storybook.state import State, InputState, AgentOutput
@@ -180,8 +181,16 @@ async def quality_reviewer_node(state: State, *, config: RunnableConfig) -> Dict
     except Exception as e:
         return {"error": f"Quality review failed: {str(e)}"}
 
-def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
-    """Build the storybook processing graph."""
+def build_storybook(config: Optional[Dict[str, Any]] = None) -> LangChainGraph:
+    """
+    Build and return a story graph based on the provided configuration.
+    
+    Args:
+        config: Optional configuration dictionary
+        
+    Returns:
+        LangChainGraph: The constructed story graph
+    """
     # Get default config or use provided config
     config = config or get_default_config()
     
