@@ -5,6 +5,8 @@ from langgraph.graph import StateGraph, END
 from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel
 from langgraph.checkpoint.memory import MemorySaver
+from langchain_core.graphs import Graph
+from storybook.config import Configuration, get_default_config
 
 from storybook.state import State, InputState, AgentOutput
 from storybook.agents import (
@@ -12,7 +14,6 @@ from storybook.agents import (
     DialogueEnhancer, WorldBuilder, SubplotWeaver,
     StoryArcAnalyst, LanguagePolisher, QualityReviewer
 )
-from storybook.config import Configuration
 
 async def research_team_supervisor(state: State, *, config: RunnableConfig, writer=None) -> Dict[str, Any]:
     """Coordinates and combines market and content analysis with streaming support."""
@@ -179,8 +180,19 @@ async def quality_reviewer_node(state: State, *, config: RunnableConfig) -> Dict
     except Exception as e:
         return {"error": f"Quality review failed: {str(e)}"}
 
-def build_storybook(config: RunnableConfig) -> StateGraph:
-    """Build and return the hierarchical storybook processing graph."""
+def build_storybook(config: Optional[Dict[str, Any]] = None) -> Graph:
+    """Build the storybook workflow graph."""
+    # Use default config if none provided
+    if config is None:
+        config = get_default_config()
+    
+    # Validate required configuration
+    required_fields = ['openai_api_key', 'model_name']
+    missing_fields = [field for field in required_fields if field not in config]
+    if missing_fields:
+        raise ValueError(f"Missing required configuration fields: {', '.join(missing_fields)}")
+
+    # Continue with graph building
     builder = StateGraph(State, input=InputState, config_schema=Configuration)
     
     # Validate config

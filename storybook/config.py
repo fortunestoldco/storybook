@@ -231,6 +231,16 @@ def validate_agent_config(config: Optional[Dict[str, Any]] = None) -> bool:
 
     return True
 
+def get_default_config() -> Dict[str, Any]:
+    """Get default configuration with required fields."""
+    return {
+        "openai_api_key": os.getenv("OPENAI_API_KEY"),
+        "model_name": os.getenv("MODEL_NAME", "gpt-4"),
+        "temperature": 0.7,
+        "max_tokens": 2000,
+        # Add other default configurations as needed
+    }
+
 # Collection Names
 COLLECTION_MANUSCRIPTS = os.getenv("COLLECTION_MANUSCRIPTS", "manuscripts")
 COLLECTION_CHARACTERS = os.getenv("COLLECTION_CHARACTERS", "characters")
