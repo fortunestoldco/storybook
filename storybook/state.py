@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, TypedDict, Literal
 from enum import Enum
 from pydantic import BaseModel, Field
 
@@ -134,3 +134,62 @@ class InputState(BaseModel):
         if not self.llm_model:
             raise ValueError(f"Model name required for {self.llm_provider.value}")
         return self.llm_model
+
+class AnalysisState(TypedDict):
+    genre: Optional[str]
+    market_data: Optional[Dict[str, Any]]
+    comparables: Optional[List[Dict[str, Any]]]
+    nlp_analysis: Optional[Dict[str, Any]]
+
+class CreativeState(TypedDict):
+    analysis: Dict[str, Any]
+    narrative_structure: Optional[Dict[str, Any]]
+    characters: Optional[List[Dict[str, Any]]]
+    world_building: Optional[Dict[str, Any]]
+    themes: Optional[List[str]]
+    style_guide: Optional[Dict[str, Any]]
+
+class ProductionState(TypedDict):
+    creative_blueprint: Dict[str, Any]
+    current_chapter: int
+    chapter_outlines: List[Dict[str, Any]]
+    drafted_chapters: List[Dict[str, Any]]
+    continuity_notes: Dict[str, Any]
+    current_draft_version: int
+
+class EditorialState(TypedDict):
+    manuscript: Dict[str, Any]
+    developmental_feedback: Optional[Dict[str, Any]]
+    line_edits: Optional[Dict[str, Any]]
+    copy_edits: Optional[Dict[str, Any]]
+    reader_experience: Optional[Dict[str, Any]]
+    quality_benchmark: Optional[Dict[str, Any]]
+    revision_plan: Optional[Dict[str, Any]]
+
+class RefinementState(TypedDict):
+    manuscript: Dict[str, Any]
+    revision_plan: Dict[str, Any]
+    current_revision_task: Optional[int]
+    revised_sections: List[Dict[str, Any]]
+    quality_metrics: Dict[str, float]
+    final_review_complete: bool
+
+class MasterState(TypedDict):
+    manuscript: str
+    analysis_state: Optional[AnalysisState]
+    creative_state: Optional[CreativeState]
+    production_state: Optional[ProductionState]
+    editorial_state: Optional[EditorialState]
+    refinement_state: Optional[RefinementState]
+    current_phase: Literal["analysis", "creative", "production", "editorial", "refinement"]
+    completed_phases: List[str]
+    final_manuscript: Optional[str]
+
+class AgentOutput(TypedDict):
+    content: Any
+    timestamp: datetime
+    agent_id: str
+
+class InputState(TypedDict):
+    manuscript: str
+    title: str
