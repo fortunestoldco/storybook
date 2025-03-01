@@ -4,7 +4,6 @@ from .worldbuild import WorldBuilder
 from .subplot import SubplotWeaver
 from .storyarc import StoryArcAnalyst
 from .continuity import ContinuityEditor
-from .language_polisher import LanguagePolisher
 from .review import QualityReviewer
 from .research import MarketResearcher
 from .content_analyzer import ContentAnalyzer
@@ -16,7 +15,6 @@ __all__ = [
     'SubplotWeaver',
     'StoryArcAnalyst',
     'ContinuityEditor',
-    'LanguagePolisher',
     'QualityReviewer',
     'MarketResearcher',
     'ContentAnalyzer'

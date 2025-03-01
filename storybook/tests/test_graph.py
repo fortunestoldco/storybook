@@ -51,7 +51,6 @@ class TestGraph:
             patch("storybook.graph.SubplotWeaver") as mock_subplot,
             patch("storybook.graph.StoryArcAnalyst") as mock_story_arc,
             patch("storybook.graph.ContinuityEditor") as mock_continuity,
-            patch("storybook.graph.LanguagePolisher") as mock_language,
             patch("storybook.graph.QualityReviewer") as mock_quality,
         ):
 
