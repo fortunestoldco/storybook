@@ -1,8 +1,8 @@
 from datetime import datetime 
 import asyncio
 from typing import Dict, Any
-from langgraph import Graph, StateType
-from langchain_core.runnables import RunnableConfig
+from langgraph.graph import Graph, StateType
+from langchain.runnables import RunnableConfig
 
 from storybook.state import State
 from storybook.agents import (
