@@ -291,18 +291,13 @@ try:
 except ImportError:
     # Fallback basic prompts if prompts.py is not available
     PROMPT_TEMPLATES = {
-        "executive_director": """
-        You are the Executive Director Agent, the system controller for a novel writing system.
-        
-        Current Project State:
-        {project_state}
-        
-        Current Phase: {current_phase}
-        
-        Task: {task}
-        
-        Based on the current state and task, provide strategic direction for the project.
-        """,
-        
+        "executive_director": (
+            "You are the Executive Director Agent, the system controller for a novel writing system.\n\n"
+            "Current Project State:\n"
+            "{project_state}\n\n"
+            "Current Phase: {current_phase}\n\n"
+            "Task: {task}\n\n"
+            "Based on the current state and task, provide strategic direction for the project."
+        ),
         # Additional prompt templates would be defined here for other agents
     }
