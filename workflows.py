@@ -57,8 +57,11 @@ def create_initialization_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("project_timeline_manager", project_timeline_manager)
     workflow.add_node("market_alignment_director", market_alignment_director)
 
-    # Set up the edges - use the globally defined routing function
-    workflow.add_edge("executive_director", route_after_executive_director_initialization)
+    # Set up the edges - IMPORTANT: Use route_fn=... parameter instead of directly passing the function
+    workflow.add_conditional_edges(
+        "executive_director",
+        route_after_executive_director_initialization
+    )
     workflow.add_edge("human_feedback_manager", "executive_director")
     workflow.add_edge("quality_assessment_director", "executive_director")
     workflow.add_edge("project_timeline_manager", "executive_director")
@@ -156,9 +159,15 @@ def create_development_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("cultural_authenticity_expert", cultural_authenticity_expert)
     workflow.add_node("market_alignment_director", market_alignment_director)
 
-    # Set up the edges - use the globally defined routing functions
-    workflow.add_edge("executive_director", route_after_executive_director_development)
-    workflow.add_edge("creative_director", route_after_creative_director_development)
+    # Set up the edges - use the globally defined routing functions with add_conditional_edges
+    workflow.add_conditional_edges(
+        "executive_director",
+        route_after_executive_director_development
+    )
+    workflow.add_conditional_edges(
+        "creative_director",
+        route_after_creative_director_development
+    )
     workflow.add_edge("structure_architect", "creative_director")
     workflow.add_edge("plot_development_specialist", "creative_director")
     workflow.add_edge("world_building_expert", "creative_director")
@@ -268,10 +277,19 @@ def create_creation_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("emotional_arc_designer", emotional_arc_designer)
     workflow.add_node("domain_knowledge_specialist", domain_knowledge_specialist)
 
-    # Set up the edges - use the globally defined routing functions
-    workflow.add_edge("executive_director", route_after_executive_director_creation)
-    workflow.add_edge("content_development_director", route_after_content_director_creation)
-    workflow.add_edge("creative_director", route_after_creative_director_creation)
+    # Set up the edges - use the globally defined routing functions with add_conditional_edges
+    workflow.add_conditional_edges(
+        "executive_director",
+        route_after_executive_director_creation
+    )
+    workflow.add_conditional_edges(
+        "content_development_director",
+        route_after_content_director_creation
+    )
+    workflow.add_conditional_edges(
+        "creative_director",
+        route_after_creative_director_creation
+    )
     workflow.add_edge("chapter_drafters", "content_development_director")
     workflow.add_edge("scene_construction_specialists", "content_development_director")
     workflow.add_edge("dialogue_crafters", "content_development_director")
@@ -381,9 +399,15 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("grammar_consistency_checker", grammar_consistency_checker)
     workflow.add_node("fact_verification_specialist", fact_verification_specialist)
 
-    # Set up the edges - use the globally defined routing functions
-    workflow.add_edge("executive_director", route_after_executive_director_refinement)
-    workflow.add_edge("editorial_director", route_after_editorial_director_refinement)
+    # Set up the edges - use the globally defined routing functions with add_conditional_edges
+    workflow.add_conditional_edges(
+        "executive_director",
+        route_after_executive_director_refinement
+    )
+    workflow.add_conditional_edges(
+        "editorial_director",
+        route_after_editorial_director_refinement
+    )
     workflow.add_edge("creative_director", "executive_director")
     workflow.add_edge("market_alignment_director", "executive_director")
     workflow.add_edge("structural_editor", "editorial_director")
@@ -482,10 +506,19 @@ def create_finalization_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("differentiation_strategist", differentiation_strategist)
     workflow.add_node("formatting_standards_expert", formatting_standards_expert)
 
-    # Set up the edges - use the globally defined routing functions
-    workflow.add_edge("executive_director", route_after_executive_director_finalization)
-    workflow.add_edge("market_alignment_director", route_after_market_director_finalization)
-    workflow.add_edge("editorial_director", route_after_editorial_director_finalization)
+    # Set up the edges - use the globally defined routing functions with add_conditional_edges
+    workflow.add_conditional_edges(
+        "executive_director",
+        route_after_executive_director_finalization
+    )
+    workflow.add_conditional_edges(
+        "market_alignment_director",
+        route_after_market_director_finalization
+    )
+    workflow.add_conditional_edges(
+        "editorial_director",
+        route_after_editorial_director_finalization
+    )
     workflow.add_edge("positioning_specialist", "market_alignment_director")
     workflow.add_edge("title_blurb_optimizer", "market_alignment_director")
     workflow.add_edge("differentiation_strategist", "market_alignment_director")
