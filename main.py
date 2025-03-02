@@ -19,25 +19,28 @@ from server import server, runtime
 # Initialize FastAPI app
 app = FastAPI(title="Storybook Langgraph Server")
 
-# Add CORS middleware
+# Add CORS middleware with specific origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://smith.langchain.com", "http://localhost:2024"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Register the graph factory functions directly
-serve.register_entrypoint(get_phase_workflow)
 
 # Initialize services
 mongo_manager = MongoDBManager()
 backend_config = get_default_backend_config()
 agent_factory = AgentFactory(mongo_manager, backend_config)
 
-# Move this before other route definitions
-serve.mount_asgi_app(app, server, runtime)
+# Mount LangGraph API - move this before other route definitions
+serve.mount_asgi_app(
+    app,
+    server,
+    runtime,
+    path_prefix="/api/v1",  # Add a path prefix
+    include_middleware=True
+)
 
 # Then add your routes
 @app.get("/")
