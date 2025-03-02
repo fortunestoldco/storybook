@@ -94,9 +94,10 @@ def create_initialization_graph(config: RunnableConfig) -> StateGraph:
         collection_name=f"checkpoint_initialization_{project_id}"
     )
 
-    return workflow.compile(
-        name=config.get("configurable", {}).get("graph_name", "storybook"),
-        checkpointer=checkpointer)
+    # Compile the graph with the new format
+    app = workflow.compile()
+
+    return app
 
 
 def create_development_graph(config: RunnableConfig) -> StateGraph:

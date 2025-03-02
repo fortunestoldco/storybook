@@ -2,7 +2,7 @@ from typing import Dict, List, Optional, Any
 import os
 import json
 
-from langgraph.server import Server, RuntimeEnvironment
+from langgraph.server import LangGraphServer, RuntimeEnvironment
 from langgraph.graph import StateGraph
 
 from agents import AgentFactory
@@ -27,11 +27,11 @@ runtime = RuntimeEnvironment(
     ]
 )
 
-# Create a server instance
-server = Server(runtime=runtime)
+# Initialize server
+graph_server = LangGraphServer()
 
 # Register graphs as endpoints
-@server.register("/initialize/{project_id}")
+@graph_server.register("/initialize/{project_id}")
 def get_initialization_graph(project_id: str) -> StateGraph:
     """Get the initialization phase graph for a project."""
     config = {
@@ -39,14 +39,12 @@ def get_initialization_graph(project_id: str) -> StateGraph:
             "project_id": project_id,
             "phase": "initialization",
             "agent_factory": agent_factory
-        },
-        "configurable": {
-            "graph_name": f"storybook_{project_id}_initialization"
         }
     }
-    return get_phase_workflow(config)
+    app = get_phase_workflow(config)
+    return app
 
-@server.register("/develop/{project_id}")
+@graph_server.register("/develop/{project_id}")
 def get_development_graph(project_id: str) -> StateGraph:
     """Get the development phase graph for a project."""
     config = {
@@ -61,7 +59,7 @@ def get_development_graph(project_id: str) -> StateGraph:
     }
     return get_phase_workflow(config)
 
-@server.register("/create/{project_id}")
+@graph_server.register("/create/{project_id}")
 def get_creation_graph(project_id: str) -> StateGraph:
     """Get the creation phase graph for a project."""
     config = {
@@ -76,7 +74,7 @@ def get_creation_graph(project_id: str) -> StateGraph:
     }
     return get_phase_workflow(config)
 
-@server.register("/refine/{project_id}")
+@graph_server.register("/refine/{project_id}")
 def get_refinement_graph(project_id: str) -> StateGraph:
     """Get the refinement phase graph for a project."""
     config = {
@@ -91,7 +89,7 @@ def get_refinement_graph(project_id: str) -> StateGraph:
     }
     return get_phase_workflow(config)
 
-@server.register("/finalize/{project_id}")
+@graph_server.register("/finalize/{project_id}")
 def get_finalization_graph(project_id: str) -> StateGraph:
     """Get the finalization phase graph for a project."""
     config = {
@@ -107,9 +105,15 @@ def get_finalization_graph(project_id: str) -> StateGraph:
     return get_phase_workflow(config)
 
 if __name__ == "__main__":
-    # Run the server
-    server.serve(
+    # Run the server with the new format
+    graph_server.serve(
         host=SERVER_CONFIG["host"],
-        port=SERVER_CONFIG["port"],
-        workers=SERVER_CONFIG["workers"]
+        port=SERVER_CONFIG["port"]
+    )
+    serve.mount_asgi_app(
+        app,
+        server,
+        runtime,
+        path_prefix="/api/v1",
+        include_middleware=True
     )

@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Any
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from langgraph_api import serve
+from langgraph.server import LangGraphServer  # Updated import
 from langgraph.prebuilt.fixed_graph import FixedGraph
 
 from agents import AgentFactory
@@ -22,7 +22,7 @@ app = FastAPI(title="Storybook Langgraph Server")
 # Add CORS middleware with specific origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://smith.langchain.com", "http://localhost:2024"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +32,12 @@ app.add_middleware(
 mongo_manager = MongoDBManager()
 backend_config = get_default_backend_config()
 agent_factory = AgentFactory(mongo_manager, backend_config)
+
+# Create LangGraph server instance
+graph_server = LangGraphServer()
+
+# Register the graph factory
+serve.register_entrypoint(get_phase_workflow)
 
 # Mount LangGraph API - move this before other route definitions
 serve.mount_asgi_app(
