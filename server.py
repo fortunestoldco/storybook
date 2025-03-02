@@ -2,7 +2,7 @@ from typing import Dict, List, Optional, Any
 import os
 import json
 
-from langgraph.server import LangGraphServer, RuntimeEnvironment
+from langgraph_serve import LangGraphServe, RuntimeEnvironment
 from langgraph.graph import StateGraph
 
 from agents import AgentFactory
