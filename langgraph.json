@@ -6,12 +6,5 @@
     "storybook_{project_id}_creation": "./workflows.py:get_phase_workflow",
     "storybook_{project_id}_refinement": "./workflows.py:get_phase_workflow",
     "storybook_{project_id}_finalization": "./workflows.py:get_phase_workflow"
-  },
-  "env": ".env",
-  "api": {
-    "base_url": "http://localhost:2024/api/v1",
-    "auth": {
-      "type": "none"
-    }
   }
 }
