@@ -1,5 +1,5 @@
 from typing import Dict, List, Callable, Optional, Any, Annotated, TypedDict, cast
-from langchain_core.runnables.config import RunnableConfig  # Add this import
+from langchain_core.runnables.config import RunnableConfig
 import json
 
 from langgraph.graph import StateGraph, END
@@ -13,15 +13,7 @@ from utils import check_quality_gate
 
 
 def create_initialization_graph(config: RunnableConfig) -> StateGraph:
-    """Create the workflow graph for the initialization phase.
-
-    Args:
-        config: RunnableConfig containing project metadata and configuration.
-
-    Returns:
-        A StateGraph for the initialization phase.
-    """
-    # Extract necessary information from config
+    """Create the workflow graph for the initialization phase."""
     metadata = config.get("metadata", {})
     project_id = metadata.get("project_id")
     agent_factory = metadata.get("agent_factory")
@@ -48,14 +40,6 @@ def create_initialization_graph(config: RunnableConfig) -> StateGraph:
 
     # Define conditional routing
     def route_after_executive_director(state: NovelSystemState) -> str:
-        """Route after the executive director node.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            The next node name.
-        """
         task = state["current_input"].get("task", "")
 
         if "human_feedback" in task.lower():
@@ -67,15 +51,9 @@ def create_initialization_graph(config: RunnableConfig) -> StateGraph:
         elif "market" in task.lower() or "trend" in task.lower():
             return "market_alignment_director"
         else:
-            # Check if we should transition to the development phase
             metrics = state["project"].quality_assessment
             gate_result = check_quality_gate("initialization_to_development", metrics)
-
-            if gate_result["passed"]:
-                return END
-            else:
-                # Stay in the current phase
-                return "executive_director"
+            return END if gate_result["passed"] else "executive_director"
 
     # Set up the edges
     workflow.add_edge("executive_director", route_after_executive_director)
@@ -85,7 +63,7 @@ def create_initialization_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_edge("market_alignment_director", "executive_director")
 
     # Set the entry point
-    workflow.set_entry_point("executive_director")
+    workflow.add_edge("__start__", "executive_director")
 
     # Set up checkpointing with MongoDB
     checkpointer = MongoDBSaver.from_conn_string(
@@ -94,22 +72,15 @@ def create_initialization_graph(config: RunnableConfig) -> StateGraph:
         collection_name=f"checkpoint_initialization_{project_id}"
     )
 
-    # Compile the graph with the new format
-    app = workflow.compile()
+    # Compile the graph
+    graph = workflow.compile()
+    graph.name = config.get("configurable", {}).get("graph_name", "Initialization Graph")
 
-    return app
+    return graph
 
 
 def create_development_graph(config: RunnableConfig) -> StateGraph:
-    """Create the workflow graph for the development phase.
-
-    Args:
-        config: RunnableConfig containing project metadata and configuration.
-
-    Returns:
-        A StateGraph for the development phase.
-    """
-    # Extract necessary information from config
+    """Create the workflow graph for the development phase."""
     metadata = config.get("metadata", {})
     project_id = metadata.get("project_id")
     agent_factory = metadata.get("agent_factory")
@@ -146,16 +117,8 @@ def create_development_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("cultural_authenticity_expert", cultural_authenticity_expert)
     workflow.add_node("market_alignment_director", market_alignment_director)
 
-    # Define conditional routing
+    # Define conditional routing functions
     def route_after_executive_director(state: NovelSystemState) -> str:
-        """Route after the executive director node.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            The next node name.
-        """
         task = state["current_input"].get("task", "")
 
         if "creative" in task.lower() or "story" in task.lower():
@@ -165,25 +128,11 @@ def create_development_graph(config: RunnableConfig) -> StateGraph:
         elif "research" in task.lower() or "knowledge" in task.lower():
             return "domain_knowledge_specialist"
         else:
-            # Check if we should transition to the creation phase
             metrics = state["project"].quality_assessment
             gate_result = check_quality_gate("development_to_creation", metrics)
-
-            if gate_result["passed"]:
-                return END
-            else:
-                # Default to creative director if no specific routing
-                return "creative_director"
+            return END if gate_result["passed"] else "creative_director"
 
     def route_after_creative_director(state: NovelSystemState) -> str:
-        """Route after the creative director node.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            The next node name.
-        """
         task = state["current_input"].get("task", "")
 
         if "structure" in task.lower() or "plot" in task.lower():
@@ -197,7 +146,6 @@ def create_development_graph(config: RunnableConfig) -> StateGraph:
         elif "world" in task.lower() or "setting" in task.lower():
             return "world_building_expert"
         else:
-            # Default back to executive director
             return "executive_director"
 
     # Set up the edges
@@ -214,7 +162,7 @@ def create_development_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_edge("market_alignment_director", "executive_director")
 
     # Set the entry point
-    workflow.set_entry_point("executive_director")
+    workflow.add_edge("__start__", "executive_director")
 
     # Set up checkpointing with MongoDB
     checkpointer = MongoDBSaver.from_conn_string(
@@ -223,21 +171,15 @@ def create_development_graph(config: RunnableConfig) -> StateGraph:
         collection_name=f"checkpoint_development_{project_id}"
     )
 
-    return workflow.compile(
-        name=config.get("configurable", {}).get("graph_name", "storybook"),
-        checkpointer=checkpointer)
+    # Compile the graph
+    graph = workflow.compile()
+    graph.name = config.get("configurable", {}).get("graph_name", "Development Graph")
+
+    return graph
 
 
 def create_creation_graph(config: RunnableConfig) -> StateGraph:
-    """Create the workflow graph for the creation phase.
-
-    Args:
-        config: RunnableConfig containing project metadata and configuration.
-
-    Returns:
-        A StateGraph for the creation phase.
-    """
-    # Extract necessary information from config
+    """Create the workflow graph for the creation phase."""
     metadata = config.get("metadata", {})
     project_id = metadata.get("project_id")
     agent_factory = metadata.get("agent_factory")
@@ -272,16 +214,8 @@ def create_creation_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("emotional_arc_designer", emotional_arc_designer)
     workflow.add_node("domain_knowledge_specialist", domain_knowledge_specialist)
 
-    # Define conditional routing
+    # Define conditional routing functions
     def route_after_executive_director(state: NovelSystemState) -> str:
-        """Route after the executive director node.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            The next node name.
-        """
         task = state["current_input"].get("task", "")
 
         if "content" in task.lower() or "draft" in task.lower():
@@ -289,25 +223,11 @@ def create_creation_graph(config: RunnableConfig) -> StateGraph:
         elif "creative" in task.lower() or "emotion" in task.lower():
             return "creative_director"
         else:
-            # Check if we should transition to the refinement phase
             metrics = state["project"].quality_assessment
             gate_result = check_quality_gate("creation_to_refinement", metrics)
-
-            if gate_result["passed"]:
-                return END
-            else:
-                # Default to content development director
-                return "content_development_director"
+            return END if gate_result["passed"] else "content_development_director"
 
     def route_after_content_director(state: NovelSystemState) -> str:
-        """Route after the content development director node.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            The next node name.
-        """
         task = state["current_input"].get("task", "")
 
         if "chapter" in task.lower():
@@ -323,24 +243,14 @@ def create_creation_graph(config: RunnableConfig) -> StateGraph:
         elif "research" in task.lower() or "knowledge" in task.lower():
             return "domain_knowledge_specialist"
         else:
-            # Default back to executive director
             return "executive_director"
 
     def route_after_creative_director(state: NovelSystemState) -> str:
-        """Route after the creative director node.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            The next node name.
-        """
         task = state["current_input"].get("task", "")
 
         if "emotion" in task.lower() or "arc" in task.lower():
             return "emotional_arc_designer"
         else:
-            # Default back to content development director
             return "content_development_director"
 
     # Set up the edges
@@ -356,7 +266,7 @@ def create_creation_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_edge("domain_knowledge_specialist", "content_development_director")
 
     # Set the entry point
-    workflow.set_entry_point("executive_director")
+    workflow.add_edge("__start__", "executive_director")
 
     # Set up checkpointing with MongoDB
     checkpointer = MongoDBSaver.from_conn_string(
@@ -365,21 +275,15 @@ def create_creation_graph(config: RunnableConfig) -> StateGraph:
         collection_name=f"checkpoint_creation_{project_id}"
     )
 
-    return workflow.compile(
-        name=config.get("configurable", {}).get("graph_name", "storybook"),
-        checkpointer=checkpointer)
+    # Compile the graph
+    graph = workflow.compile()
+    graph.name = config.get("configurable", {}).get("graph_name", "Creation Graph")
+
+    return graph
 
 
 def create_refinement_graph(config: RunnableConfig) -> StateGraph:
-    """Create the workflow graph for the refinement phase.
-
-    Args:
-        config: RunnableConfig containing project metadata and configuration.
-
-    Returns:
-        A StateGraph for the refinement phase.
-    """
-    # Extract necessary information from config
+    """Create the workflow graph for the refinement phase."""
     metadata = config.get("metadata", {})
     project_id = metadata.get("project_id")
     agent_factory = metadata.get("agent_factory")
@@ -418,16 +322,8 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("grammar_consistency_checker", grammar_consistency_checker)
     workflow.add_node("fact_verification_specialist", fact_verification_specialist)
 
-    # Define conditional routing
+    # Define conditional routing functions
     def route_after_executive_director(state: NovelSystemState) -> str:
-        """Route after the executive director node.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            The next node name.
-        """
         task = state["current_input"].get("task", "")
 
         if "edit" in task.lower() or "revise" in task.lower():
@@ -437,25 +333,11 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
         elif "market" in task.lower():
             return "market_alignment_director"
         else:
-            # Check if we should transition to the finalization phase
             metrics = state["project"].quality_assessment
             gate_result = check_quality_gate("refinement_to_finalization", metrics)
-
-            if gate_result["passed"]:
-                return END
-            else:
-                # Default to editorial director
-                return "editorial_director"
+            return END if gate_result["passed"] else "editorial_director"
 
     def route_after_editorial_director(state: NovelSystemState) -> str:
-        """Route after the editorial director node.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            The next node name.
-        """
         task = state["current_input"].get("task", "")
         editing_type = state["current_input"].get("editing_type", "").lower()
 
@@ -476,7 +358,6 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
         elif editing_type == "technical" or "fact" in task.lower():
             return "fact_verification_specialist"
         else:
-            # Default back to executive director
             return "executive_director"
 
     # Set up the edges
@@ -494,7 +375,7 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_edge("fact_verification_specialist", "editorial_director")
 
     # Set the entry point
-    workflow.set_entry_point("executive_director")
+    workflow.add_edge("__start__", "executive_director")
 
     # Set up checkpointing with MongoDB
     checkpointer = MongoDBSaver.from_conn_string(
@@ -503,21 +384,15 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
         collection_name=f"checkpoint_refinement_{project_id}"
     )
 
-    return workflow.compile(
-        name=config.get("configurable", {}).get("graph_name", "storybook"),
-        checkpointer=checkpointer)
+    # Compile the graph
+    graph = workflow.compile()
+    graph.name = config.get("configurable", {}).get("graph_name", "Refinement Graph")
+
+    return graph
 
 
 def create_finalization_graph(config: RunnableConfig) -> StateGraph:
-    """Create the workflow graph for the finalization phase.
-
-    Args:
-        config: RunnableConfig containing project metadata and configuration.
-
-    Returns:
-        A StateGraph for the finalization phase.
-    """
-    # Extract necessary information from config
+    """Create the workflow graph for the finalization phase."""
     metadata = config.get("metadata", {})
     project_id = metadata.get("project_id")
     agent_factory = metadata.get("agent_factory")
@@ -546,16 +421,8 @@ def create_finalization_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("differentiation_strategist", differentiation_strategist)
     workflow.add_node("formatting_standards_expert", formatting_standards_expert)
 
-    # Define conditional routing
+    # Define conditional routing functions
     def route_after_executive_director(state: NovelSystemState) -> str:
-        """Route after the executive director node.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            The next node name.
-        """
         task = state["current_input"].get("task", "")
 
         if "market" in task.lower() or "position" in task.lower():
@@ -563,25 +430,11 @@ def create_finalization_graph(config: RunnableConfig) -> StateGraph:
         elif "edit" in task.lower() or "format" in task.lower():
             return "editorial_director"
         else:
-            # Check if we should complete the project
             metrics = state["project"].quality_assessment
             gate_result = check_quality_gate("finalization_to_complete", metrics)
-
-            if gate_result["passed"]:
-                return END
-            else:
-                # Default to market alignment director
-                return "market_alignment_director"
+            return END if gate_result["passed"] else "market_alignment_director"
 
     def route_after_market_director(state: NovelSystemState) -> str:
-        """Route after the market alignment director node.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            The next node name.
-        """
         task = state["current_input"].get("task", "")
 
         if "position" in task.lower() or "strategy" in task.lower():
@@ -591,24 +444,14 @@ def create_finalization_graph(config: RunnableConfig) -> StateGraph:
         elif "different" in task.lower() or "unique" in task.lower():
             return "differentiation_strategist"
         else:
-            # Default back to executive director
             return "executive_director"
 
     def route_after_editorial_director(state: NovelSystemState) -> str:
-        """Route after the editorial director node.
-
-        Args:
-            state: The current state.
-
-        Returns:
-            The next node name.
-        """
         task = state["current_input"].get("task", "")
 
         if "format" in task.lower() or "standard" in task.lower():
             return "formatting_standards_expert"
         else:
-            # Default back to executive director
             return "executive_director"
 
     # Set up the edges
@@ -621,7 +464,7 @@ def create_finalization_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_edge("formatting_standards_expert", "editorial_director")
 
     # Set the entry point
-    workflow.set_entry_point("executive_director")
+    workflow.add_edge("__start__", "executive_director")
 
     # Set up checkpointing with MongoDB
     checkpointer = MongoDBSaver.from_conn_string(
@@ -630,20 +473,15 @@ def create_finalization_graph(config: RunnableConfig) -> StateGraph:
         collection_name=f"checkpoint_finalization_{project_id}"
     )
 
-    return workflow.compile(
-        name=config.get("configurable", {}).get("graph_name", "storybook"),
-        checkpointer=checkpointer)
+    # Compile the graph
+    graph = workflow.compile()
+    graph.name = config.get("configurable", {}).get("graph_name", "Finalization Graph")
+
+    return graph
+
 
 def get_phase_workflow(config: RunnableConfig) -> StateGraph:
-    """Get the workflow graph for a specific phase.
-
-    Args:
-        config: RunnableConfig containing metadata about the project.
-
-    Returns:
-        A StateGraph for the specified phase.
-    """
-    # Extract phase and project ID for workflow selection
+    """Get the workflow graph for a specific phase."""
     metadata = config.get("metadata", {})
     phase = metadata.get("phase")
     project_id = metadata.get("project_id")
