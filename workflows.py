@@ -13,6 +13,24 @@ from agents import AgentFactory
 from utils import check_quality_gate
 
 
+# Define routing functions outside of the graph creation functions
+def route_after_executive_director_initialization(state: NovelSystemState) -> str:
+    task = state["current_input"].get("task", "")
+
+    if "human_feedback" in task.lower():
+        return "human_feedback_manager"
+    elif "quality" in task.lower() or "assessment" in task.lower():
+        return "quality_assessment_director"
+    elif "timeline" in task.lower() or "schedule" in task.lower():
+        return "project_timeline_manager"
+    elif "market" in task.lower() or "trend" in task.lower():
+        return "market_alignment_director"
+    else:
+        metrics = state["project"].quality_assessment
+        gate_result = check_quality_gate("initialization_to_development", metrics)
+        return END if gate_result["passed"] else "executive_director"
+
+
 def create_initialization_graph(config: RunnableConfig) -> StateGraph:
     """Create the workflow graph for the initialization phase."""
     metadata = config.get("metadata", {})
@@ -39,25 +57,8 @@ def create_initialization_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("project_timeline_manager", project_timeline_manager)
     workflow.add_node("market_alignment_director", market_alignment_director)
 
-    # Define conditional routing
-    def route_after_executive_director(state: NovelSystemState) -> str:
-        task = state["current_input"].get("task", "")
-
-        if "human_feedback" in task.lower():
-            return "human_feedback_manager"
-        elif "quality" in task.lower() or "assessment" in task.lower():
-            return "quality_assessment_director"
-        elif "timeline" in task.lower() or "schedule" in task.lower():
-            return "project_timeline_manager"
-        elif "market" in task.lower() or "trend" in task.lower():
-            return "market_alignment_director"
-        else:
-            metrics = state["project"].quality_assessment
-            gate_result = check_quality_gate("initialization_to_development", metrics)
-            return END if gate_result["passed"] else "executive_director"
-
-    # Set up the edges
-    workflow.add_edge("executive_director", route_after_executive_director)
+    # Set up the edges - use the globally defined routing function
+    workflow.add_edge("executive_director", route_after_executive_director_initialization)
     workflow.add_edge("human_feedback_manager", "executive_director")
     workflow.add_edge("quality_assessment_director", "executive_director")
     workflow.add_edge("project_timeline_manager", "executive_director")
@@ -82,6 +83,39 @@ def create_initialization_graph(config: RunnableConfig) -> StateGraph:
     graph.name = config.get("configurable", {}).get("graph_name", "Initialization Graph")
 
     return graph
+
+
+# Define routing functions for other phases as global functions
+def route_after_executive_director_development(state: NovelSystemState) -> str:
+    task = state["current_input"].get("task", "")
+
+    if "creative" in task.lower() or "story" in task.lower():
+        return "creative_director"
+    elif "market" in task.lower() or "trend" in task.lower():
+        return "market_alignment_director"
+    elif "research" in task.lower() or "knowledge" in task.lower():
+        return "domain_knowledge_specialist"
+    else:
+        metrics = state["project"].quality_assessment
+        gate_result = check_quality_gate("development_to_creation", metrics)
+        return END if gate_result["passed"] else "creative_director"
+
+
+def route_after_creative_director_development(state: NovelSystemState) -> str:
+    task = state["current_input"].get("task", "")
+
+    if "structure" in task.lower() or "plot" in task.lower():
+        return "structure_architect"
+    elif "character" in task.lower() and "psychology" in task.lower():
+        return "character_psychology_specialist"
+    elif "character" in task.lower() and "voice" in task.lower():
+        return "character_voice_designer"
+    elif "character" in task.lower() and "relationship" in task.lower():
+        return "character_relationship_mapper"
+    elif "world" in task.lower() or "setting" in task.lower():
+        return "world_building_expert"
+    else:
+        return "executive_director"
 
 
 def create_development_graph(config: RunnableConfig) -> StateGraph:
@@ -122,40 +156,9 @@ def create_development_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("cultural_authenticity_expert", cultural_authenticity_expert)
     workflow.add_node("market_alignment_director", market_alignment_director)
 
-    # Define conditional routing functions
-    def route_after_executive_director(state: NovelSystemState) -> str:
-        task = state["current_input"].get("task", "")
-
-        if "creative" in task.lower() or "story" in task.lower():
-            return "creative_director"
-        elif "market" in task.lower() or "trend" in task.lower():
-            return "market_alignment_director"
-        elif "research" in task.lower() or "knowledge" in task.lower():
-            return "domain_knowledge_specialist"
-        else:
-            metrics = state["project"].quality_assessment
-            gate_result = check_quality_gate("development_to_creation", metrics)
-            return END if gate_result["passed"] else "creative_director"
-
-    def route_after_creative_director(state: NovelSystemState) -> str:
-        task = state["current_input"].get("task", "")
-
-        if "structure" in task.lower() or "plot" in task.lower():
-            return "structure_architect"
-        elif "character" in task.lower() and "psychology" in task.lower():
-            return "character_psychology_specialist"
-        elif "character" in task.lower() and "voice" in task.lower():
-            return "character_voice_designer"
-        elif "character" in task.lower() and "relationship" in task.lower():
-            return "character_relationship_mapper"
-        elif "world" in task.lower() or "setting" in task.lower():
-            return "world_building_expert"
-        else:
-            return "executive_director"
-
-    # Set up the edges
-    workflow.add_edge("executive_director", route_after_executive_director)
-    workflow.add_edge("creative_director", route_after_creative_director)
+    # Set up the edges - use the globally defined routing functions
+    workflow.add_edge("executive_director", route_after_executive_director_development)
+    workflow.add_edge("creative_director", route_after_creative_director_development)
     workflow.add_edge("structure_architect", "creative_director")
     workflow.add_edge("plot_development_specialist", "creative_director")
     workflow.add_edge("world_building_expert", "creative_director")
@@ -185,6 +188,48 @@ def create_development_graph(config: RunnableConfig) -> StateGraph:
     graph.name = config.get("configurable", {}).get("graph_name", "Development Graph")
 
     return graph
+
+
+# Define routing functions for creation phase
+def route_after_executive_director_creation(state: NovelSystemState) -> str:
+    task = state["current_input"].get("task", "")
+
+    if "content" in task.lower() or "draft" in task.lower():
+        return "content_development_director"
+    elif "creative" in task.lower() or "emotion" in task.lower():
+        return "creative_director"
+    else:
+        metrics = state["project"].quality_assessment
+        gate_result = check_quality_gate("creation_to_refinement", metrics)
+        return END if gate_result["passed"] else "content_development_director"
+
+
+def route_after_content_director_creation(state: NovelSystemState) -> str:
+    task = state["current_input"].get("task", "")
+
+    if "chapter" in task.lower():
+        return "chapter_drafters"
+    elif "scene" in task.lower():
+        return "scene_construction_specialists"
+    elif "dialogue" in task.lower():
+        return "dialogue_crafters"
+    elif "continuity" in task.lower():
+        return "continuity_manager"
+    elif "voice" in task.lower() or "consistency" in task.lower():
+        return "voice_consistency_monitor"
+    elif "research" in task.lower() or "knowledge" in task.lower():
+        return "domain_knowledge_specialist"
+    else:
+        return "executive_director"
+
+
+def route_after_creative_director_creation(state: NovelSystemState) -> str:
+    task = state["current_input"].get("task", "")
+
+    if "emotion" in task.lower() or "arc" in task.lower():
+        return "emotional_arc_designer"
+    else:
+        return "content_development_director"
 
 
 def create_creation_graph(config: RunnableConfig) -> StateGraph:
@@ -223,49 +268,10 @@ def create_creation_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("emotional_arc_designer", emotional_arc_designer)
     workflow.add_node("domain_knowledge_specialist", domain_knowledge_specialist)
 
-    # Define conditional routing functions
-    def route_after_executive_director(state: NovelSystemState) -> str:
-        task = state["current_input"].get("task", "")
-
-        if "content" in task.lower() or "draft" in task.lower():
-            return "content_development_director"
-        elif "creative" in task.lower() or "emotion" in task.lower():
-            return "creative_director"
-        else:
-            metrics = state["project"].quality_assessment
-            gate_result = check_quality_gate("creation_to_refinement", metrics)
-            return END if gate_result["passed"] else "content_development_director"
-
-    def route_after_content_director(state: NovelSystemState) -> str:
-        task = state["current_input"].get("task", "")
-
-        if "chapter" in task.lower():
-            return "chapter_drafters"
-        elif "scene" in task.lower():
-            return "scene_construction_specialists"
-        elif "dialogue" in task.lower():
-            return "dialogue_crafters"
-        elif "continuity" in task.lower():
-            return "continuity_manager"
-        elif "voice" in task.lower() or "consistency" in task.lower():
-            return "voice_consistency_monitor"
-        elif "research" in task.lower() or "knowledge" in task.lower():
-            return "domain_knowledge_specialist"
-        else:
-            return "executive_director"
-
-    def route_after_creative_director(state: NovelSystemState) -> str:
-        task = state["current_input"].get("task", "")
-
-        if "emotion" in task.lower() or "arc" in task.lower():
-            return "emotional_arc_designer"
-        else:
-            return "content_development_director"
-
-    # Set up the edges
-    workflow.add_edge("executive_director", route_after_executive_director)
-    workflow.add_edge("content_development_director", route_after_content_director)
-    workflow.add_edge("creative_director", route_after_creative_director)
+    # Set up the edges - use the globally defined routing functions
+    workflow.add_edge("executive_director", route_after_executive_director_creation)
+    workflow.add_edge("content_development_director", route_after_content_director_creation)
+    workflow.add_edge("creative_director", route_after_creative_director_creation)
     workflow.add_edge("chapter_drafters", "content_development_director")
     workflow.add_edge("scene_construction_specialists", "content_development_director")
     workflow.add_edge("dialogue_crafters", "content_development_director")
@@ -293,6 +299,46 @@ def create_creation_graph(config: RunnableConfig) -> StateGraph:
     graph.name = config.get("configurable", {}).get("graph_name", "Creation Graph")
 
     return graph
+
+
+# Define routing functions for refinement phase
+def route_after_executive_director_refinement(state: NovelSystemState) -> str:
+    task = state["current_input"].get("task", "")
+
+    if "edit" in task.lower() or "revise" in task.lower():
+        return "editorial_director"
+    elif "creative" in task.lower():
+        return "creative_director"
+    elif "market" in task.lower():
+        return "market_alignment_director"
+    else:
+        metrics = state["project"].quality_assessment
+        gate_result = check_quality_gate("refinement_to_finalization", metrics)
+        return END if gate_result["passed"] else "editorial_director"
+
+
+def route_after_editorial_director_refinement(state: NovelSystemState) -> str:
+    task = state["current_input"].get("task", "")
+    editing_type = state["current_input"].get("editing_type", "").lower()
+
+    if editing_type == "developmental" or "structure" in task.lower():
+        return "structural_editor"
+    elif editing_type == "developmental" or "character" in task.lower():
+        return "character_arc_evaluator"
+    elif editing_type == "developmental" or "theme" in task.lower():
+        return "thematic_coherence_analyst"
+    elif editing_type == "line" or "prose" in task.lower():
+        return "prose_enhancement_specialist"
+    elif editing_type == "line" or "dialogue" in task.lower():
+        return "dialogue_refinement_expert"
+    elif editing_type == "line" or "rhythm" in task.lower() or "flow" in task.lower():
+        return "rhythm_cadence_optimizer"
+    elif editing_type == "technical" or "grammar" in task.lower():
+        return "grammar_consistency_checker"
+    elif editing_type == "technical" or "fact" in task.lower():
+        return "fact_verification_specialist"
+    else:
+        return "executive_director"
 
 
 def create_refinement_graph(config: RunnableConfig) -> StateGraph:
@@ -335,47 +381,9 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("grammar_consistency_checker", grammar_consistency_checker)
     workflow.add_node("fact_verification_specialist", fact_verification_specialist)
 
-    # Define conditional routing functions
-    def route_after_executive_director(state: NovelSystemState) -> str:
-        task = state["current_input"].get("task", "")
-
-        if "edit" in task.lower() or "revise" in task.lower():
-            return "editorial_director"
-        elif "creative" in task.lower():
-            return "creative_director"
-        elif "market" in task.lower():
-            return "market_alignment_director"
-        else:
-            metrics = state["project"].quality_assessment
-            gate_result = check_quality_gate("refinement_to_finalization", metrics)
-            return END if gate_result["passed"] else "editorial_director"
-
-    def route_after_editorial_director(state: NovelSystemState) -> str:
-        task = state["current_input"].get("task", "")
-        editing_type = state["current_input"].get("editing_type", "").lower()
-
-        if editing_type == "developmental" or "structure" in task.lower():
-            return "structural_editor"
-        elif editing_type == "developmental" or "character" in task.lower():
-            return "character_arc_evaluator"
-        elif editing_type == "developmental" or "theme" in task.lower():
-            return "thematic_coherence_analyst"
-        elif editing_type == "line" or "prose" in task.lower():
-            return "prose_enhancement_specialist"
-        elif editing_type == "line" or "dialogue" in task.lower():
-            return "dialogue_refinement_expert"
-        elif editing_type == "line" or "rhythm" in task.lower() or "flow" in task.lower():
-            return "rhythm_cadence_optimizer"
-        elif editing_type == "technical" or "grammar" in task.lower():
-            return "grammar_consistency_checker"
-        elif editing_type == "technical" or "fact" in task.lower():
-            return "fact_verification_specialist"
-        else:
-            return "executive_director"
-
-    # Set up the edges
-    workflow.add_edge("executive_director", route_after_executive_director)
-    workflow.add_edge("editorial_director", route_after_editorial_director)
+    # Set up the edges - use the globally defined routing functions
+    workflow.add_edge("executive_director", route_after_executive_director_refinement)
+    workflow.add_edge("editorial_director", route_after_editorial_director_refinement)
     workflow.add_edge("creative_director", "executive_director")
     workflow.add_edge("market_alignment_director", "executive_director")
     workflow.add_edge("structural_editor", "editorial_director")
@@ -408,6 +416,42 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
     return graph
 
 
+# Define routing functions for finalization phase
+def route_after_executive_director_finalization(state: NovelSystemState) -> str:
+    task = state["current_input"].get("task", "")
+
+    if "market" in task.lower() or "position" in task.lower():
+        return "market_alignment_director"
+    elif "edit" in task.lower() or "format" in task.lower():
+        return "editorial_director"
+    else:
+        metrics = state["project"].quality_assessment
+        gate_result = check_quality_gate("finalization_to_complete", metrics)
+        return END if gate_result["passed"] else "market_alignment_director"
+
+
+def route_after_market_director_finalization(state: NovelSystemState) -> str:
+    task = state["current_input"].get("task", "")
+
+    if "position" in task.lower() or "strategy" in task.lower():
+        return "positioning_specialist"
+    elif "title" in task.lower() or "blurb" in task.lower():
+        return "title_blurb_optimizer"
+    elif "different" in task.lower() or "unique" in task.lower():
+        return "differentiation_strategist"
+    else:
+        return "executive_director"
+
+
+def route_after_editorial_director_finalization(state: NovelSystemState) -> str:
+    task = state["current_input"].get("task", "")
+
+    if "format" in task.lower() or "standard" in task.lower():
+        return "formatting_standards_expert"
+    else:
+        return "executive_director"
+
+
 def create_finalization_graph(config: RunnableConfig) -> StateGraph:
     """Create the workflow graph for the finalization phase."""
     metadata = config.get("metadata", {})
@@ -438,43 +482,10 @@ def create_finalization_graph(config: RunnableConfig) -> StateGraph:
     workflow.add_node("differentiation_strategist", differentiation_strategist)
     workflow.add_node("formatting_standards_expert", formatting_standards_expert)
 
-    # Define conditional routing functions
-    def route_after_executive_director(state: NovelSystemState) -> str:
-        task = state["current_input"].get("task", "")
-
-        if "market" in task.lower() or "position" in task.lower():
-            return "market_alignment_director"
-        elif "edit" in task.lower() or "format" in task.lower():
-            return "editorial_director"
-        else:
-            metrics = state["project"].quality_assessment
-            gate_result = check_quality_gate("finalization_to_complete", metrics)
-            return END if gate_result["passed"] else "market_alignment_director"
-
-    def route_after_market_director(state: NovelSystemState) -> str:
-        task = state["current_input"].get("task", "")
-
-        if "position" in task.lower() or "strategy" in task.lower():
-            return "positioning_specialist"
-        elif "title" in task.lower() or "blurb" in task.lower():
-            return "title_blurb_optimizer"
-        elif "different" in task.lower() or "unique" in task.lower():
-            return "differentiation_strategist"
-        else:
-            return "executive_director"
-
-    def route_after_editorial_director(state: NovelSystemState) -> str:
-        task = state["current_input"].get("task", "")
-
-        if "format" in task.lower() or "standard" in task.lower():
-            return "formatting_standards_expert"
-        else:
-            return "executive_director"
-
-    # Set up the edges
-    workflow.add_edge("executive_director", route_after_executive_director)
-    workflow.add_edge("market_alignment_director", route_after_market_director)
-    workflow.add_edge("editorial_director", route_after_editorial_director)
+    # Set up the edges - use the globally defined routing functions
+    workflow.add_edge("executive_director", route_after_executive_director_finalization)
+    workflow.add_edge("market_alignment_director", route_after_market_director_finalization)
+    workflow.add_edge("editorial_director", route_after_editorial_director_finalization)
     workflow.add_edge("positioning_specialist", "market_alignment_director")
     workflow.add_edge("title_blurb_optimizer", "market_alignment_director")
     workflow.add_edge("differentiation_strategist", "market_alignment_director")
