@@ -5,7 +5,7 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 from pymongo.errors import OperationFailure
 from langchain_mongodb import MongoDBAtlasVectorSearch
-from langchain_mongodb.vectorstores import MongoDBVectorSearchIndex
+from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
 from langchain_core.embeddings import Embeddings
 from langchain_openai import OpenAIEmbeddings
 
