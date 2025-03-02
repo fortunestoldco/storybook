@@ -1,12 +1,11 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "initialization": "./workflows.py:create_initialization_graph",
-    "development": "./workflows.py:create_development_graph",
-    "creation": "./workflows.py:create_creation_graph",
-    "refinement": "./workflows.py:create_refinement_graph",
-    "finalization": "./workflows.py:create_finalization_graph",
-    "phase_workflow": "./workflows.py:get_phase_workflow"
+    "storybook_{project_id}_initialization": "./workflows.py:get_phase_workflow",
+    "storybook_{project_id}_development": "./workflows.py:get_phase_workflow",
+    "storybook_{project_id}_creation": "./workflows.py:get_phase_workflow",
+    "storybook_{project_id}_refinement": "./workflows.py:get_phase_workflow",
+    "storybook_{project_id}_finalization": "./workflows.py:get_phase_workflow"
   },
   "env": ".env"
 }
