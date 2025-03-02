@@ -1,4 +1,5 @@
 from typing import Dict, List, Callable, Optional, Any, Annotated, TypedDict, cast
+from langchain_core.runnables.config import RunnableConfig  # Add this import
 import json
 
 from langgraph.graph import StateGraph, END
