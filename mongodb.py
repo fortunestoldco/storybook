@@ -1,4 +1,3 @@
-import os
 from typing import Any, Dict, List, Optional
 from pymongo import MongoClient, ASCENDING
 from pymongo.collection import Collection
@@ -24,28 +23,28 @@ class MongoDBManager:
         self.connection_string = connection_string or os.getenv("MONGODB_URI", MONGODB_CONFIG["connection_string"])
         self.database_name = os.getenv("MONGODB_DB", MONGODB_CONFIG["database_name"])
         self.client = MongoClient(self.connection_string)
-        
+
         # Check if database exists, if not create it
         self._initialize_database()
-        
+
         self.db = self.client[self.database_name]
 
     def _initialize_database(self):
         """Initialize the database and collections if they don't exist."""
         # Check if database exists in list of database names
         existing_dbs = self.client.list_database_names()
-        
+
         if self.database_name not in existing_dbs:
             print(f"Creating new database: {self.database_name}")
             # MongoDB actually creates the database when you first create a collection
             db = self.client[self.database_name]
-            
+
             # Create all required collections
             collections_config = MONGODB_CONFIG["collections"]
             for collection_name in collections_config.values():
                 db.create_collection(collection_name)
                 print(f"Created collection: {collection_name}")
-            
+
             # Create vector search index on documents collection
             self._create_vector_search_index()
         else:
@@ -53,38 +52,38 @@ class MongoDBManager:
             db = self.client[self.database_name]
             existing_collections = db.list_collection_names()
             collections_config = MONGODB_CONFIG["collections"]
-            
+
             for collection_name in collections_config.values():
                 if collection_name not in existing_collections:
                     print(f"Creating missing collection: {collection_name}")
                     db.create_collection(collection_name)
-            
+
             # Check if vector search index exists, create if not
             try:
                 indexes = list(db[MONGODB_CONFIG["collections"]["documents"]].list_indexes())
                 vector_index_exists = any("vector" in idx.get("name", "") for idx in indexes)
-                
+
                 if not vector_index_exists:
                     self._create_vector_search_index()
             except Exception as e:
                 print(f"Error checking vector index: {str(e)}")
                 # Try to create vector index anyway
                 self._create_vector_search_index()
-    
+
     def _create_vector_search_index(self):
         """Create a vector search index on the documents collection."""
         try:
             db = self.client[self.database_name]
             documents_collection = db[MONGODB_CONFIG["collections"]["documents"]]
-            
+
             # Create a basic index to support vector search
             documents_collection.create_index([("embedding", ASCENDING)])
-            
+
             print(f"Created vector search index on documents collection")
-            
+
             # Setup vector store for future use
             embeddings = OpenAIEmbeddings()
-            
+
             # Initialize with langchain-mongodb
             vector_store = MongoDBAtlasVectorSearch.from_connection_string(
                 connection_string=self.connection_string,
@@ -92,9 +91,9 @@ class MongoDBManager:
                 embedding=embeddings,
                 index_name="vector_index"
             )
-            
+
             print(f"Initialized vector search capabilities")
-            
+
         except OperationFailure as e:
             print(f"Error creating vector search index: {str(e)}")
             print("Will attempt to continue without vector search capabilities")
@@ -228,23 +227,23 @@ class MongoDBManager:
         """
         collection = self.get_collection(MONGODB_CONFIG["collections"]["metrics"])
         return list(collection.find({"project_id": project_id}))
-    
+
     def vector_search(self, query: str, limit: int = 5) -> List[Dict]:
         """Perform a vector search on documents.
-        
+
         Args:
             query: The search query.
             limit: Maximum number of results to return.
-            
+
         Returns:
             List of matching documents.
         """
         try:
             from langchain_core.documents import Document
-            
+
             # Create embeddings
             embeddings = OpenAIEmbeddings()
-            
+
             # Initialize vector store
             vector_store = MongoDBAtlasVectorSearch.from_connection_string(
                 connection_string=self.connection_string,
@@ -252,10 +251,10 @@ class MongoDBManager:
                 embedding=embeddings,
                 index_name="vector_index"
             )
-            
+
             # Perform the search
             results = vector_store.similarity_search(query, k=limit)
-            
+
             # Convert documents to dictionaries
             return [doc.metadata for doc in results]
         except Exception as e:

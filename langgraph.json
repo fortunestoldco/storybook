@@ -1,10 +1,7 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "storybook_{project_id}_initialization": "./workflows.py:get_phase_workflow",
-    "storybook_{project_id}_development": "./workflows.py:get_phase_workflow",
-    "storybook_{project_id}_creation": "./workflows.py:get_phase_workflow",
-    "storybook_{project_id}_refinement": "./workflows.py:get_phase_workflow",
-    "storybook_{project_id}_finalization": "./workflows.py:get_phase_workflow"
-  }
+    "agent": "./workflows.py:get_phase_workflow"
+  },
+  "env": ".env"
 }

@@ -77,8 +77,8 @@ def create_initialization_graph(config: RunnableConfig) -> StateGraph:
         collection_name=f"checkpoint_initialization_{project_id}"
     )
 
-    # Compile the graph
-    graph = workflow.compile()
+    # Compile the graph with persistent checkpoint saver
+    graph = workflow.compile(checkpointer=checkpointer)
     graph.name = config.get("configurable", {}).get("graph_name", "Initialization Graph")
 
     return graph
@@ -180,8 +180,8 @@ def create_development_graph(config: RunnableConfig) -> StateGraph:
         collection_name=f"checkpoint_development_{project_id}"
     )
 
-    # Compile the graph
-    graph = workflow.compile()
+    # Compile the graph with persistent checkpoint saver
+    graph = workflow.compile(checkpointer=checkpointer)
     graph.name = config.get("configurable", {}).get("graph_name", "Development Graph")
 
     return graph
@@ -288,8 +288,8 @@ def create_creation_graph(config: RunnableConfig) -> StateGraph:
         collection_name=f"checkpoint_creation_{project_id}"
     )
 
-    # Compile the graph
-    graph = workflow.compile()
+    # Compile the graph with persistent checkpoint saver
+    graph = workflow.compile(checkpointer=checkpointer)
     graph.name = config.get("configurable", {}).get("graph_name", "Creation Graph")
 
     return graph
@@ -401,8 +401,8 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
         collection_name=f"checkpoint_refinement_{project_id}"
     )
 
-    # Compile the graph
-    graph = workflow.compile()
+    # Compile the graph with persistent checkpoint saver
+    graph = workflow.compile(checkpointer=checkpointer)
     graph.name = config.get("configurable", {}).get("graph_name", "Refinement Graph")
 
     return graph
@@ -494,8 +494,8 @@ def create_finalization_graph(config: RunnableConfig) -> StateGraph:
         collection_name=f"checkpoint_finalization_{project_id}"
     )
 
-    # Compile the graph
-    graph = workflow.compile()
+    # Compile the graph with persistent checkpoint saver
+    graph = workflow.compile(checkpointer=checkpointer)
     graph.name = config.get("configurable", {}).get("graph_name", "Finalization Graph")
 
     return graph
