@@ -7,7 +7,8 @@ from langgraph.graph import StateGraph
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
+from pydantic import BaseModel
 
 from agents import AgentFactory
 from mongodb import MongoDBManager
@@ -116,43 +117,77 @@ def get_finalization_graph(project_id: str) -> StateGraph:
     }
     return get_phase_workflow(config)
 
-# Add assistants API endpoint - Required for the assistants UI
-@server.app.get("/api/v1/assistants")
-async def get_assistants():
+# Define model for Assistant responses
+class Assistant(BaseModel):
+    id: str
+    name: str
+    description: str
+    model: str
+
+# Define model for Assistant search request/response
+class AssistantSearchRequest(BaseModel):
+    query: Optional[str] = None
+    limit: Optional[int] = 20
+    order: Optional[str] = "desc"
+
+class AssistantSearchResponse(BaseModel):
+    data: List[Assistant]
+    has_more: bool = False
+    object: str = "list"
+
+# Add custom assistants endpoints to avoid reliance on LangGraph API
+@server.app.get("/api/v1/assistants", response_model=AssistantSearchResponse)
+async def list_assistants():
     """Get available assistants information for UI."""
-    assistants = [
+    assistants_data = [
         {
             "id": "exec_director",
             "name": "Executive Director",
             "description": "Overall project manager for the novel writing process",
-            "model": agent_factory.backend_config.provider
+            "model": str(agent_factory.backend_config.provider)
         },
         {
             "id": "creative_director",
             "name": "Creative Director",
             "description": "Manages creative aspects of the novel",
-            "model": agent_factory.backend_config.provider
+            "model": str(agent_factory.backend_config.provider)
         },
         {
             "id": "content_director",
             "name": "Content Development Director",
             "description": "Manages content creation and drafting",
-            "model": agent_factory.backend_config.provider
+            "model": str(agent_factory.backend_config.provider)
         },
         {
             "id": "editorial_director",
             "name": "Editorial Director",
             "description": "Manages editing and refinement",
-            "model": agent_factory.backend_config.provider
+            "model": str(agent_factory.backend_config.provider)
         },
         {
             "id": "market_director",
             "name": "Market Alignment Director",
             "description": "Manages market positioning and audience targeting",
-            "model": agent_factory.backend_config.provider
+            "model": str(agent_factory.backend_config.provider)
         }
     ]
-    return assistants
+    
+    # Convert to Assistant models
+    assistants = [Assistant(**data) for data in assistants_data]
+    
+    return AssistantSearchResponse(data=assistants)
+
+@server.app.post("/api/v1/assistants/search", response_model=AssistantSearchResponse)
+async def search_assistants(request: AssistantSearchRequest):
+    """Search available assistants."""
+    # This implementation simply returns all assistants
+    # In a real implementation, you would filter based on the search query
+    return await list_assistants()
+
+# Add a root endpoint that redirects to the UI
+@server.app.get("/")
+async def root():
+    return RedirectResponse(url="/index.html")
 
 # Try to mount static files (UI) if the directory exists
 try:
