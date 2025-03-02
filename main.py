@@ -36,40 +36,29 @@ mongo_manager = MongoDBManager()
 backend_config = get_default_backend_config()
 agent_factory = AgentFactory(mongo_manager, backend_config)
 
+# Move this before other route definitions
+serve.mount_asgi_app(app, server, runtime)
 
-class ProjectRequest(BaseModel):
-    """Request model for creating a new project."""
-    title: str
-    genre: str
-    target_audience: str
-    word_count_target: int
-    description: Optional[str] = None
-
-
-class TaskRequest(BaseModel):
-    """Request model for running a task."""
-    task: str
-    content: Optional[str] = None
-    phase: Optional[str] = None
-    editing_type: Optional[str] = None
-
-
-class FeedbackRequest(BaseModel):
-    """Request model for providing human feedback."""
-    content: str
-    type: str = "general"
-    quality_scores: Optional[Dict[str, int]] = None
-
-
-class BackendConfigRequest(BaseModel):
-    """Request model for updating backend configuration."""
-    provider: BackendProvider
-    api_key: Optional[str] = None
-    api_url: Optional[str] = None
-    region: Optional[str] = None
-    project_id: Optional[str] = None
-    deployment_name: Optional[str] = None
-
+# Then add your routes
+@app.get("/")
+async def root():
+    """Root endpoint that provides basic API information."""
+    return {
+        "name": "Storybook LangGraph Server",
+        "version": "1.0.0",
+        "description": "Novel writing system using LangGraph and multiple LLM agents",
+        "endpoints": {
+            "api_docs": "/docs",
+            "projects": "/projects",
+            "workflows": {
+                "initialize": "/initialize/{project_id}",
+                "develop": "/develop/{project_id}",
+                "create": "/create/{project_id}",
+                "refine": "/refine/{project_id}",
+                "finalize": "/finalize/{project_id}"
+            }
+        }
+    }
 
 @app.post("/projects", response_model=Dict)
 async def create_project(request: ProjectRequest) -> Dict:
@@ -372,6 +361,12 @@ async def get_backend_config() -> Dict:
         "has_api_key": backend_config.api_key is not None,
         "has_api_url": backend_config.api_url is not None
     }
+
+
+# Add OpenAPI metadata
+app.title = "Storybook LangGraph Server"
+app.description = "A novel writing system using LangGraph and multiple LLM agents"
+app.version = "1.0.0"
 
 
 if __name__ == "__main__":
