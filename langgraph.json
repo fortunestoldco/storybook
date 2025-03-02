@@ -1,7 +1,78 @@
 {
-  "dependencies": ["."],
+  "dependencies": [
+    "."
+  ],
   "graphs": {
-    "agent": "./workflows.py:get_phase_workflow"
-  },
-  "env": ".env"
+    "initialization": {
+      "endpoints": [
+        "/initialize/{project_id}"
+      ],
+      "name": "initialization",
+      "description": "Project initialization workflow"
+    },
+    "storybook_{project_id}_initialization": {
+      "endpoints": [
+        "/initialize/{project_id}"
+      ],
+      "name": "storybook_{project_id}_initialization",
+      "description": "Project initialization workflow for specific project"
+    },
+    "development": {
+      "endpoints": [
+        "/develop/{project_id}"
+      ],
+      "name": "development",
+      "description": "Project development workflow"
+    },
+    "storybook_{project_id}_development": {
+      "endpoints": [
+        "/develop/{project_id}"
+      ],
+      "name": "storybook_{project_id}_development",
+      "description": "Project development workflow for specific project"
+    },
+    "creation": {
+      "endpoints": [
+        "/create/{project_id}"
+      ],
+      "name": "creation",
+      "description": "Content creation workflow"
+    },
+    "storybook_{project_id}_creation": {
+      "endpoints": [
+        "/create/{project_id}"
+      ],
+      "name": "storybook_{project_id}_creation",
+      "description": "Content creation workflow for specific project"
+    },
+    "refinement": {
+      "endpoints": [
+        "/refine/{project_id}"
+      ],
+      "name": "refinement",
+      "description": "Content refinement workflow"
+    },
+    "storybook_{project_id}_refinement": {
+      "endpoints": [
+        "/refine/{project_id}"
+      ],
+      "name": "storybook_{project_id}_refinement",
+      "description": "Content refinement workflow for specific project"
+    },
+    "finalization": {
+      "endpoints": [
+        "/finalize/{project_id}"
+      ],
+      "name": "finalization",
+      "description": "Project finalization workflow"
+    },
+    "storybook_{project_id}_finalization": {
+      "endpoints": [
+        "/finalize/{project_id}"
+      ],
+      "name": "storybook_{project_id}_finalization",
+      "description": "Project finalization workflow for specific project"
+    },
+    "env": ".env"
+  }
 }
