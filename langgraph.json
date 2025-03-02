@@ -2,6 +2,7 @@
   "dependencies": [
     "."
   ],
+  "env": ".env",
   "graphs": {
     "initialization": {
       "endpoints": [
@@ -72,7 +73,6 @@
       ],
       "name": "storybook_{project_id}_finalization",
       "description": "Project finalization workflow for specific project"
-    },
-    "env": ".env"
+    }
   }
 }
