@@ -4,7 +4,7 @@ import os
 
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
-from langchain_aws import BedrockChat
+from langchain_aws import ChatBedrock
 from langchain_google_vertexai import ChatVertexAI
 from langchain_azure_openai import AzureChatOpenAI
 from langchain_community.llms import Ollama, LlamaCpp, Replicate
@@ -82,7 +82,7 @@ class AgentFactory:
             else:
                 clean_model_name = model_name
 
-            return BedrockChat(
+            return ChatBedrock(
                 model_id=clean_model_name,
                 model_kwargs={
                     "temperature": config.get("temperature", 0.3),
