@@ -1,11 +1,12 @@
 import json
 import uuid
+import os
 from typing import Dict, List, Optional, Any
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from langgraph.server import LangGraphServer  # Updated import
+from langgraph.serve import Server as LangGraphServer
 from langgraph.prebuilt.fixed_graph import FixedGraph
 
 from agents import AgentFactory
@@ -15,6 +16,32 @@ from workflows import get_phase_workflow
 from utils import generate_id, current_timestamp
 from backend import BackendProvider, BackendConfig, get_default_backend_config
 from server import server, runtime
+
+# Define request models
+class ProjectRequest(BaseModel):
+    title: str
+    genre: str
+    target_audience: str
+    word_count_target: int
+
+class TaskRequest(BaseModel):
+    task: str
+    phase: Optional[str] = None
+    content: Optional[str] = None
+    editing_type: Optional[str] = None
+
+class FeedbackRequest(BaseModel):
+    content: str
+    type: str
+    quality_scores: Optional[Dict[str, float]] = None
+
+class BackendConfigRequest(BaseModel):
+    provider: BackendProvider
+    api_key: Optional[str] = None
+    api_url: Optional[str] = None
+    region: Optional[str] = None
+    project_id: Optional[str] = None
+    deployment_name: Optional[str] = None
 
 # Initialize FastAPI app
 app = FastAPI(title="Storybook Langgraph Server")
@@ -33,20 +60,8 @@ mongo_manager = MongoDBManager()
 backend_config = get_default_backend_config()
 agent_factory = AgentFactory(mongo_manager, backend_config)
 
-# Create LangGraph server instance
-graph_server = LangGraphServer()
-
-# Register the graph factory
-serve.register_entrypoint(get_phase_workflow)
-
 # Mount LangGraph API - move this before other route definitions
-serve.mount_asgi_app(
-    app,
-    server,
-    runtime,
-    path_prefix="/api/v1",  # Add a path prefix
-    include_middleware=True
-)
+app.mount("/api/v1", server)
 
 # Then add your routes
 @app.get("/")
@@ -72,15 +87,15 @@ async def root():
 @app.post("/projects", response_model=Dict)
 async def create_project(request: ProjectRequest) -> Dict:
     """Create a new project.
-    
+
     Args:
         request: The project request.
-        
+
     Returns:
         The created project.
     """
     project_id = generate_id()
-    
+
     # Create initial project state
     project_state = ProjectState(
         project_id=project_id,
@@ -89,10 +104,10 @@ async def create_project(request: ProjectRequest) -> Dict:
         target_audience=request.target_audience,
         word_count_target=request.word_count_target
     )
-    
+
     # Save to MongoDB
     mongo_manager.save_state(project_id, project_state.dict())
-    
+
     return {
         "project_id": project_id,
         "title": request.title,
@@ -104,19 +119,19 @@ async def create_project(request: ProjectRequest) -> Dict:
 @app.get("/projects/{project_id}", response_model=Dict)
 async def get_project(project_id: str) -> Dict:
     """Get a project by ID.
-    
+
     Args:
         project_id: ID of the project.
-        
+
     Returns:
         The project.
     """
     # Load from MongoDB
     project_data = mongo_manager.load_state(project_id)
-    
+
     if not project_data:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     return {
         "project_id": project_id,
         "title": project_data.get("title", ""),
@@ -128,33 +143,40 @@ async def get_project(project_id: str) -> Dict:
 @app.post("/projects/{project_id}/run", response_model=Dict)
 async def run_task(project_id: str, request: TaskRequest, background_tasks: BackgroundTasks) -> Dict:
     """Run a task for a project.
-    
+
     Args:
         project_id: ID of the project.
         request: The task request.
         background_tasks: FastAPI background tasks.
-        
+
     Returns:
         Status of the task execution.
     """
     # Load from MongoDB
     project_data = mongo_manager.load_state(project_id)
-    
+
     if not project_data:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     # Create project state
     project_state = ProjectState(**project_data)
-    
+
     # Use the phase from the request or the current phase
     phase = request.phase or project_state.current_phase
-    
+
     # Get the workflow for the phase
     try:
-        workflow = get_phase_workflow(phase, project_id, agent_factory)
+        config = {
+            "metadata": {
+                "project_id": project_id,
+                "phase": phase,
+                "agent_factory": agent_factory
+            }
+        }
+        workflow = get_phase_workflow(config)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+
     # Create initial state
     initial_state: NovelSystemState = {
         "project": project_state,
@@ -167,19 +189,19 @@ async def run_task(project_id: str, request: TaskRequest, background_tasks: Back
         "messages": [],
         "errors": []
     }
-    
+
     # Create a unique run ID
     run_id = generate_id()
-    
+
     # Execute the workflow in the background
     def execute_workflow():
         try:
             # Run the workflow
             final_state = workflow.invoke(initial_state, {"recursion_limit": 25})
-            
+
             # Save the final state
             mongo_manager.save_state(project_id, final_state["project"].dict())
-            
+
             # Save execution record
             execution_record = {
                 "run_id": run_id,
@@ -191,12 +213,12 @@ async def run_task(project_id: str, request: TaskRequest, background_tasks: Back
                 "messages": final_state["messages"]
             }
             mongo_manager.save_document(execution_record)
-            
+
         except Exception as e:
             # Log the error
             error_message = str(e)
             print(f"Error executing workflow: {error_message}")
-            
+
             # Save error record
             error_record = {
                 "run_id": run_id,
@@ -208,9 +230,9 @@ async def run_task(project_id: str, request: TaskRequest, background_tasks: Back
                 "timestamp": current_timestamp()
             }
             mongo_manager.save_document(error_record)
-    
+
     background_tasks.add_task(execute_workflow)
-    
+
     return {
         "project_id": project_id,
         "run_id": run_id,
@@ -223,20 +245,20 @@ async def run_task(project_id: str, request: TaskRequest, background_tasks: Back
 @app.post("/projects/{project_id}/feedback", response_model=Dict)
 async def add_feedback(project_id: str, request: FeedbackRequest) -> Dict:
     """Add human feedback to a project.
-    
+
     Args:
         project_id: ID of the project.
         request: The feedback request.
-        
+
     Returns:
         Status of the feedback submission.
     """
     # Load from MongoDB
     project_data = mongo_manager.load_state(project_id)
-    
+
     if not project_data:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     # Create feedback document
     feedback = {
         "project_id": project_id,
@@ -245,27 +267,27 @@ async def add_feedback(project_id: str, request: FeedbackRequest) -> Dict:
         "quality_scores": request.quality_scores or {},
         "timestamp": current_timestamp()
     }
-    
+
     # Save to MongoDB
     mongo_manager.save_feedback(feedback)
-    
+
     # Update the project state with human feedback
     project_state = ProjectState(**project_data)
     project_state.human_feedback.append(feedback)
-    
+
     # If quality scores are provided, update the quality assessment
     if request.quality_scores:
         for key, value in request.quality_scores.items():
             project_state.quality_assessment[key] = value
-        
+
         # Also set human approval if high scores
         average_score = sum(request.quality_scores.values()) / len(request.quality_scores)
         if average_score >= 85:  # High score threshold
             project_state.quality_assessment["human_approved"] = True
-    
+
     # Save updated state
     mongo_manager.save_state(project_id, project_state.dict())
-    
+
     return {
         "project_id": project_id,
         "status": "feedback_added"
@@ -275,21 +297,21 @@ async def add_feedback(project_id: str, request: FeedbackRequest) -> Dict:
 @app.get("/projects/{project_id}/status", response_model=Dict)
 async def get_project_status(project_id: str) -> Dict:
     """Get the status of a project.
-    
+
     Args:
         project_id: ID of the project.
-        
+
     Returns:
         Status of the project.
     """
     # Load from MongoDB
     project_data = mongo_manager.load_state(project_id)
-    
+
     if not project_data:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     project_state = ProjectState(**project_data)
-    
+
     return {
         "project_id": project_id,
         "title": project_state.title,
@@ -302,21 +324,21 @@ async def get_project_status(project_id: str) -> Dict:
 @app.get("/projects/{project_id}/manuscript", response_model=Dict)
 async def get_manuscript(project_id: str) -> Dict:
     """Get the manuscript for a project.
-    
+
     Args:
         project_id: ID of the project.
-        
+
     Returns:
         The manuscript.
     """
     # Load from MongoDB
     project_data = mongo_manager.load_state(project_id)
-    
+
     if not project_data:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     project_state = ProjectState(**project_data)
-    
+
     return {
         "project_id": project_id,
         "title": project_state.title,
@@ -327,15 +349,15 @@ async def get_manuscript(project_id: str) -> Dict:
 @app.post("/backend/config", response_model=Dict)
 async def update_backend_config(request: BackendConfigRequest) -> Dict:
     """Update the backend configuration.
-    
+
     Args:
         request: The backend configuration request.
-        
+
     Returns:
         Status of the update.
     """
     global backend_config, agent_factory
-    
+
     # Update backend configuration
     backend_config = BackendConfig(
         provider=request.provider,
@@ -345,10 +367,10 @@ async def update_backend_config(request: BackendConfigRequest) -> Dict:
         project_id=request.project_id,
         deployment_name=request.deployment_name
     )
-    
+
     # Create a new agent factory with the updated config
     agent_factory = AgentFactory(mongo_manager, backend_config)
-    
+
     return {
         "status": "backend_updated",
         "provider": request.provider
@@ -358,7 +380,7 @@ async def update_backend_config(request: BackendConfigRequest) -> Dict:
 @app.get("/backend/config", response_model=Dict)
 async def get_backend_config() -> Dict:
     """Get the current backend configuration.
-    
+
     Returns:
         The current backend configuration.
     """
@@ -381,9 +403,9 @@ app.version = "1.0.0"
 if __name__ == "__main__":
     import uvicorn
     from config import SERVER_CONFIG
-    
-    uvicorn.run("main:app", 
-                host=SERVER_CONFIG["host"], 
-                port=SERVER_CONFIG["port"], 
+
+    uvicorn.run("main:app",
+                host=SERVER_CONFIG["host"],
+                port=SERVER_CONFIG["port"],
                 workers=SERVER_CONFIG["workers"],
                 log_level="info")

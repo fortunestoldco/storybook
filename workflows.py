@@ -1,6 +1,7 @@
 from typing import Dict, List, Callable, Optional, Any, Annotated, TypedDict, cast
 from langchain_core.runnables.config import RunnableConfig
 import json
+import os
 
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.mongodb import MongoDBSaver
@@ -65,10 +66,14 @@ def create_initialization_graph(config: RunnableConfig) -> StateGraph:
     # Set the entry point
     workflow.add_edge("__start__", "executive_director")
 
+    # Get MongoDB config from environment or defaults
+    mongodb_uri = os.getenv("MONGODB_URI", MONGODB_CONFIG["connection_string"])
+    db_name = os.getenv("MONGODB_DB", MONGODB_CONFIG["database_name"])
+
     # Set up checkpointing with MongoDB
     checkpointer = MongoDBSaver.from_conn_string(
-        MONGODB_CONFIG["connection_string"],
-        database_name=MONGODB_CONFIG["database_name"],
+        mongodb_uri,
+        database_name=db_name,
         collection_name=f"checkpoint_initialization_{project_id}"
     )
 
@@ -164,10 +169,14 @@ def create_development_graph(config: RunnableConfig) -> StateGraph:
     # Set the entry point
     workflow.add_edge("__start__", "executive_director")
 
+    # Get MongoDB config from environment or defaults
+    mongodb_uri = os.getenv("MONGODB_URI", MONGODB_CONFIG["connection_string"])
+    db_name = os.getenv("MONGODB_DB", MONGODB_CONFIG["database_name"])
+
     # Set up checkpointing with MongoDB
     checkpointer = MongoDBSaver.from_conn_string(
-        MONGODB_CONFIG["connection_string"],
-        database_name=MONGODB_CONFIG["database_name"],
+        mongodb_uri,
+        database_name=db_name,
         collection_name=f"checkpoint_development_{project_id}"
     )
 
@@ -268,10 +277,14 @@ def create_creation_graph(config: RunnableConfig) -> StateGraph:
     # Set the entry point
     workflow.add_edge("__start__", "executive_director")
 
+    # Get MongoDB config from environment or defaults
+    mongodb_uri = os.getenv("MONGODB_URI", MONGODB_CONFIG["connection_string"])
+    db_name = os.getenv("MONGODB_DB", MONGODB_CONFIG["database_name"])
+
     # Set up checkpointing with MongoDB
     checkpointer = MongoDBSaver.from_conn_string(
-        MONGODB_CONFIG["connection_string"],
-        database_name=MONGODB_CONFIG["database_name"],
+        mongodb_uri,
+        database_name=db_name,
         collection_name=f"checkpoint_creation_{project_id}"
     )
 
@@ -377,10 +390,14 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
     # Set the entry point
     workflow.add_edge("__start__", "executive_director")
 
+    # Get MongoDB config from environment or defaults
+    mongodb_uri = os.getenv("MONGODB_URI", MONGODB_CONFIG["connection_string"])
+    db_name = os.getenv("MONGODB_DB", MONGODB_CONFIG["database_name"])
+
     # Set up checkpointing with MongoDB
     checkpointer = MongoDBSaver.from_conn_string(
-        MONGODB_CONFIG["connection_string"],
-        database_name=MONGODB_CONFIG["database_name"],
+        mongodb_uri,
+        database_name=db_name,
         collection_name=f"checkpoint_refinement_{project_id}"
     )
 
@@ -466,10 +483,14 @@ def create_finalization_graph(config: RunnableConfig) -> StateGraph:
     # Set the entry point
     workflow.add_edge("__start__", "executive_director")
 
+    # Get MongoDB config from environment or defaults
+    mongodb_uri = os.getenv("MONGODB_URI", MONGODB_CONFIG["connection_string"])
+    db_name = os.getenv("MONGODB_DB", MONGODB_CONFIG["database_name"])
+
     # Set up checkpointing with MongoDB
     checkpointer = MongoDBSaver.from_conn_string(
-        MONGODB_CONFIG["connection_string"],
-        database_name=MONGODB_CONFIG["database_name"],
+        mongodb_uri,
+        database_name=db_name,
         collection_name=f"checkpoint_finalization_{project_id}"
     )
 
@@ -486,16 +507,30 @@ def get_phase_workflow(config: RunnableConfig) -> StateGraph:
     phase = metadata.get("phase")
     project_id = metadata.get("project_id")
 
-    if not phase:
-        raise ValueError("Missing required metadata: phase is required")
+    # Create a default project_id for schema retrieval if not provided
     if not project_id:
-        raise ValueError("Missing required metadata: project_id is required")
+        project_id = "default_project"
+        metadata["project_id"] = project_id
+
+    # Create agent factory if not provided
+    if "agent_factory" not in metadata:
+        from agents import AgentFactory  # Import here to avoid circular imports
+        metadata["agent_factory"] = AgentFactory()
+
+    # Update the config with our modified metadata
+    config_with_metadata = dict(config)
+    config_with_metadata["metadata"] = metadata
+
+    # If phase is not specified, default to "initialization" to avoid errors
+    # This allows the API to get schemas without requiring phase parameter
+    if not phase:
+        phase = "initialization"  # Default phase when not specified
 
     # Create unique graph name for this project and phase
     graph_name = f"storybook_{project_id}_{phase}"
 
     # Set graph name in config before creating workflow
-    config_with_name = dict(config)
+    config_with_name = dict(config_with_metadata)
     if "configurable" not in config_with_name:
         config_with_name["configurable"] = {}
     config_with_name["configurable"]["graph_name"] = graph_name

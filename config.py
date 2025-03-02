@@ -1,3 +1,9 @@
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 # Model configurations for agents
 MODEL_CONFIGS = {
     # Strategic Level
@@ -21,7 +27,7 @@ MODEL_CONFIGS = {
         "temperature": 0.2,
         "max_tokens": 1500,
     },
-    
+
     # Creative Director and Teams
     "creative_director": {
         "model": "anthropic/claude-3-opus",
@@ -73,7 +79,7 @@ MODEL_CONFIGS = {
         "temperature": 0.4,
         "max_tokens": 2000,
     },
-    
+
     # Content Development Director and Teams
     "content_development_director": {
         "model": "mistralai/mixtral-8x7b-instruct-v0.1",
@@ -125,7 +131,7 @@ MODEL_CONFIGS = {
         "temperature": 0.5,
         "max_tokens": 2500,
     },
-    
+
     # Editorial Director and Teams
     "editorial_director": {
         "model": "anthropic/claude-3-opus",
@@ -177,7 +183,7 @@ MODEL_CONFIGS = {
         "temperature": 0.2,
         "max_tokens": 2000,
     },
-    
+
     # Market Alignment Director and Teams
     "market_alignment_director": {
         "model": "anthropic/claude-3-sonnet",
@@ -231,16 +237,16 @@ MODEL_CONFIGS = {
     },
 }
 
-# MongoDB configuration
+# MongoDB configuration from environment variables
 MONGODB_CONFIG = {
-    "connection_string": "mongodb://mongodb:27017/",  # Updated for Docker deployment
-    "database_name": "novel_writing_system",
+    "connection_string": os.getenv("MONGODB_URI", "mongodb://mongodb:27017/"),
+    "database_name": os.getenv("MONGODB_DB", "storybook"),
     "collections": {
-        "project_state": "project_state",
-        "documents": "documents",
-        "research": "research",
-        "feedback": "feedback",
-        "metrics": "metrics",
+        "project_state": os.getenv("MONGODB_COLLECTION_PROJECT_STATE", "project_state"),
+        "documents": os.getenv("MONGODB_COLLECTION_DOCUMENTS", "documents"),
+        "research": os.getenv("MONGODB_COLLECTION_RESEARCH", "research"),
+        "feedback": os.getenv("MONGODB_COLLECTION_FEEDBACK", "feedback"),
+        "metrics": os.getenv("MONGODB_COLLECTION_METRICS", "metrics"),
     }
 }
 
@@ -292,7 +298,7 @@ except ImportError:
     # Fallback basic prompts if prompts.py is not available
     PROMPT_TEMPLATES = {
         "executive_director": (
-            "You are the Executive Director Agent, the system controller for a novel writing system.\n\n"
+            "You are the Executive Director Agent, the system controller for a storybook system.\n\n"
             "Current Project State:\n"
             "{project_state}\n\n"
             "Current Phase: {current_phase}\n\n"
