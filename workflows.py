@@ -1,5 +1,6 @@
 from typing import Dict, List, Callable, Optional, Any, Annotated, TypedDict, cast
 import json
+from langchain.schema.runnable import RunnableConfig
 
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.mongodb import MongoDBSaver
@@ -11,16 +12,22 @@ from agents import AgentFactory
 from utils import check_quality_gate
 
 
-def create_initialization_graph(project_id: str, agent_factory: AgentFactory) -> StateGraph:
+def create_initialization_graph(config: RunnableConfig) -> StateGraph:
     """Create the workflow graph for the initialization phase.
 
     Args:
-        project_id: ID of the project.
-        agent_factory: Factory for creating agents.
+        config: A RunnableConfig object containing runtime configuration.
 
     Returns:
         A StateGraph for the initialization phase.
     """
+    # Extract project_id and agent_factory from the config's metadata
+    project_id = config.get("metadata", {}).get("project_id")
+    agent_factory = config.get("metadata", {}).get("agent_factory")
+    
+    if not project_id or not agent_factory:
+        raise ValueError("Missing required metadata: project_id and agent_factory are required")
+    
     # Create agent nodes
     executive_director = agent_factory.create_agent("executive_director", project_id)
     human_feedback_manager = agent_factory.create_agent("human_feedback_manager", project_id)
@@ -89,16 +96,22 @@ def create_initialization_graph(project_id: str, agent_factory: AgentFactory) ->
     return workflow.compile(checkpointer=checkpointer)
 
 
-def create_development_graph(project_id: str, agent_factory: AgentFactory) -> StateGraph:
+def create_development_graph(config: RunnableConfig) -> StateGraph:
     """Create the workflow graph for the development phase.
 
     Args:
-        project_id: ID of the project.
-        agent_factory: Factory for creating agents.
+        config: A RunnableConfig object containing runtime configuration.
 
     Returns:
         A StateGraph for the development phase.
     """
+    # Extract project_id and agent_factory from the config's metadata
+    project_id = config.get("metadata", {}).get("project_id")
+    agent_factory = config.get("metadata", {}).get("agent_factory")
+    
+    if not project_id or not agent_factory:
+        raise ValueError("Missing required metadata: project_id and agent_factory are required")
+    
     # Create agent nodes for the development phase
     executive_director = agent_factory.create_agent("executive_director", project_id)
     creative_director = agent_factory.create_agent("creative_director", project_id)
@@ -208,16 +221,22 @@ def create_development_graph(project_id: str, agent_factory: AgentFactory) -> St
     return workflow.compile(checkpointer=checkpointer)
 
 
-def create_creation_graph(project_id: str, agent_factory: AgentFactory) -> StateGraph:
+def create_creation_graph(config: RunnableConfig) -> StateGraph:
     """Create the workflow graph for the creation phase.
 
     Args:
-        project_id: ID of the project.
-        agent_factory: Factory for creating agents.
+        config: A RunnableConfig object containing runtime configuration.
 
     Returns:
         A StateGraph for the creation phase.
     """
+    # Extract project_id and agent_factory from the config's metadata
+    project_id = config.get("metadata", {}).get("project_id")
+    agent_factory = config.get("metadata", {}).get("agent_factory")
+    
+    if not project_id or not agent_factory:
+        raise ValueError("Missing required metadata: project_id and agent_factory are required")
+    
     # Create agent nodes for the creation phase
     executive_director = agent_factory.create_agent("executive_director", project_id)
     content_development_director = agent_factory.create_agent("content_development_director", project_id)
@@ -341,16 +360,22 @@ def create_creation_graph(project_id: str, agent_factory: AgentFactory) -> State
     return workflow.compile(checkpointer=checkpointer)
 
 
-def create_refinement_graph(project_id: str, agent_factory: AgentFactory) -> StateGraph:
+def create_refinement_graph(config: RunnableConfig) -> StateGraph:
     """Create the workflow graph for the refinement phase.
 
     Args:
-        project_id: ID of the project.
-        agent_factory: Factory for creating agents.
+        config: A RunnableConfig object containing runtime configuration.
 
     Returns:
         A StateGraph for the refinement phase.
     """
+    # Extract project_id and agent_factory from the config's metadata
+    project_id = config.get("metadata", {}).get("project_id")
+    agent_factory = config.get("metadata", {}).get("agent_factory")
+    
+    if not project_id or not agent_factory:
+        raise ValueError("Missing required metadata: project_id and agent_factory are required")
+    
     # Create agent nodes for the refinement phase
     executive_director = agent_factory.create_agent("executive_director", project_id)
     editorial_director = agent_factory.create_agent("editorial_director", project_id)
@@ -470,16 +495,22 @@ def create_refinement_graph(project_id: str, agent_factory: AgentFactory) -> Sta
     return workflow.compile(checkpointer=checkpointer)
 
 
-def create_finalization_graph(project_id: str, agent_factory: AgentFactory) -> StateGraph:
+def create_finalization_graph(config: RunnableConfig) -> StateGraph:
     """Create the workflow graph for the finalization phase.
 
     Args:
-        project_id: ID of the project.
-        agent_factory: Factory for creating agents.
+        config: A RunnableConfig object containing runtime configuration.
 
     Returns:
         A StateGraph for the finalization phase.
     """
+    # Extract project_id and agent_factory from the config's metadata
+    project_id = config.get("metadata", {}).get("project_id")
+    agent_factory = config.get("metadata", {}).get("agent_factory")
+    
+    if not project_id or not agent_factory:
+        raise ValueError("Missing required metadata: project_id and agent_factory are required")
+    
     # Create agent nodes for the finalization phase
     executive_director = agent_factory.create_agent("executive_director", project_id)
     editorial_director = agent_factory.create_agent("editorial_director", project_id)
@@ -588,17 +619,24 @@ def create_finalization_graph(project_id: str, agent_factory: AgentFactory) -> S
     return workflow.compile(checkpointer=checkpointer)
 
 
-def get_phase_workflow(phase: str, project_id: str, agent_factory: AgentFactory) -> StateGraph:
+def get_phase_workflow(config: RunnableConfig) -> StateGraph:
     """Get the workflow graph for a specific phase.
 
     Args:
-        phase: The phase name.
-        project_id: ID of the project.
-        agent_factory: Factory for creating agents.
+        config: A RunnableConfig containing phase, project_id, and agent_factory in its metadata.
 
     Returns:
         A StateGraph for the specified phase.
     """
+    # Extract necessary information from the config's metadata
+    metadata = config.get("metadata", {})
+    phase = metadata.get("phase")
+    project_id = metadata.get("project_id")
+    agent_factory = metadata.get("agent_factory")
+    
+    if not phase or not project_id or not agent_factory:
+        raise ValueError("Missing required metadata: phase, project_id, and agent_factory are required")
+    
     workflow_map = {
         "initialization": create_initialization_graph,
         "development": create_development_graph,
@@ -610,4 +648,19 @@ def get_phase_workflow(phase: str, project_id: str, agent_factory: AgentFactory)
     if phase not in workflow_map:
         raise ValueError(f"Unknown phase: {phase}")
 
-    return workflow_map[phase](project_id, agent_factory)
+    # Pass the config directly to the workflow creation function
+    return workflow_map[phase](config)
+```
+
+When using this function, you need to ensure that your configuration includes all necessary metadata:
+
+```python
+# Example of how to call the graph factory:
+config = RunnableConfig(
+    metadata={
+        "phase": "initialization", 
+        "project_id": "project_123",
+        "agent_factory": agent_factory_instance
+    }
+)
+graph = get_phase_workflow(config)

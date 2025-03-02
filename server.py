@@ -20,7 +20,7 @@ agent_factory = AgentFactory(mongo_manager, backend_config)
 # Define runtime environment
 runtime = RuntimeEnvironment(
     python_dependencies=[
-        "langchain", "langchain-anthropic", "langchain-openai", 
+        "langchain", "langchain-anthropic", "langchain-openai",
         "langchain-aws", "langchain-mongodb", "pymongo",
         "langchain-google-vertexai", "langchain-azure-openai",
         "langchain-community", "python-dotenv"
@@ -34,10 +34,10 @@ server = Server(runtime=runtime)
 @server.register("/initialize/{project_id}")
 def get_initialization_graph(project_id: str) -> StateGraph:
     """Get the initialization phase graph for a project.
-    
+
     Args:
         project_id: ID of the project.
-        
+
     Returns:
         The initialization phase graph.
     """
@@ -46,10 +46,10 @@ def get_initialization_graph(project_id: str) -> StateGraph:
 @server.register("/develop/{project_id}")
 def get_development_graph(project_id: str) -> StateGraph:
     """Get the development phase graph for a project.
-    
+
     Args:
         project_id: ID of the project.
-        
+
     Returns:
         The development phase graph.
     """
@@ -58,10 +58,10 @@ def get_development_graph(project_id: str) -> StateGraph:
 @server.register("/create/{project_id}")
 def get_creation_graph(project_id: str) -> StateGraph:
     """Get the creation phase graph for a project.
-    
+
     Args:
         project_id: ID of the project.
-        
+
     Returns:
         The creation phase graph.
     """
@@ -70,10 +70,10 @@ def get_creation_graph(project_id: str) -> StateGraph:
 @server.register("/refine/{project_id}")
 def get_refinement_graph(project_id: str) -> StateGraph:
     """Get the refinement phase graph for a project.
-    
+
     Args:
         project_id: ID of the project.
-        
+
     Returns:
         The refinement phase graph.
     """
@@ -82,10 +82,10 @@ def get_refinement_graph(project_id: str) -> StateGraph:
 @server.register("/finalize/{project_id}")
 def get_finalization_graph(project_id: str) -> StateGraph:
     """Get the finalization phase graph for a project.
-    
+
     Args:
         project_id: ID of the project.
-        
+
     Returns:
         The finalization phase graph.
     """

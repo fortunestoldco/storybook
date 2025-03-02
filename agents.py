@@ -8,7 +8,7 @@ from langchain_aws import ChatBedrock
 from langchain_google_vertexai import ChatVertexAI
 from langchain_openai import AzureOpenAI
 from langchain_community.llms import Ollama, LlamaCpp, Replicate
-from langchain_community.chat_models import ChatOllama, HuggingFaceChatLLM
+from langchain_community.chat_models import ChatOllama
 from langchain_mongodb import MongoDBChatMessageHistory
 from langchain.prompts import PromptTemplate, ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
 from langchain.memory import ConversationBufferMemory
