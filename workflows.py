@@ -2,7 +2,7 @@ from typing import Dict, List, Callable, Optional, Any, Annotated, TypedDict, ca
 import json
 
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.mongo import MongoDBCheckpointHandler
+from langgraph.checkpoint.mongodb import MongoDBSaver
 
 from config import MONGODB_CONFIG, QUALITY_GATES
 from state import NovelSystemState
@@ -80,7 +80,7 @@ def create_initialization_graph(project_id: str, agent_factory: AgentFactory) ->
     workflow.set_entry_point("executive_director")
 
     # Set up checkpointing with MongoDB
-    checkpointer = MongoDBCheckpointHandler.from_conn_string(
+    checkpointer = MongoDBSaver.from_conn_string(
         MONGODB_CONFIG["connection_string"],
         database_name=MONGODB_CONFIG["database_name"],
         collection_name=f"checkpoint_initialization_{project_id}"
@@ -199,7 +199,7 @@ def create_development_graph(project_id: str, agent_factory: AgentFactory) -> St
     workflow.set_entry_point("executive_director")
 
     # Set up checkpointing with MongoDB
-    checkpointer = MongoDBCheckpointHandler.from_conn_string(
+    checkpointer = MongoDBSaver.from_conn_string(
         MONGODB_CONFIG["connection_string"],
         database_name=MONGODB_CONFIG["database_name"],
         collection_name=f"checkpoint_development_{project_id}"
@@ -332,7 +332,7 @@ def create_creation_graph(project_id: str, agent_factory: AgentFactory) -> State
     workflow.set_entry_point("executive_director")
 
     # Set up checkpointing with MongoDB
-    checkpointer = MongoDBCheckpointHandler.from_conn_string(
+    checkpointer = MongoDBSaver.from_conn_string(
         MONGODB_CONFIG["connection_string"],
         database_name=MONGODB_CONFIG["database_name"],
         collection_name=f"checkpoint_creation_{project_id}"
@@ -461,7 +461,7 @@ def create_refinement_graph(project_id: str, agent_factory: AgentFactory) -> Sta
     workflow.set_entry_point("executive_director")
 
     # Set up checkpointing with MongoDB
-    checkpointer = MongoDBCheckpointHandler.from_conn_string(
+    checkpointer = MongoDBSaver.from_conn_string(
         MONGODB_CONFIG["connection_string"],
         database_name=MONGODB_CONFIG["database_name"],
         collection_name=f"checkpoint_refinement_{project_id}"
@@ -579,7 +579,7 @@ def create_finalization_graph(project_id: str, agent_factory: AgentFactory) -> S
     workflow.set_entry_point("executive_director")
 
     # Set up checkpointing with MongoDB
-    checkpointer = MongoDBCheckpointHandler.from_conn_string(
+    checkpointer = MongoDBSaver.from_conn_string(
         MONGODB_CONFIG["connection_string"],
         database_name=MONGODB_CONFIG["database_name"],
         collection_name=f"checkpoint_finalization_{project_id}"
