@@ -3,10 +3,10 @@ import json
 
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
-from langchain_aws import BedrockChat
-from langchain_mongodb import MongoDBChatMessageHistory
-from langchain.prompts import PromptTemplate, ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
-from langchain.memory import ConversationBufferMemory
+from langchain_aws.chat_models import BedrockChat
+from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
+from langchain_core.prompts import PromptTemplate, ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
+from langchain_core.memory import ConversationBufferMemory
 from langchain.agents import AgentExecutor, ConversationalAgent
 from langchain.chains import LLMChain
 

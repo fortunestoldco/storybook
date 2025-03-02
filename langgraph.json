@@ -1,0 +1,12 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "initialization": "./workflows.py:create_initialization_graph",
+    "development": "./workflows.py:create_development_graph",
+    "creation": "./workflows.py:create_creation_graph",
+    "refinement": "./workflows.py:create_refinement_graph",
+    "finalization": "./workflows.py:create_finalization_graph",
+    "phase_workflow": "./workflows.py:get_phase_workflow"
+  },
+  "env": ".env"
+}

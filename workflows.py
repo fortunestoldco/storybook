@@ -2,7 +2,7 @@ from typing import Dict, List, Callable, Optional, Any, Annotated, TypedDict, ca
 import json
 
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.mongo import MongoDBCheckpointHandler
+from langgraph.checkpoint.mongodb import MongoDBCheckpointHandler
 
 from config import MONGODB_CONFIG, QUALITY_GATES
 from state import NovelSystemState
