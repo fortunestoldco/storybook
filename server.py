@@ -33,15 +33,18 @@ server = Server(runtime=runtime)
 # Register graphs as endpoints
 @server.register("/initialize/{project_id}")
 def get_initialization_graph(project_id: str) -> StateGraph:
-    """Get the initialization phase graph for a project.
-
-    Args:
-        project_id: ID of the project.
-
-    Returns:
-        The initialization phase graph.
-    """
-    return get_phase_workflow("initialization", project_id, agent_factory)
+    """Get the initialization phase graph for a project."""
+    config = {
+        "metadata": {
+            "project_id": project_id,
+            "phase": "initialization",
+            "agent_factory": agent_factory
+        },
+        "configurable": {
+            "graph_name": f"storybook_{project_id}_initialization"
+        }
+    }
+    return get_phase_workflow(config)
 
 @server.register("/develop/{project_id}")
 def get_development_graph(project_id: str) -> StateGraph:
