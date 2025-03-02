@@ -2,19 +2,21 @@ import json
 import uuid
 from typing import Dict, List, Optional, Any
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
+from pydantic import BaseModel, Field
 
 from agents import AgentFactory
 from state import ProjectState, NovelSystemState
 from mongodb import MongoDBManager
 from workflows import get_phase_workflow
 from utils import generate_id, current_timestamp
+from backend import BackendProvider, BackendConfig, get_default_backend_config
 
-app = FastAPI(title="NovelSystem Langgraph Server")
+app = FastAPI(title="Storybook Langgraph Server")
 
 mongo_manager = MongoDBManager()
-agent_factory = AgentFactory(mongo_manager)
+backend_config = get_default_backend_config()
+agent_factory = AgentFactory(mongo_manager, backend_config)
 
 
 class ProjectRequest(BaseModel):
@@ -39,6 +41,16 @@ class FeedbackRequest(BaseModel):
     content: str
     type: str = "general"
     quality_scores: Optional[Dict[str, int]] = None
+
+
+class BackendConfigRequest(BaseModel):
+    """Request model for updating backend configuration."""
+    provider: BackendProvider
+    api_key: Optional[str] = None
+    api_url: Optional[str] = None
+    region: Optional[str] = None
+    project_id: Optional[str] = None
+    deployment_name: Optional[str] = None
 
 
 @app.post("/projects", response_model=Dict)
@@ -293,6 +305,54 @@ async def get_manuscript(project_id: str) -> Dict:
         "project_id": project_id,
         "title": project_state.title,
         "manuscript": project_state.manuscript
+    }
+
+
+@app.post("/backend/config", response_model=Dict)
+async def update_backend_config(request: BackendConfigRequest) -> Dict:
+    """Update the backend configuration.
+    
+    Args:
+        request: The backend configuration request.
+        
+    Returns:
+        Status of the update.
+    """
+    global backend_config, agent_factory
+    
+    # Update backend configuration
+    backend_config = BackendConfig(
+        provider=request.provider,
+        api_key=request.api_key,
+        api_url=request.api_url,
+        region=request.region,
+        project_id=request.project_id,
+        deployment_name=request.deployment_name
+    )
+    
+    # Create a new agent factory with the updated config
+    agent_factory = AgentFactory(mongo_manager, backend_config)
+    
+    return {
+        "status": "backend_updated",
+        "provider": request.provider
+    }
+
+
+@app.get("/backend/config", response_model=Dict)
+async def get_backend_config() -> Dict:
+    """Get the current backend configuration.
+    
+    Returns:
+        The current backend configuration.
+    """
+    return {
+        "provider": backend_config.provider,
+        "region": backend_config.region,
+        "project_id": backend_config.project_id,
+        "deployment_name": backend_config.deployment_name,
+        "has_api_key": backend_config.api_key is not None,
+        "has_api_url": backend_config.api_url is not None
     }
 
 
