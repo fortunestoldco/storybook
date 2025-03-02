@@ -1,32 +1,21 @@
-FROM python:3.12-slim
+FROM python:3.10-slim
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    gcc \
-    g++ \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
 WORKDIR /app
 
-# Copy requirements files
-COPY requirements.txt requirements-dev.txt ./
+# Copy requirements first for better caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Set build environment variables
-ENV CMAKE_ARGS="-DLLAMA_CUBLAS=OFF -DLLAMA_METAL=OFF -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++"
-ENV CMAKE_GENERATOR="Unix Makefiles"
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements-dev.txt
-
-# Copy application code
+# Copy the rest of the application code
 COPY . .
 
-# Install the package
-RUN pip install -e .
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV MONGODB_HOST=mongodb
+ENV MONGODB_PORT=27017
 
-# Command to run the application
-CMD ["uvicorn", "storybook.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Expose the port
+EXPOSE 8000
+
+# Command to run the server
+CMD ["python", "server.py"]

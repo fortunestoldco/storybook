@@ -4,21 +4,29 @@ services:
   app:
     build: .
     ports:
-      - "8080:8080"
+      - "8000:8000"
     volumes:
       - .:/app
-    environment:
-      - MONGODB_URI=mongodb://mongo:27017
-      - MONGODB_DB_NAME=storybook
     depends_on:
-      - mongo
+      - mongodb
+    environment:
+      - MONGODB_HOST=mongodb
+      - MONGODB_PORT=27017
+    networks:
+      - novel-system-network
 
-  mongo:
+  mongodb:
     image: mongo:latest
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - novel-system-network
+
+networks:
+  novel-system-network:
+    driver: bridge
 
 volumes:
   mongodb_data:

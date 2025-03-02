@@ -1,205 +1,138 @@
-# Storybook
+# Novel Writing System with LangGraph
 
-A LangGraph-powered workflow for transforming draft manuscripts into finished novels.
+This is a LangGraph-based self-deployed server implementing a comprehensive novel writing system with a hierarchical agent structure.
 
-## Overview
+## System Architecture
 
-Storybook uses a sophisticated workflow built with LangGraph to analyze and enhance manuscripts through multiple stages of refinement. The system incorporates market research, content analysis, and targeted improvements across multiple dimensions of storytelling.
+The system is structured into strategic and operational levels:
 
-## Key Features
+### Strategic Level
+- Executive Director Agent (System Controller)
+  - Human Feedback Integration Manager
+  - Quality Assessment Director
+  - Project Timeline Manager
 
-- Comprehensive market research and target audience analysis
-- Detailed content analysis using NLP techniques
-- Character development and dialogue enhancement
-- World-building and setting enrichment
-- Subplot integration and story arc refinement
-- Continuity checking and error correction
-- Language polishing and style enhancement
-- Final quality review and improvement recommendations
+### Operational Level
+- Creative Director Agent (with teams for Story Architecture, Character Development, Emotional Engineering)
+- Content Development Director Agent (with teams for Research, Writing, Drafting Coordination)
+- Editorial Director Agent (with teams for Developmental, Line, and Technical Editing)
+- Market Alignment Director Agent (with teams for Cultural Relevance, Reader Experience, Marketing Strategy)
 
-## Architecture
+## System Workflow
 
-The system is built using:
+The workflow progresses through five major phases:
+1. **Initialization** - Project setup and initial planning
+2. **Development** - Building the foundation of the novel
+3. **Creation** - Writing the actual content
+4. **Refinement** - Editing and polishing the manuscript
+5. **Finalization** - Preparing for publication
 
-- LangGraph for workflow orchestration
-- LangChain for LLM interactions
-- Replicate for NLP tasks
-- MongoDB for document storage
-- FastAPI for API endpoints
-
-## Usage
-
-1. Upload a manuscript through the API
-2. Start the transformation process
-3. Monitor progress through each stage
-4. Receive the enhanced manuscript with a detailed analysis report
-
-## Development
+## Getting Started
 
 ### Prerequisites
-
-- Python 3.12+
+- Python 3.10+
 - MongoDB
-- Replicate API token
-- OpenAI API key (optional)
+- Docker and Docker Compose (optional)
 
 ### Installation
 
+#### Using Docker (Recommended)
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/storybook.git
-cd storybook
+git clone <repository-url>
+cd novel-writing-system
 
-# Install dependencies
-pip install -e .
-
-# Set environment variables
-export MONGODB_URI="mongodb://localhost:27017"
-export REPLICATE_API_TOKEN="your_replicate_token"
-export OPENAI_API_KEY="your_openai_key"  # Optional
-
-# Run the API server
-uvicorn storybook.main:app --reload
+# Start the containers
+docker-compose up -d
 ```
 
-## Setup Local Models
-
-For local model support (llama.cpp), run:
-
+#### Manual Setup
 ```bash
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Clone the repository
+git clone <repository-url>
+cd novel-writing-system
+
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Download required models
-python scripts/download_models.py
+# Start MongoDB (must be running separately)
+# Then start the server
+python server.py
 ```
 
-## Environment Configuration
+## API Usage
 
-1. Copy `.env.example` to `.env`
-2. Fill in your API keys and configuration
-3. Adjust model paths if needed
+The system provides a RESTful API for interaction:
 
-## API Endpoints
+### Create a New Project
+```bash
+curl -X POST http://localhost:8000/projects \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "My Novel",
+    "genre": "Science Fiction",
+    "target_audience": "Young Adult",
+    "word_count_target": 80000,
+    "description": "A space adventure story"
+  }'
+```
 
-- POST `/manuscripts`: Upload a new manuscript
-- GET `/manuscripts/{manuscript_id}`: Retrieve a manuscript
-- POST `/start-transformation`: Start the transformation process
-- POST `/transform`: Execute the transformation workflow
-- GET `/health`: Health check endpoint
+### Run a Task
+```bash
+curl -X POST http://localhost:8000/projects/{project_id}/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "Develop character profiles",
+    "phase": "development"
+  }'
+```
 
-## LLM Configuration
-
-Storybook supports multiple LLM providers:
-
-- OpenAI (GPT-4, GPT-3.5)
-- Anthropic (Claude-3)
-- Replicate (Custom models)
-- Ollama (Local models)
-- HuggingFace (Custom models)
-- LlamaCpp (Local models)
-
-### Example Configuration
-
-```json
-{
-    "agent_config": {
-        "research": {
-            "provider": "anthropic",
-            "config": {
-                "model_name": "claude-3-sonnet",
-                "temperature": 0.7,
-                "max_tokens": 4000
-            }
-        },
-        "writing": {
-            "provider": "openai",
-            "config": {
-                "model_name": "gpt-4",
-                "temperature": 0.9
-            }
-        },
-        "editorial": {
-            "provider": "llamacpp",
-            "config": {
-                "model_path": "./models/llama-2-7b.Q4_K_M.gguf",
-                "temperature": 0.3,
-                "n_gpu_layers": 1
-            }
-        }
+### Add Human Feedback
+```bash
+curl -X POST http://localhost:8000/projects/{project_id}/feedback \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "The protagonist needs a stronger motivation",
+    "type": "character",
+    "quality_scores": {
+      "character_believability": 70,
+      "plot_coherence": 85
     }
-}
+  }'
 ```
 
-## Development Setup
-
-### Prerequisites
-
-- Python 3.9 or higher
-- C++ compiler (Visual Studio 2019 Build Tools on Windows, GCC on Linux)
-- CMake 3.21 or higher
-
-### Windows Setup
-
-1. Install Visual Studio Build Tools 2019 or later with C++ workload:
-   - Download from [Visual Studio Downloads](https://visualstudio.microsoft.com/downloads/)
-   - Select "Desktop development with C++"
-
-2. Create and activate virtual environment:
-```cmd
-python -m venv .venv
-.venv\Scripts\activate
-```
-
-3. Install dependencies:
-```cmd
-pip install -r requirements-dev.txt
-```
-
-### Linux Setup
-
-1. Install build dependencies:
+### Get Project Status
 ```bash
-# Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install build-essential cmake gcc g++
-
-# Fedora/RHEL
-sudo dnf groupinstall "Development Tools"
-sudo dnf install cmake gcc gcc-c++
+curl -X GET http://localhost:8000/projects/{project_id}/status
 ```
 
-2. Create and activate virtual environment:
+### Get Manuscript
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+curl -X GET http://localhost:8000/projects/{project_id}/manuscript
 ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements-dev.txt
-```
+## Architecture Details
 
-## Troubleshooting
+### Components
 
-### PowerShell Execution Policy
+- **Agents**: Specialized AI components with specific roles
+- **Workflows**: Phase-specific graphs defining agent interaction patterns
+- **State Management**: Hierarchical state tracking at global, director, and team levels
+- **MongoDB Integration**: Persistent storage for all system artifacts
+- **Quality Gates**: Criteria that must be met to transition between phases
 
-If you see an error about scripts being disabled, you have two options:
+### Key Features
 
-1. **Quick Fix (Recommended)**: Run this command in PowerShell as administrator:
-   ```powershell
-   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-   ```
-
-2. **One-time Bypass**: Run the activate script with a bypass:
-   ```powershell
-   PowerShell -ExecutionPolicy Bypass -File .\.venv\Scripts\Activate.ps1
-   ```
+- **Dynamic Team Activation**: Teams are activated based on manuscript needs
+- **Hierarchical Quality Control**: Quality checks at different levels
+- **Enhanced Knowledge Persistence**: Specialized knowledge bases
+- **Adaptive Resource Allocation**: Computation focused on high-impact areas
+- **Human-in-the-Loop Integration**: Strategic placement of human touchpoints
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details.
