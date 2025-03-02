@@ -48,51 +48,63 @@ def get_initialization_graph(project_id: str) -> StateGraph:
 
 @server.register("/develop/{project_id}")
 def get_development_graph(project_id: str) -> StateGraph:
-    """Get the development phase graph for a project.
-
-    Args:
-        project_id: ID of the project.
-
-    Returns:
-        The development phase graph.
-    """
-    return get_phase_workflow("development", project_id, agent_factory)
+    """Get the development phase graph for a project."""
+    config = {
+        "metadata": {
+            "project_id": project_id,
+            "phase": "development",
+            "agent_factory": agent_factory
+        },
+        "configurable": {
+            "graph_name": f"storybook_{project_id}_development"
+        }
+    }
+    return get_phase_workflow(config)
 
 @server.register("/create/{project_id}")
 def get_creation_graph(project_id: str) -> StateGraph:
-    """Get the creation phase graph for a project.
-
-    Args:
-        project_id: ID of the project.
-
-    Returns:
-        The creation phase graph.
-    """
-    return get_phase_workflow("creation", project_id, agent_factory)
+    """Get the creation phase graph for a project."""
+    config = {
+        "metadata": {
+            "project_id": project_id,
+            "phase": "creation",
+            "agent_factory": agent_factory
+        },
+        "configurable": {
+            "graph_name": f"storybook_{project_id}_creation"
+        }
+    }
+    return get_phase_workflow(config)
 
 @server.register("/refine/{project_id}")
 def get_refinement_graph(project_id: str) -> StateGraph:
-    """Get the refinement phase graph for a project.
-
-    Args:
-        project_id: ID of the project.
-
-    Returns:
-        The refinement phase graph.
-    """
-    return get_phase_workflow("refinement", project_id, agent_factory)
+    """Get the refinement phase graph for a project."""
+    config = {
+        "metadata": {
+            "project_id": project_id,
+            "phase": "refinement",
+            "agent_factory": agent_factory
+        },
+        "configurable": {
+            "graph_name": f"storybook_{project_id}_refinement"
+        }
+    }
+    return get_phase_workflow(config)
 
 @server.register("/finalize/{project_id}")
 def get_finalization_graph(project_id: str) -> StateGraph:
-    """Get the finalization phase graph for a project.
-
-    Args:
-        project_id: ID of the project.
-
-    Returns:
-        The finalization phase graph.
-    """
-    return get_phase_workflow("finalization", project_id, agent_factory)
+    """Get the finalization phase graph for a project."""
+    config = {
+        "metadata": {
+            "project_id": project_id,
+            "phase": "finalization",
+            "agent_factory": agent_factory
+        },
+        "configurable": {
+            "graph_name": f"storybook_{project_id}_finalization"
+        }
+    }
+    return get_phase_workflow(config)
 
 if __name__ == "__main__":
     # Run the server
