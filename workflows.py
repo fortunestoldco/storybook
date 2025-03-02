@@ -601,7 +601,7 @@ def get_phase_workflow(config: RunnableConfig) -> StateGraph:
     """Get the workflow graph for a specific phase.
 
     Args:
-        config: A RunnableConfig containing phase, project_id, and agent_factory in its metadata.
+        config: RunnableConfig containing metadata about the project.
 
     Returns:
         A StateGraph for the specified phase.
@@ -611,10 +611,10 @@ def get_phase_workflow(config: RunnableConfig) -> StateGraph:
     phase = metadata.get("phase")
     project_id = metadata.get("project_id")
     agent_factory = metadata.get("agent_factory")
-    
+
     if not phase or not project_id or not agent_factory:
         raise ValueError("Missing required metadata: phase, project_id, and agent_factory are required")
-    
+
     workflow_map = {
         "initialization": create_initialization_graph,
         "development": create_development_graph,
@@ -626,5 +626,13 @@ def get_phase_workflow(config: RunnableConfig) -> StateGraph:
     if phase not in workflow_map:
         raise ValueError(f"Unknown phase: {phase}")
 
-    # Pass the config directly to the workflow creation function
-    return workflow_map[phase](config)
+    # Create a unique graph name that includes project and phase
+    graph_name = "storybook"  # Consistent name for storybook UI
+    
+    # Modify config to include graph_name
+    config_with_name = dict(config)
+    if "configurable" not in config_with_name:
+        config_with_name["configurable"] = {}
+    config_with_name["configurable"]["graph_name"] = graph_name
+
+    return workflow_map[phase](config_with_name)
