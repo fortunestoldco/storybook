@@ -655,6 +655,13 @@ def get_phase_workflow(config: RunnableConfig) -> StateGraph:
     # Create unique graph name for this project and phase
     graph_name = f"storybook_{project_id}_{phase}"
 
+    # Set graph name in config before creating workflow
+    config_with_name = dict(config)
+    if "configurable" not in config_with_name:
+        config_with_name["configurable"] = {}
+    config_with_name["configurable"]["graph_name"] = graph_name
+
+    # Map phases to their workflow creation functions
     workflow_map = {
         "initialization": create_initialization_graph,
         "development": create_development_graph,
@@ -666,10 +673,5 @@ def get_phase_workflow(config: RunnableConfig) -> StateGraph:
     if phase not in workflow_map:
         raise ValueError(f"Unknown phase: {phase}")
 
-    # Set graph name in config
-    config_with_name = dict(config)
-    if "configurable" not in config_with_name:
-        config_with_name["configurable"] = {}
-    config_with_name["configurable"]["graph_name"] = graph_name
-
+    # Create and return the workflow graph
     return workflow_map[phase](config_with_name)
