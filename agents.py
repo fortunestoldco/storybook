@@ -6,9 +6,9 @@ from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
 from langchain_aws import ChatBedrock
 from langchain_google_vertexai import ChatVertexAI
-from langchain_azure_openai import AzureChatOpenAI
+from langchain_openai import AzureOpenAI
 from langchain_community.llms import Ollama, LlamaCpp, Replicate
-from langchain_community.chat_models import ChatOllama
+from langchain_community.chat_models import ChatOllama, HuggingFaceChatLLM
 from langchain_mongodb import MongoDBChatMessageHistory
 from langchain.prompts import PromptTemplate, ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
 from langchain.memory import ConversationBufferMemory
@@ -96,12 +96,9 @@ class AgentFactory:
             if not model_endpoint and not self.backend_config.api_url:
                 raise ValueError(f"HuggingFace endpoint URL required for model {model_name}")
 
-            from langchain_community.llms import HuggingFaceEndpoint
-
-            return HuggingFaceEndpoint(
+            return HuggingFaceChatLLM(
                 endpoint_url=model_endpoint or self.backend_config.api_url,
                 huggingfacehub_api_token=self.backend_config.api_key,
-                task="text-generation",
                 model_kwargs={
                     "temperature": config.get("temperature", 0.3),
                     "max_tokens": config.get("max_tokens", 2000)

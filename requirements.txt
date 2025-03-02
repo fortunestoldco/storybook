@@ -11,4 +11,5 @@ pydantic==2.10.6
 pymongo==4.11.1
 python-dotenv==1.0.1
 uvicorn==0.34.0
-langgraph-checkpoint-mongodb
+langchain-huggingface
+langchain-checkpoint-mongodb
