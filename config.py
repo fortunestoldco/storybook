@@ -247,7 +247,7 @@ MONGODB_CONFIG = {
 # Server configuration
 SERVER_CONFIG = {
     "host": "0.0.0.0",
-    "port": 8000,
+    "port": 2024,
     "debug": False,
     "workers": 4,
 }
