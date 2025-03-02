@@ -587,18 +587,24 @@ def create_finalization_graph(project_id: str, agent_factory: AgentFactory) -> S
 
     return workflow.compile(checkpointer=checkpointer)
 
-
-def get_phase_workflow(phase: str, project_id: str, agent_factory: AgentFactory) -> StateGraph:
+def get_phase_workflow(config: RunnableConfig) -> StateGraph:
     """Get the workflow graph for a specific phase.
 
     Args:
-        phase: The phase name.
-        project_id: ID of the project.
-        agent_factory: Factory for creating agents.
+        config: A RunnableConfig containing phase, project_id, and agent_factory in its metadata.
 
     Returns:
         A StateGraph for the specified phase.
     """
+    # Extract necessary information from the config's metadata
+    metadata = config.get("metadata", {})
+    phase = metadata.get("phase")
+    project_id = metadata.get("project_id")
+    agent_factory = metadata.get("agent_factory")
+    
+    if not phase or not project_id or not agent_factory:
+        raise ValueError("Missing required metadata: phase, project_id, and agent_factory are required")
+    
     workflow_map = {
         "initialization": create_initialization_graph,
         "development": create_development_graph,
@@ -610,4 +616,5 @@ def get_phase_workflow(phase: str, project_id: str, agent_factory: AgentFactory)
     if phase not in workflow_map:
         raise ValueError(f"Unknown phase: {phase}")
 
-    return workflow_map[phase](project_id, agent_factory)
+    # Pass the config directly to the workflow creation function
+    return workflow_map[phase](config)
