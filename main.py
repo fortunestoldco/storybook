@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from langgraph_api import serve
+from langgraph.prebuilt.fixed_graph import FixedGraph
 
 from agents import AgentFactory
 from state import ProjectState, NovelSystemState
@@ -27,8 +28,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount LangGraph API
-serve.mount_asgi_app(app, server, runtime)
+# Register the graph factory functions directly
+serve.register_entrypoint(get_phase_workflow)
 
 # Initialize services
 mongo_manager = MongoDBManager()
