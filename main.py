@@ -3,7 +3,9 @@ import uuid
 from typing import Dict, List, Optional, Any
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from langgraph_api import serve
 
 from agents import AgentFactory
 from state import ProjectState, NovelSystemState
@@ -11,9 +13,24 @@ from mongodb import MongoDBManager
 from workflows import get_phase_workflow
 from utils import generate_id, current_timestamp
 from backend import BackendProvider, BackendConfig, get_default_backend_config
+from server import server, runtime
 
+# Initialize FastAPI app
 app = FastAPI(title="Storybook Langgraph Server")
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount LangGraph API
+serve.mount_asgi_app(app, server, runtime)
+
+# Initialize services
 mongo_manager = MongoDBManager()
 backend_config = get_default_backend_config()
 agent_factory = AgentFactory(mongo_manager, backend_config)
