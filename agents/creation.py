@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Any
 from langchain_core.agents import AgentExecutor, Tool
 from langchain.agents.structured_chat.base import StructuredChatAgent
 from langsmith.run_helpers import traceable
@@ -7,6 +7,7 @@ from tools.creation import (
     review_content,
     manage_continuity
 )
+from langchain_core.llms import get_llm_from_state
 
 @traceable(name="Content Creator Agent")
 def content_creator_agent(state: StoryState) -> Dict:

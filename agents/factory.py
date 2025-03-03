@@ -4,11 +4,22 @@ from langgraph.prebuilt import ToolExecutor
 from langgraph_sdk.clients import SyncAssistantsClient
 from langchain_core.agents import AgentExecutor
 from langchain_core.tools import BaseTool
+from langchain_core.chains import LLMChain
 
 from mongodb import MongoDBManager
 from config import MODEL_CONFIGS
 from state import NovelSystemState
 from tools.development import get_tools_for_agent
+from prompts import get_prompt_for_agent
+from utils import current_timestamp
+
+import os
+import json
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class AgentFactory:
     """Factory for creating and managing agents in the LangGraph workflow."""

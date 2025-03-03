@@ -232,6 +232,26 @@ MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
         "model": os.getenv("OLLAMA_NEURAL_MODEL", "anthropic/claude-3-opus"),
         "temperature": float(os.getenv("OLLAMA_NEURAL_TEMP", "0.2")),
         "max_tokens": int(os.getenv("OLLAMA_NEURAL_MAX_TOKENS", "4000"))
+    },
+    "content_creator": {
+        "model": os.getenv("CONTENT_CREATOR_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CONTENT_CREATOR_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CONTENT_CREATOR_MAX_TOKENS", "4000"))
+    },
+    "draft_reviewer": {
+        "model": os.getenv("DRAFT_REVIEWER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("DRAFT_REVIEWER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("DRAFT_REVIEWER_MAX_TOKENS", "4000"))
+    },
+    "plot_development": {
+        "model": os.getenv("PLOT_DEVELOPMENT_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("PLOT_DEVELOPMENT_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("PLOT_DEVELOPMENT_MAX_TOKENS", "4000"))
+    },
+    "character_development": {
+        "model": os.getenv("CHARACTER_DEVELOPMENT_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CHARACTER_DEVELOPMENT_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CHARACTER_DEVELOPMENT_MAX_TOKENS", "4000"))
     }
 }
 

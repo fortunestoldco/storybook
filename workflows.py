@@ -6,7 +6,7 @@ from langsmith.run_helpers import traceable
 from langsmith import RunTree
 
 from state import NovelSystemState
-from agents import AgentFactory
+from agents import AgentFactory, content_creator_agent, draft_reviewer_agent, plot_development_agent, character_development_agent
 
 # Define input, output, and overall state schemas
 class ModelProvider(str, Enum):

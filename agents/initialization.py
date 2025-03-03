@@ -8,6 +8,7 @@ from tools.analysis import (
     assess_character_development
 )
 from tools.project_management import create_project_timeline, analyze_market_trends
+from langchain_core.llms import get_llm_from_state
 
 @traceable(name="Quality Assessment Director")
 def quality_assessment_director_agent(state: StoryState) -> Dict:
