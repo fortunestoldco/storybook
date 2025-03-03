@@ -1212,3 +1212,4 @@ def get_prompt_for_agent(agent_name: str) -> str:
         The prompt template string.
     """
     return AGENT_PROMPTS.get(agent_name, "You are an AI assistant.")
+

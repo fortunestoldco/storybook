@@ -76,3 +76,4 @@ class NovelSystemState(TypedDict):
     current_output: Dict
     messages: List[Dict]
     errors: List[Dict]
+

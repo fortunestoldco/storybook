@@ -19,3 +19,4 @@ EXPOSE 8000
 
 # Command to run the server
 CMD ["python", "server.py"]
+

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import re
 import uuid
@@ -46,7 +47,7 @@ def check_quality_gate(phase_transition: str, metrics: Dict) -> Dict:
     failed_criteria = []
     
     for criterion, threshold in gate.items():
-        if criterion == "human_approval_required":
+        if criterion >= "human_approval_required":
             continue
         
         if criterion not in metrics or metrics[criterion] < threshold:
@@ -82,7 +83,7 @@ def format_agent_response(response: str) -> Dict:
         A structured response dict.
     """
     # Extract JSON if the response contains it
-    json_match = re.search(r'```json\s*(.*?)\s*```', response, re.DOTALL)
+    json_match = re.search(r'```json\\s*(.*?)\\s*```', response, re.DOTALL)
     if json_match:
         try:
             return json.loads(json_match.group(1))
@@ -107,3 +108,23 @@ def create_prompt_with_context(template: str, context: Dict) -> str:
         The filled prompt string.
     """
     return template.format(**context)
+
+
+def read_file(filepath: str, encoding: str = 'utf-8') -> str:
+    """Read a file with proper encoding.
+    
+    Args:
+        filepath: Path to the file.
+        encoding: Encoding to use, defaults to UTF-8.
+        
+    Returns:
+        The file contents as a string.
+    """
+    try:
+        with open(filepath, 'r', encoding=encoding) as f:
+            return f.read()
+    except UnicodeDecodeError:
+        # If UTF-8 fails, try with a different encoding
+        with open(filepath, 'r', encoding='cp1252') as f:
+            return f.read()
+

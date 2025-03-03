@@ -1,78 +1,21 @@
 {
-  "dependencies": [
-    "."
-  ],
-  "env": ".env",
+  "version": "1.0",
   "graphs": {
-    "initialization": {
-      "endpoints": [
-        "/initialize/{project_id}"
-      ],
-      "name": "initialization",
-      "description": "Project initialization workflow"
+    "storybook": {
+      "path": "./workflows.py:create_storybook_workflow",
+      "config": {
+        "metadata": {
+          "description": "Complete story creation workflow",
+          "version": "1.0.0"
+        }
+      }
     },
-    "storybook_{project_id}_initialization": {
-      "endpoints": [
-        "/initialize/{project_id}"
-      ],
-      "name": "storybook_{project_id}_initialization",
-      "description": "Project initialization workflow for specific project"
-    },
-    "development": {
-      "endpoints": [
-        "/develop/{project_id}"
-      ],
-      "name": "development",
-      "description": "Project development workflow"
-    },
-    "storybook_{project_id}_development": {
-      "endpoints": [
-        "/develop/{project_id}"
-      ],
-      "name": "storybook_{project_id}_development",
-      "description": "Project development workflow for specific project"
-    },
-    "creation": {
-      "endpoints": [
-        "/create/{project_id}"
-      ],
-      "name": "creation",
-      "description": "Content creation workflow"
-    },
-    "storybook_{project_id}_creation": {
-      "endpoints": [
-        "/create/{project_id}"
-      ],
-      "name": "storybook_{project_id}_creation",
-      "description": "Content creation workflow for specific project"
-    },
-    "refinement": {
-      "endpoints": [
-        "/refine/{project_id}"
-      ],
-      "name": "refinement",
-      "description": "Content refinement workflow"
-    },
-    "storybook_{project_id}_refinement": {
-      "endpoints": [
-        "/refine/{project_id}"
-      ],
-      "name": "storybook_{project_id}_refinement",
-      "description": "Content refinement workflow for specific project"
-    },
-    "finalization": {
-      "endpoints": [
-        "/finalize/{project_id}"
-      ],
-      "name": "finalization",
-      "description": "Project finalization workflow"
-    },
-    "storybook_{project_id}_finalization": {
-      "endpoints": [
-        "/finalize/{project_id}"
-      ],
-      "name": "storybook_{project_id}_finalization",
-      "description": "Project finalization workflow for specific project"
-    }
-  }
+    "initialization": "./workflows.py:create_initialization_graph",
+    "development": "./workflows.py:create_development_graph",
+    "creation": "./workflows.py:create_creation_graph",
+    "refinement": "./workflows.py:create_refinement_graph",
+    "finalization": "./workflows.py:create_finalization_graph"
+  },
+  "dependencies": ["."],
+  "env": ".env"
 }

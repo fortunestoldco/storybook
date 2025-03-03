@@ -136,3 +136,4 @@ curl -X GET http://localhost:8000/projects/{project_id}/manuscript
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
