@@ -70,16 +70,133 @@ class AgentFactory:
             A callable agent function for use in the workflow
         """
         def agent_function(state: Dict) -> Dict:
-                }
+            try:
+                # For cloud deployment, use Assistants API
+                if os.getenv("LANGGRAPH_CLOUD") >= "true":
+                    assistant_id = self._get_or_create_assistant(agent_type)
+                    
+                    def cloud_agent_function(state: NovelSystemState) -> Dict:
+                        """The agent function to be used in the graph with LangGraph Cloud.
+
+                        Args:
+                            state: The current state.
+
+                        Returns:
+                            The updated state.
+                        """
+                        try:
+                            # Prepare the context
+                            context = {
+                                "project_state": json.dumps(state["project"], indent=2),
+                                "current_phase": state["project"].current_phase,
+                                "task": state["current_input"].get("task", ""),
+                                "input": state["current_input"].get("content", "")
+                            }
+                            
+                            # Create a thread and run the assistant
+                            thread = self.assistants_client.create_thread()
+                            self.assistants_client.add_message(
+                                thread_id=thread.id,
+                                role="user",
+                                content=json.dumps(context)
+                            )
+                            run = self.assistants_client.run_thread(
+                                thread_id=thread.id,
+                                assistant_id=assistant_id
+                            )
+                            
+                            # Get the response
+                            messages = self.assistants_client.get_messages(thread.id)
+                            response = messages[0].content[0].text.value
+                            
+                            # Update the state
+                            state["current_output"] = {
+                                "agent": agent_type,
+                                "content": response,
+                                "timestamp": current_timestamp()
+                            }
+
+                            # Add to message history
+                            state["messages"].append({
+                                "role": agent_type,
+                                "content": response,
+                                "timestamp": current_timestamp()
+                            })
+
+                            return state
+                        except Exception as e:
+                            logger.error(f"Error in cloud agent function for agent {agent_type}: {e}")
+                            state["errors"].append({
+                                "agent": agent_type,
+                                "error": str(e),
+                                "timestamp": current_timestamp()
+                            })
+                            return state
+                    
+                    return cloud_agent_function
                 
+                # For local deployment, use LangChain
+                else:
+                    llm = self._get_llm(agent_type)
+                    memory = self._get_memory(agent_type, project_id)
+                    prompt = self._get_prompt_template(agent_type)
+
+                    chain = LLMChain(
+                        llm=llm,
+                        prompt=prompt,
+                        memory=memory,
+                        verbose=True
+                    )
+
+                    def local_agent_function(state: NovelSystemState) -> Dict:
+                        """The agent function to be used in the graph locally.
+
+                        Args:
+                            state: The current state.
+
+                        Returns:
+                            The updated state.
+                        """
+                        try:
+                            # Prepare the context
+                            context = {
+                                "project_state": json.dumps(state["project"], indent=2),
+                                "current_phase": state["project"].current_phase,
+                                "task": state["current_input"].get("task", ""),
+                                "input": state["current_input"].get("content", "")
+                            }
+
+                            # Run the chain
+                            response = chain.run(input=json.dumps(context))
+
+                            # Update the state
+                            state["current_output"] = {
+                                "agent": agent_type,
+                                "content": response,
+                                "timestamp": current_timestamp()
+                            }
+
+                            # Add to message history
+                            state["messages"].append({
+                                "role": agent_type,
+                                "content": response,
+                                "timestamp": current_timestamp()
+                            })
+
+                            return state
+                        except Exception as e:
+                            logger.error(f"Error in local agent function for agent {agent_type}: {e}")
+                            state["errors"].append({
+                                "agent": agent_type,
+                                "error": str(e),
+                                "timestamp": current_timestamp()
+                            })
+                            return state
+
+                    return local_agent_function
             except Exception as e:
-                return {
-                    **state,
-                    "errors": state.get("errors", []) + [{
-                        "agent": agent_type,
-                        "error": str(e)
-                    }]
-                }
+                logger.error(f"Error creating agent {agent_type}: {e}")
+                raise
                 
         return agent_function
     
@@ -150,3 +267,23 @@ class AgentFactory:
             self._agent_cache[cache_key] = assistant.id
             
         return self._agent_cache[cache_key]
+    
+    def _get_llm(self, agent_type: str):
+        """Retrieve the LLM for the given agent type."""
+        config = MODEL_CONFIGS.get(agent_type, {})
+        model_name = config.get("model", "anthropic/claude-3-opus-20240229")
+        return self.assistants_client.get_llm(model_name)
+    
+    def _get_memory(self, agent_type: str, project_id: str):
+        """Retrieve the memory for the given agent type."""
+        return self.mongodb_manager.load_state(project_id)
+    
+    def _get_prompt_template(self, agent_type: str):
+        """Retrieve the prompt template for the given agent type."""
+        config = MODEL_CONFIGS.get(agent_type, {})
+        return config.get("prompt_template", "")
+    
+    def create_agent(self, agent_type: str, state_type: Type[NovelSystemState], project_id: str) -> Callable:
+        """Create an agent with the new agent_function."""
+        tools = get_tools_for_agent(agent_type)
+        return self.create_workflow_agent(agent_type, state_type, tools)
