@@ -1,5 +1,5 @@
 from typing import Dict, List, Any
-from langchain.agents import AgentExecutor
+from langchain_core.agents import AgentExecutor, Tool
 from langchain.agents.structured_chat.base import StructuredChatAgent
 from langsmith.run_helpers import traceable
 from tools.quality_assessment import (
@@ -62,3 +62,14 @@ def quality_assessment_director_agent(state: StoryState) -> Dict:
         "agent_type": "quality_assessment_director",
         "agent_model": state["model_name"]
     }
+
+install_requires=[
+    "fastapi>=0.115.11",
+    "langchain>=0.3.19",
+    "langchain_anthropic>=0.3.8",
+    "langchain_aws>=0.2.14",
+    "langchain_mongodb>=0.5.0",
+    "langchain_openai>=0.3.7",
+    "langchain_ollama>=0.0.1",
+    # ...
+]

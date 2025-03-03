@@ -1,6 +1,8 @@
 from typing import Dict, List, Optional
-from langchain.tools import tool
+from langchain_core.tools import tool
 from pydantic import BaseModel
+from langchain.agents import AgentExecutor, StructuredChatAgent
+from langsmith.run_helpers import traceable
 
 class StoryAnalysisInput(BaseModel):
     title: str
@@ -20,4 +22,5 @@ def analyze_story_structure(input_data: StoryAnalysisInput) -> Dict:
         "recommendations": [
             "Tighten middle section",
             "Add more tension points"
-        ]
+            ]
+        }

@@ -1,5 +1,6 @@
 from typing import Dict, List
-from langchain.agents import AgentExecutor, StructuredChatAgent
+from langchain_core.agents import AgentExecutor, Tool
+from langchain.agents.structured_chat.base import StructuredChatAgent
 from langsmith.run_helpers import traceable
 from tools.analysis import (
     analyze_story_structure,

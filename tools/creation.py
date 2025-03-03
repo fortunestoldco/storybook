@@ -1,6 +1,9 @@
 from typing import Dict, List, Optional
-from langchain.tools import tool
+from langchain_core.tools import tool
 from pydantic import BaseModel
+from langchain_core.agents import AgentExecutor
+from langchain.agents.structured_chat.base import StructuredChatAgent
+from langsmith.run_helpers import traceable
 
 class ContentCreationInput(BaseModel):
     title: str

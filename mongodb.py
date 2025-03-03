@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
+from datetime import datetime
 
 from config import MONGODB_CONFIG
 
@@ -130,26 +131,15 @@ class MongoDBManager:
         return list(collection.find({"project_id": project_id}))
     
     def save_metrics(self, metrics: Dict) -> None:
-        """Save quality metrics to MongoDB.
-        
-        Args:
-            metrics: The metrics to save.
-        """
+        """Save quality metrics to MongoDB."""
         collection = self.get_collection(MONGODB_CONFIG["collections"]["metrics"])
-        if "_id" in metrics:
-            collection.replace_one({"_id": metrics["_id"]}, metrics, upsert=True)
-        else:
-            collection.insert_one(metrics)
+        collection.insert_one({
+            **metrics,
+            "timestamp": datetime.now().isoformat()
+        })
     
     def load_metrics(self, project_id: str) -> List[Dict]:
-        """Load quality metrics for a project from MongoDB.
-        
-        Args:
-            project_id: ID of the project.
-            
-        Returns:
-            List of metrics documents.
-        """
+        """Load metrics for a project."""
         collection = self.get_collection(MONGODB_CONFIG["collections"]["metrics"])
         return list(collection.find({"project_id": project_id}))
 

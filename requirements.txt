@@ -1,0 +1,16 @@
+agent>=0.0.1
+fastapi>=0.115.11
+langchain>=0.3.19
+langchain_anthropic>=0.3.8
+langgraph
+langchain_aws>=0.2.14
+langchain_mongodb>=0.5.0
+langchain_ollama>=0.2.3
+langchain_openai>=0.3.7
+langgraph_sdk>=0.1.53
+pydantic>=2.10.6
+pymongo>=4.11.1
+pytest>=8.3.5
+python-dotenv>=1.0.1
+setuptools>=75.8.2
+uvicorn>=0.34.0

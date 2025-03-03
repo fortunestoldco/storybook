@@ -1,11 +1,14 @@
 from typing import Dict, List
-from langchain.agents import AgentExecutor, StructuredChatAgent
+from langchain_core.agents import AgentExecutor, Tool
+from langchain.agents.structured_chat.base import StructuredChatAgent
 from langsmith.run_helpers import traceable
 from tools.refinement import (
     edit_content,
     analyze_story_coherence,
     verify_story_elements
 )
+from langchain_core.tools import tool
+from pydantic import BaseModel
 
 @traceable(name="Editor Agent")
 def editor_agent(state: StoryState) -> Dict:

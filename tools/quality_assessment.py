@@ -1,6 +1,9 @@
 from typing import Dict, List, Optional
-from langchain.tools import Tool, tool
+from langchain_core.tools import tool
 from pydantic import BaseModel
+from langchain_core.agents import AgentExecutor
+from langchain.agents.structured_chat.base import StructuredChatAgent
+from langsmith.run_helpers import traceable
 
 class StoryAnalysisInput(BaseModel):
     title: str
@@ -54,4 +57,23 @@ def assess_narrative_coherence(input_data: StoryAnalysisInput) -> Dict:
             "Strengthen thematic elements",
             "Add more connecting details between subplots"
         ]
+    }
+
+@tool
+def assess_character_development(input_data: StoryAnalysisInput) -> Dict:
+    """Assesses character development and consistency."""
+    return {
+        "character_assessment": {
+            "development_score": 0.87,
+            "consistency_score": 0.92,
+            "strengths": [
+                "Clear character motivations",
+                "Consistent character voices",
+                "Well-defined character arcs"
+            ],
+            "areas_for_improvement": [
+                "Deepen secondary character relationships",
+                "Add more character-revealing moments"
+            ]
+        }
     }

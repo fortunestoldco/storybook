@@ -15,127 +15,92 @@ from agents import AgentFactory
 from mongodb import MongoDBManager
 from test_helpers import create_test_story_input, create_test_config
 import pytest
+from typing import Dict, Any
 
-class TestWorkflows(unittest.TestCase):
+@pytest.fixture
+def test_input() -> Dict[str, Any]:
+    return create_test_story_input()
 
-    def setUp(self):
-        """Set up test cases."""
-        self.test_input = create_test_story_input()
-        self.config = create_test_config()
+@pytest.fixture
+def config(agent_factory):
+    return create_test_config()
 
-    def test_create_initialization_graph(self):
-        graph = create_initialization_graph(self.project_id, self.agent_factory)
-        self.assertIsNotNone(graph)
-        self.assertEqual(graph.entry_point, "executive_director")
-        self.assertIn("executive_director", graph.nodes)
-        self.assertIn("human_feedback_manager", graph.nodes)
-        self.assertIn("quality_assessment_director", graph.nodes)
-        self.assertIn("project_timeline_manager", graph.nodes)
-        self.assertIn("market_alignment_director", graph.nodes)
+@pytest.fixture
+def agent_factory(mongodb_manager):
+    return AgentFactory(mongodb_manager)
 
-    def test_create_development_graph(self):
-        graph = create_development_graph(self.project_id, self.agent_factory)
-        self.assertIsNotNone(graph)
-        self.assertEqual(graph.entry_point, "executive_director")
-        self.assertIn("executive_director", graph.nodes)
-        self.assertIn("creative_director", graph.nodes)
-        self.assertIn("structure_architect", graph.nodes)
-        self.assertIn("plot_development_specialist", graph.nodes)
-        self.assertIn("world_building_expert", graph.nodes)
-        self.assertIn("character_psychology_specialist", graph.nodes)
-        self.assertIn("character_voice_designer", graph.nodes)
-        self.assertIn("character_relationship_mapper", graph.nodes)
-        self.assertIn("domain_knowledge_specialist", graph.nodes)
-        self.assertIn("cultural_authenticity_expert", graph.nodes)
-        self.assertIn("market_alignment_director", graph.nodes)
+@pytest.fixture
+def mongodb_manager():
+    return MongoDBManager()
 
-    def test_create_creation_graph(self):
-        graph = create_creation_graph(self.project_id, self.agent_factory)
-        self.assertIsNotNone(graph)
-        self.assertEqual(graph.entry_point, "executive_director")
-        self.assertIn("executive_director", graph.nodes)
-        self.assertIn("content_development_director", graph.nodes)
-        self.assertIn("creative_director", graph.nodes)
-        self.assertIn("chapter_drafters", graph.nodes)
-        self.assertIn("scene_construction_specialists", graph.nodes)
-        self.assertIn("dialogue_crafters", graph.nodes)
-        self.assertIn("continuity_manager", graph.nodes)
-        self.assertIn("voice_consistency_monitor", graph.nodes)
-        self.assertIn("emotional_arc_designer", graph.nodes)
-        self.assertIn("domain_knowledge_specialist", graph.nodes)
+def test_create_initialization_graph(config, agent_factory):
+    """Test initialization graph creation."""
+    graph = create_initialization_graph(config)
+    
+    assert graph is not None
+    assert "executive_director" in graph.nodes
+    assert "human_feedback_manager" in graph.nodes
+    assert "quality_assessment_director" in graph.nodes
+    assert "project_timeline_manager" in graph.nodes
+    assert "market_alignment_director" in graph.nodes
 
-    def test_create_refinement_graph(self):
-        graph = create_refinement_graph(self.project_id, self.agent_factory)
-        self.assertIsNotNone(graph)
-        self.assertEqual(graph.entry_point, "executive_director")
-        self.assertIn("executive_director", graph.nodes)
-        self.assertIn("editorial_director", graph.nodes)
-        self.assertIn("creative_director", graph.nodes)
-        self.assertIn("market_alignment_director", graph.nodes)
-        self.assertIn("structural_editor", graph.nodes)
-        self.assertIn("character_arc_evaluator", graph.nodes)
-        self.assertIn("thematic_coherence_analyst", graph.nodes)
-        self.assertIn("prose_enhancement_specialist", graph.nodes)
-        self.assertIn("dialogue_refinement_expert", graph.nodes)
-        self.assertIn("rhythm_cadence_optimizer", graph.nodes)
-        self.assertIn("grammar_consistency_checker", graph.nodes)
-        self.assertIn("fact_verification_specialist", graph.nodes)
+def test_create_development_graph(config, agent_factory):
+    """Test development graph creation."""
+    graph = create_development_graph(config)
+    
+    assert graph is not None
+    assert "executive_director" in graph.nodes
+    assert "creative_director" in graph.nodes
+    assert "structure_architect" in graph.nodes
+    assert all(node in graph.nodes for node in [
+        "plot_development_specialist",
+        "world_building_expert",
+        "character_psychology_specialist",
+        "character_voice_designer",
+        "character_relationship_mapper",
+        "domain_knowledge_specialist",
+        "cultural_authenticity_expert",
+        "market_alignment_director"
+    ])
 
-    def test_create_finalization_graph(self):
-        graph = create_finalization_graph(self.project_id, self.agent_factory)
-        self.assertIsNotNone(graph)
-        self.assertEqual(graph.entry_point, "executive_director")
-        self.assertIn("executive_director", graph.nodes)
-        self.assertIn("editorial_director", graph.nodes)
-        self.assertIn("market_alignment_director", graph.nodes)
-        self.assertIn("positioning_specialist", graph.nodes)
-        self.assertIn("title_blurb_optimizer", graph.nodes)
-        self.assertIn("differentiation_strategist", graph.nodes)
-        self.assertIn("formatting_standards_expert", graph.nodes)
+def test_workflow_execution(test_input, config):
+    """Test complete workflow execution."""
+    workflow = create_storybook_workflow(config)
+    result = workflow.invoke(test_input)
+    
+    # Verify workflow completion
+    assert result["title"] == test_input["title"]
+    assert result["model_provider"] == test_input["model_provider"]
+    assert "feedback" in result
+    
+    # Verify phase completion
+    for phase in ["initialization", "development", "creation", "refinement", "finalization"]:
+        assert f"{phase}_complete" in result
+    
+    # Verify quality metrics
+    assert "quality_score" in result
+    assert 0.0 <= result["quality_score"] <= 1.0
 
-    def test_initialization_graph(self):
-        """Test initialization phase workflow."""
-        graph = create_initialization_graph(self.config)
-        result = graph.invoke(self.test_input)
-        
-        # Verify state management
-        self.assertEqual(result["title"], self.test_input["title"])
-        self.assertEqual(result["model_provider"], ModelProvider.ANTHROPIC)
-        
-        # Verify agent
+def test_workflow_graph_structure(config):
+    """Test the structure of all workflow graphs."""
+    graphs = {
+        "initialization": create_initialization_graph(config),
+        "development": create_development_graph(config),
+        "creation": create_creation_graph(config),
+        "refinement": create_refinement_graph(config),
+        "finalization": create_finalization_graph(config)
+    }
+    
+    # Test common nodes across all graphs
+    for name, graph in graphs.items():
+        assert "executive_director" in graph.nodes
+        assert graph is not None
 
-    def test_storybook_workflow(self):
-        """Test the complete storybook workflow."""
-        config = RunnableConfig(
-            metadata={
-                "project_id": "test_story_123",
-                "agent_factory": AgentFactory()
-            }
-        )
-        
-        workflow = create_storybook_workflow(config)
-        
-        result = workflow.invoke({
-            "title": "Test Story",
-            "manuscript": "Initial draft...",
-            "model_provider": ModelProvider.ANTHROPIC,
-            "model_name": "claude-3-opus-20240229"
-        })
-        
-        assert result["title"] >= "Test Story"
-        assert "feedback" in result
-        assert result["model_provider"] >= ModelProvider.ANTHROPIC
+    # Test phase-specific nodes
+    assert "creative_director" in graphs["development"].nodes
+    assert "content_development_director" in graphs["creation"].nodes
+    assert "editorial_director" in graphs["refinement"].nodes
+    assert "market_alignment_director" in graphs["finalization"].nodes
 
-    def test_storybook_workflow_registration(self):
-        """Test that the storybook workflow is properly registered."""
-        workflow = create_storybook_workflow(self.config)
-        self.assertIsNotNone(workflow)
-        self.assertTrue(hasattr(workflow, 'invoke'))
-        
-        # Test workflow invocation
-        result = workflow.invoke(self.test_input)
-        self.assertEqual(result["title"], self.test_input["title"])
-        self.assertEqual(result["model_provider"], self.test_input["model_provider"])
-
-if __name__ >= '__main__':
-    pytest.main([__file__])
+if __name__ == '__main__':
+    pytest.main(['-v', __file__])

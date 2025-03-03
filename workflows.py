@@ -1,7 +1,7 @@
 from typing import Dict, List, Callable, Optional, Any, Annotated, TypedDict, cast, Union
 from enum import Enum
 from langgraph.graph import StateGraph, START, END
-from langchain.schema.runnable import RunnableConfig
+from langchain_core.runnables import RunnableConfig
 from langsmith.run_helpers import traceable
 from langsmith import RunTree
 
@@ -54,64 +54,66 @@ def human_feedback_manager_agent(state: StoryState) -> Dict:
         "agent_model": state["model_name"]
     }
 
+from typing import Dict, Any
+from langchain_core.runnables import RunnableConfig
+from langgraph.graph import StateGraph, END
+from state import StoryState
+from agents import (
+    executive_director_agent,
+    human_feedback_manager_agent,
+    quality_assessment_director_agent,
+    creative_director_agent,
+    content_creator_agent,
+    draft_reviewer_agent,
+    editor_agent,
+    proofreader_agent,
+    finalizer_agent,
+    quality_checker_agent,
+    market_alignment_agent
+)
+
 def create_initialization_graph(config: RunnableConfig) -> StateGraph:
     """Creates the initialization phase workflow graph."""
     workflow = StateGraph(StoryState)
     
-    # Add nodes with traced agent functions and metadata
+    # Add executive director node
     workflow.add_node(
-        "executive_director", 
+        "executive_director",
         executive_director_agent,
         metadata={
-            "description": "Executive oversight and initial planning",
-            "agent_type": "executive_director",
+            "description": "Strategic planning and oversight",
+            "agent_type": "director",
             "team": "management"
         }
     )
+    
+    # Add human feedback manager node
     workflow.add_node(
-        "human_feedback_manager", 
+        "human_feedback_manager",
         human_feedback_manager_agent,
         metadata={
-            "description": "Manages human feedback integration",
-            "agent_type": "human_feedback_manager",
-            "team": "feedback"
+            "description": "Processes and integrates human feedback",
+            "agent_type": "manager",
+            "team": "management"
         }
     )
+    
+    # Add quality assessment director node
     workflow.add_node(
         "quality_assessment_director",
         quality_assessment_director_agent,
         metadata={
-            "description": "Evaluates story quality and provides feedback",
-            "agent_type": "quality_assessment_director",
+            "description": "Evaluates quality metrics",
+            "agent_type": "director",
             "team": "quality"
         }
     )
-    workflow.add_node(
-        "project_timeline_manager",
-        project_timeline_manager_agent,
-        metadata={
-            "description": "Manages project timeline and milestones",
-            "agent_type": "project_timeline_manager",
-            "team": "management"
-        }
-    )
-    workflow.add_node(
-        "market_alignment_director",
-        market_alignment_director_agent,
-        metadata={
-            "description": "Analyzes market fit and positioning",
-            "agent_type": "market_alignment_director",
-            "team": "market"
-        }
-    )
     
-    # Add edges without metadata
-    workflow.add_edge(START, "executive_director")
+    # Define workflow edges
+    workflow.add_edge("START", "executive_director")
     workflow.add_edge("executive_director", "human_feedback_manager")
     workflow.add_edge("human_feedback_manager", "quality_assessment_director")
-    workflow.add_edge("quality_assessment_director", "project_timeline_manager")
-    workflow.add_edge("project_timeline_manager", "market_alignment_director")
-    workflow.add_edge("market_alignment_director", END)
+    workflow.add_edge("quality_assessment_director", "END")
     
     return workflow.compile()
 
@@ -119,59 +121,51 @@ def create_development_graph(config: RunnableConfig) -> StateGraph:
     """Creates the development phase workflow graph."""
     workflow = StateGraph(StoryState)
     
+    # Add creative director node
     workflow.add_node(
-        "plot_developer",
-        plot_development_agent,
+        "creative_director",
+        creative_director_agent,
         metadata={
-            "description": "Develops plot structure and story arcs",
-            "agent_type": "plot_developer",
+            "description": "Creative vision and direction",
+            "agent_type": "director",
             "team": "creative"
         }
     )
     
-    workflow.add_node(
-        "character_developer",
-        character_development_agent,
-        metadata={
-            "description": "Develops character profiles and arcs",
-            "agent_type": "character_developer",
-            "team": "creative"
-        }
-    )
-    
-    workflow.add_edge(START, "plot_developer")
-    workflow.add_edge("plot_developer", "character_developer")
-    workflow.add_edge("character_developer", END)
+    workflow.add_edge("START", "creative_director")
+    workflow.add_edge("creative_director", "END")
     
     return workflow.compile()
 
 def create_creation_graph(config: RunnableConfig) -> StateGraph:
-    """Creates the creation phase workflow graph."""
+    """Creates the content creation phase workflow graph."""
     workflow = StateGraph(StoryState)
     
+    # Add content creator node
     workflow.add_node(
         "content_creator",
         content_creator_agent,
         metadata={
-            "description": "Generates and manages story content",
-            "agent_type": "content_creator",
+            "description": "Creates story content",
+            "agent_type": "creator",
             "team": "writing"
         }
     )
     
+    # Add draft reviewer node
     workflow.add_node(
         "draft_reviewer",
         draft_reviewer_agent,
         metadata={
-            "description": "Reviews and assesses content quality",
-            "agent_type": "draft_reviewer",
+            "description": "Reviews draft content",
+            "agent_type": "reviewer",
             "team": "quality"
         }
     )
     
-    workflow.add_edge(START, "content_creator")
+    workflow.add_edge("START", "content_creator")
     workflow.add_edge("content_creator", "draft_reviewer")
-    workflow.add_edge("draft_reviewer", END)
+    workflow.add_edge("draft_reviewer", "END")
     
     return workflow.compile()
 
@@ -179,16 +173,18 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
     """Creates the refinement phase workflow graph."""
     workflow = StateGraph(StoryState)
     
+    # Add editor node
     workflow.add_node(
         "editor",
         editor_agent,
         metadata={
-            "description": "Edits and refines story content",
+            "description": "Edits and refines content",
             "agent_type": "editor",
             "team": "editing"
         }
     )
     
+    # Add proofreader node
     workflow.add_node(
         "proofreader",
         proofreader_agent,
@@ -199,9 +195,9 @@ def create_refinement_graph(config: RunnableConfig) -> StateGraph:
         }
     )
     
-    workflow.add_edge(START, "editor")
+    workflow.add_edge("START", "editor")
     workflow.add_edge("editor", "proofreader")
-    workflow.add_edge("proofreader", END)
+    workflow.add_edge("proofreader", "END")
     
     return workflow.compile()
 
@@ -209,57 +205,66 @@ def create_finalization_graph(config: RunnableConfig) -> StateGraph:
     """Creates the finalization phase workflow graph."""
     workflow = StateGraph(StoryState)
     
+    # Add finalizer node
     workflow.add_node(
         "finalizer",
         finalizer_agent,
         metadata={
-            "description": "Prepares story for publication",
+            "description": "Prepares for publication",
             "agent_type": "finalizer",
             "team": "market"
         }
     )
     
+    # Add quality checker node
     workflow.add_node(
         "quality_checker",
         quality_checker_agent,
         metadata={
-            "description": "Performs final quality assurance",
-            "agent_type": "quality_checker",
+            "description": "Final quality assurance",
+            "agent_type": "checker",
             "team": "quality"
         }
     )
     
-    workflow.add_edge(START, "finalizer")
+    # Add market alignment node
+    workflow.add_node(
+        "market_alignment",
+        market_alignment_agent,
+        metadata={
+            "description": "Market positioning and alignment",
+            "agent_type": "analyst",
+            "team": "market"
+        }
+    )
+    
+    workflow.add_edge("START", "finalizer")
     workflow.add_edge("finalizer", "quality_checker")
-    workflow.add_edge("quality_checker", END)
+    workflow.add_edge("quality_checker", "market_alignment")
+    workflow.add_edge("market_alignment", "END")
     
     return workflow.compile()
 
 def get_phase_workflow(phase: str, project_id: str, agent_factory: AgentFactory) -> StateGraph:
     """Get the workflow graph for a specific phase."""
+    config = RunnableConfig(
+        metadata={
+            "project_id": project_id,
+            "agent_factory": agent_factory
+        }
+    )
+    
     workflow_map = {
         "initialization": create_initialization_graph,
         "development": create_development_graph,
         "creation": create_creation_graph,
         "refinement": create_refinement_graph,
-        "finalization": create_finalization_graph,
+        "finalization": create_finalization_graph
     }
     
     if phase not in workflow_map:
         raise ValueError(f"Unknown phase: {phase}")
-    
-    # Configure tracing with RunTree
-    config = RunnableConfig(
-        run_name=f"{phase}_phase",
-        callbacks=None,  # LangSmith tracing is handled via env vars
-        tags=[f"project_{project_id}", f"phase_{phase}"],
-        metadata={
-            "project_id": project_id,
-            "phase": phase,
-            "teams": ["management", "feedback", "quality", "timeline", "market"]
-        }
-    )
-    
+        
     return workflow_map[phase](config)
 
 # Add this after your existing graph functions

@@ -89,263 +89,96 @@ async def create_project(request: ProjectRequest) -> Dict:
 
 @app.get("/projects/{project_id}", response_model=Dict)
 async def get_project(project_id: str) -> Dict:
-    """Get a project by ID.
-    
-    Args:
-        project_id: ID of the project.
-        
-    Returns:
-        The project.
-    """
+    """Get a project by ID."""
     try:
-        # Load from MongoDB
-        project_data = mongo_manager.load_state(project_id)
-        
-        if not project_data:
+        project = mongo_manager.load_state(project_id)
+        if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
-        logger.info(f"Project retrieved with ID: {project_id}")
-        
-        return {
-            "project_id": project_id,
-            "title": project_data.get("title", ""),
-            "current_phase": project_data.get("current_phase", "initialization"),
-            "status": "active" if project_data.get("current_phase") != "complete" else "complete"
-        }
+        return project
     except Exception as e:
-        logger.error(f"Error retrieving project: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/projects/{project_id}/run", response_model=Dict)
 async def run_task(project_id: str, request: TaskRequest, background_tasks: BackgroundTasks) -> Dict:
-    """Run a task for a project.
-    
-    Args:
-        project_id: ID of the project.
-        request: The task request.
-        background_tasks: FastAPI background tasks.
-        
-    Returns:
-        Status of the task execution.
-    """
+    """Run a task for a project."""
     try:
-        # Load from MongoDB
         project_data = mongo_manager.load_state(project_id)
-        
         if not project_data:
             raise HTTPException(status_code=404, detail="Project not found")
         
-        # Create project state
-        project_state = ProjectState(**project_data)
+        phase = request.phase or project_data.get("current_phase", "initialization")
+        workflow = get_phase_workflow(phase, project_id, agent_factory)
         
-        # Use the phase from the request or the current phase
-        phase = request.phase or project_state.current_phase
-        
-        # Get the workflow for the phase
-        try:
-            workflow = get_phase_workflow(phase, project_id, agent_factory)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
-        
-        # Create initial state
-        initial_state: NovelSystemState = {
-            "project": project_state,
-            "current_input": {
+        background_tasks.add_task(
+            workflow.invoke,
+            {
+                "title": project_data["title"],
                 "task": request.task,
-                "content": request.content or "",
-                "editing_type": request.editing_type or ""
-            },
-            "current_output": {},
-            "messages": [],
-            "errors": []
-        }
-        
-        # Create a unique run ID
-        run_id = generate_id()
-        
-        # Execute the workflow in the background
-        def execute_workflow():
-            try:
-                # Run the workflow
-                final_state = workflow.invoke(initial_state, {"recursion_limit": 25})
-                
-                # Save the final state
-                mongo_manager.save_state(project_id, final_state["project"].dict())
-                
-                # Save execution record
-                execution_record = {
-                    "run_id": run_id,
-                    "project_id": project_id,
-                    "phase": phase,
-                    "task": request.task,
-                    "status": "completed",
-                    "timestamp": current_timestamp(),
-                    "messages": final_state["messages"]
-                }
-                mongo_manager.save_document(execution_record)
-                
-                logger.info(f"Task {request.task} completed for project {project_id}")
-                
-            except Exception as e:
-                # Log the error
-                error_message = str(e)
-                logger.error(f"Error executing workflow: {error_message}")
-                
-                # Save error record
-                error_record = {
-                    "run_id": run_id,
-                    "project_id": project_id,
-                    "phase": phase,
-                    "task": request.task,
-                    "status": "failed",
-                    "error": error_message,
-                    "timestamp": current_timestamp()
-                }
-                mongo_manager.save_document(error_record)
-        
-        background_tasks.add_task(execute_workflow)
-        
-        logger.info(f"Task {request.task} started for project {project_id}")
+                "content": request.content,
+                "phase": phase
+            }
+        )
         
         return {
             "project_id": project_id,
-            "run_id": run_id,
-            "task": request.task,
             "status": "running",
+            "task": request.task,
             "phase": phase
         }
-    except ValidationError as e:
-        logger.error(f"Validation error: {e}")
-        raise HTTPException(status_code=422, detail=e.errors())
     except Exception as e:
-        logger.error(f"Error running task: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/projects/{project_id}/feedback", response_model=Dict)
 async def add_feedback(project_id: str, request: FeedbackRequest) -> Dict:
-    """Add human feedback to a project.
-    
-    Args:
-        project_id: ID of the project.
-        request: The feedback request.
-        
-    Returns:
-        Status of the feedback submission.
-    """
+    """Add human feedback to a project."""
     try:
-        # Load from MongoDB
-        project_data = mongo_manager.load_state(project_id)
-        
-        if not project_data:
-            raise HTTPException(status_code=404, detail="Project not found")
-        
-        # Create feedback document
         feedback = {
             "project_id": project_id,
             "content": request.content,
             "type": request.type,
-            "quality_scores": request.quality_scores or {},
+            "quality_scores": request.quality_scores,
             "timestamp": current_timestamp()
         }
-        
-        # Save to MongoDB
         mongo_manager.save_feedback(feedback)
-        
-        # Update the project state with human feedback
-        project_state = ProjectState(**project_data)
-        project_state.human_feedback.append(feedback)
-        
-        # If quality scores are provided, update the quality assessment
-        if request.quality_scores:
-            for key, value in request.quality_scores.items():
-                project_state.quality_assessment[key] = value
-            
-            # Also set human approval if high scores
-            average_score = sum(request.quality_scores.values()) / len(request.quality_scores)
-            if average_score >= 85:  # High score threshold
-                project_state.quality_assessment["human_approved"] = True
-        
-        # Save updated state
-        mongo_manager.save_state(project_id, project_state.dict())
-        
-        logger.info(f"Feedback added for project {project_id}")
-        
-        return {
-            "project_id": project_id,
-            "status": "feedback_added"
-        }
-    except ValidationError as e:
-        logger.error(f"Validation error: {e}")
-        raise HTTPException(status_code=422, detail=e.errors())
+        return {"status": "feedback_added", "feedback_id": str(feedback.get("_id"))}
     except Exception as e:
-        logger.error(f"Error adding feedback: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/projects/{project_id}/status", response_model=Dict)
 async def get_project_status(project_id: str) -> Dict:
-    """Get the status of a project.
-    
-    Args:
-        project_id: ID of the project.
-        
-    Returns:
-        Status of the project.
-    """
+    """Get project status."""
     try:
-        # Load from MongoDB
-        project_data = mongo_manager.load_state(project_id)
-        
-        if not project_data:
+        project = mongo_manager.load_state(project_id)
+        if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
-        project_state = ProjectState(**project_data)
-        
-        logger.info(f"Status retrieved for project {project_id}")
-        
         return {
             "project_id": project_id,
-            "title": project_state.title,
-            "current_phase": project_state.current_phase,
-            "progress_metrics": project_state.progress_metrics,
-            "quality_assessment": project_state.quality_assessment
+            "status": project.get("status", "unknown"),
+            "current_phase": project.get("current_phase", "initialization"),
+            "last_update": project.get("last_update", None)
         }
     except Exception as e:
-        logger.error(f"Error retrieving project status: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/projects/{project_id}/manuscript", response_model=Dict)
 async def get_manuscript(project_id: str) -> Dict:
-    """Get the manuscript for a project.
-    
-    Args:
-        project_id: ID of the project.
-        
-    Returns:
-        The manuscript.
-    """
+    """Get project manuscript."""
     try:
-        # Load from MongoDB
-        project_data = mongo_manager.load_state(project_id)
-        
-        if not project_data:
+        project = mongo_manager.load_state(project_id)
+        if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
-        project_state = ProjectState(**project_data)
-        
-        logger.info(f"Manuscript retrieved for project {project_id}")
-        
         return {
             "project_id": project_id,
-            "title": project_state.title,
-            "manuscript": project_state.manuscript
+            "title": project.get("title", ""),
+            "manuscript": project.get("manuscript", ""),
+            "version": project.get("version", "1.0")
         }
     except Exception as e:
-        logger.error(f"Error retrieving manuscript: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ >= "__main__":

@@ -1,21 +1,34 @@
+import os
 from typing import Dict, List, Optional, Any, Callable, Union
 import json
 import logging
 
+# Chat models
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
-from langchain_aws import ChatBedrock  # Changed from ChatBedrock to BedrockChat
-from langchain_mongodb import MongoDBChatMessageHistory
-from langchain.prompts import PromptTemplate, ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
-from langchain.memory import ConversationBufferMemory
-from langchain.agents import AgentExecutor, ConversationalAgent
-from langchain.chains import LLMChain
-from langchain.schema import BaseMessage
+from langchain_aws.chat_models import ChatBedrock
 from langchain_ollama import ChatOllama
 
+# Core components
+from langchain_core.prompts import (
+    PromptTemplate, 
+    ChatPromptTemplate, 
+    HumanMessagePromptTemplate, 
+    SystemMessagePromptTemplate
+)
+from langchain_core.memory import ConversationBufferMemory
+from langchain_core.agents import AgentExecutor, ConversationalAgent, Tool
+from langchain_core.tools import BaseTool
+from langchain_core.chains import LLMChain
+from langchain_core.messages import BaseMessage, SystemMessage
+
+# Database
+from langchain_mongodb import MongoDBChatMessageHistory
+
+from langgraph.graph import StateGraph
+from langgraph.graph.state import State
+
 from langgraph.graph import Graph, StateGraph, END
-from langgraph.checkpoint.mongodb import MongoDBSaver
-from langgraph.prebuilt import ToolExecutor
 from langgraph_sdk.client import SyncAssistantsClient
 
 from config import MODEL_CONFIGS, PROMPT_TEMPLATES, MONGODB_CONFIG, OLLAMA_CONFIG
@@ -41,123 +54,52 @@ class AgentFactory:
         self.assistants_client = SyncAssistantsClient()
 
     def _get_llm(self, agent_name: str) -> Any:
-        """Get an LLM for an agent based on its configuration.
-
-        Args:
-            agent_name: Name of the agent.
-
-        Returns:
-            An LLM instance.
-        """
+        """Get an LLM for an agent based on its configuration."""
         try:
             config = MODEL_CONFIGS.get(agent_name, {})
             model_name = config.get("model", "")
-
+            
             if model_name.startswith("anthropic/"):
                 return ChatAnthropic(
-                    model_name=model_name.replace("anthropic/", ""),
-                    temperature=config.get("temperature", 0.3),
-                    max_tokens=config.get("max_tokens", 2000)
+                    model=model_name.split("/")[1],
+                    temperature=config.get("temperature", 0.2),
+                    max_tokens=config.get("max_tokens", 4000),
+                    anthropic_api_key=os.getenv("ANTHROPIC_API_KEY")
                 )
-            elif model_name.startswith("meta-llama/") or model_name.startswith("llama-3/"):
-                clean_model_name = model_name.replace("meta-llama/", "").replace("llama-3/", "")
-                return BedrockChat(
-                    model_id=clean_model_name,
-                    model_kwargs={
-                        "temperature": config.get("temperature", 0.3),
-                        "max_tokens": config.get("max_tokens", 2000)
-                    }
+            elif model_name.startswith("openai/"):
+                return ChatOpenAI(
+                    model=model_name.split("/")[1],
+                    temperature=config.get("temperature", 0.2),
+                    max_tokens=config.get("max_tokens", 4000)
                 )
-            elif model_name.startswith("huggingface/"):
-                if "endpoint" in model_name.lower():
-                    return HuggingFaceEndpoint(
-                        endpoint_url=config.get("endpoint_url"),
-                        task=config.get("task", "text-generation"),
-                        model_kwargs={
-                            "temperature": config.get("temperature", 0.3),
-                            "max_tokens": config.get("max_tokens", 2000)
-                        }
-                    )
-                else:
-                    return ChatHuggingFace(
-                        model_id=model_name.replace("huggingface/", ""),
-                        task=config.get("task", "text-generation"),
-                        temperature=config.get("temperature", 0.3),
-                        max_tokens=config.get("max_tokens", 2000)
-                    )
-            elif model_name.startswith("replicate/"):
-                model_version = config.get("model_version", "")
-                return Replicate(
-                    model=f"{model_name.replace('replicate/', '')}:{model_version}",
-                    model_kwargs={
-                        "temperature": config.get("temperature", 0.3),
-                        "max_length": config.get("max_tokens", 2000)
-                    }
-                )
-            elif model_name.startswith("ollama/") or model_name in [
-                "mistral:latest", "llama2:latest", "vicuna:latest", 
-                "codellama:latest", "neural-chat:latest"
-            ]:
-                model = model_name.replace("ollama/", "")
+            elif model_name.startswith("ollama/"):
                 return ChatOllama(
-                    model=model,
-                    temperature=config.get("temperature", 0.3),
-                    repeat_penalty=config.get("repeat_penalty", 1.1),
-                    base_url=OLLAMA_CONFIG["host"],
-                    timeout=OLLAMA_CONFIG["timeout"]
+                    model=model_name.split("/")[1],
+                    temperature=config.get("temperature", 0.2),
+                    base_url=OLLAMA_CONFIG["host"]
                 )
             else:
-                # Default to OpenAI
-                return ChatOpenAI(
-                    model_name=model_name,
-                    temperature=config.get("temperature", 0.3),
-                    max_tokens=config.get("max_tokens", 2000)
-                )
+                raise ValueError(f"Unsupported model provider for {model_name}")
         except Exception as e:
             logger.error(f"Error getting LLM for agent {agent_name}: {e}")
             raise
 
     def _get_message_history(self, agent_name: str, project_id: str) -> MongoDBChatMessageHistory:
-        """Get message history for an agent from MongoDB.
-
-        Args:
-            agent_name: Name of the agent.
-            project_id: ID of the project.
-
-        Returns:
-            A MongoDBChatMessageHistory instance.
-        """
-        try:
-            return MongoDBChatMessageHistory(
-                connection_string=MONGODB_CONFIG["connection_string"],
-                database_name=MONGODB_CONFIG["database_name"],
-                collection_name=f"message_history_{agent_name}",
-                session_id=project_id
-            )
-        except Exception as e:
-            logger.error(f"Error getting message history for agent {agent_name}: {e}")
-            raise
+        """Get message history for an agent."""
+        return MongoDBChatMessageHistory(
+            connection_string=MONGODB_CONFIG["connection_string"],
+            database_name=MONGODB_CONFIG["database_name"],
+            collection_name=f"message_history_{agent_name}_{project_id}"
+        )
 
     def _get_memory(self, agent_name: str, project_id: str) -> ConversationBufferMemory:
-        """Get memory for an agent.
-
-        Args:
-            agent_name: Name of the agent.
-            project_id: ID of the project.
-
-        Returns:
-            A ConversationBufferMemory instance.
-        """
-        try:
-            message_history = self._get_message_history(agent_name, project_id)
-            return ConversationBufferMemory(
-                memory_key="chat_history",
-                chat_memory=message_history,
-                return_messages=True
-            )
-        except Exception as e:
-            logger.error(f"Error getting memory for agent {agent_name}: {e}")
-            raise
+        """Get memory for an agent."""
+        message_history = self._get_message_history(agent_name, project_id)
+        return ConversationBufferMemory(
+            memory_key="chat_history",
+            chat_memory=message_history,
+            return_messages=True
+        )
 
     def _get_or_create_assistant(self, agent_name: str) -> str:
         """Get or create an assistant with LangGraph Cloud.
@@ -357,3 +299,25 @@ class AgentFactory:
         except Exception as e:
             logger.error(f"Error getting prompt template for agent {agent_name}: {e}")
             raise
+
+# Replace ToolExecutor with our own implementation
+class ToolExecutor:
+    """Simple tool executor implementation"""
+    def __init__(self, tools: List[BaseTool]):
+        self.tools = {tool.name: tool for tool in tools}
+    
+    def invoke(self, tool_name: str, tool_input: Any) -> Any:
+        if tool_name not in self.tools:
+            raise ValueError(f"Tool {tool_name} not found")
+        return self.tools[tool_name].run(tool_input)
+
+class AgentState:
+    """Represents the state of an agent in the workflow."""
+    def __init__(self, **kwargs):
+        self.data = kwargs
+    
+    def __getitem__(self, key):
+        return self.data.get(key)
+    
+    def __setitem__(self, key, value):
+        self.data[key] = value

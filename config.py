@@ -2,304 +2,114 @@
 Configuration for the Novel Writing System.
 """
 
-# Model configurations for agents
-MODEL_CONFIGS = {
-    # Strategic Level
-    "executive_director": {
-        "model": "anthropic/claude-3-opus",
-        "temperature": 0.2,
-        "max_tokens": 4000,
-    },
-    "human_feedback_manager": {
-        "model": "anthropic/claude-3-sonnet",
-        "temperature": 0.3,
-        "max_tokens": 2000,
-    },
-    "quality_assessment_director": {
-        "model": "meta-llama/Meta-Llama-3-70B-Instruct",
-        "temperature": 0.2,
-        "max_tokens": 3000,
-    },
-    "project_timeline_manager": {
-        "model": "anthropic/claude-3-haiku",
-        "temperature": 0.2,
-        "max_tokens": 1500,
-    },
-    
-    # Creative Director and Teams
-    "creative_director": {
-        "model": "anthropic/claude-3-opus",
-        "temperature": 0.4,
-        "max_tokens": 4000,
-    },
-    "structure_architect": {
-        "model": "databricks/dbrx-instruct",
-        "temperature": 0.3,
-        "max_tokens": 3000,
-    },
-    "plot_development_specialist": {
-        "model": "google/gemma-7b-it",
-        "temperature": 0.5,
-        "max_tokens": 2500,
-    },
-    "world_building_expert": {
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
-        "temperature": 0.6,
-        "max_tokens": 3000,
-    },
-    "character_psychology_specialist": {
-        "model": "Qwen/Qwen1.5-72B-Chat",
-        "temperature": 0.4,
-        "max_tokens": 3500,
-    },
-    "character_voice_designer": {
-        "model": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
-        "temperature": 0.5,
-        "max_tokens": 2500,
-    },
-    "character_relationship_mapper": {
-        "model": "mistralai/mistral-7b-instruct-v0.2",
-        "temperature": 0.4,
-        "max_tokens": 2500,
-    },
-    "emotional_arc_designer": {
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
-        "temperature": 0.5,
-        "max_tokens": 2500,
-    },
-    "reader_attachment_specialist": {
-        "model": "anthropic/claude-3-sonnet",
-        "temperature": 0.4,
-        "max_tokens": 2500,
-    },
-    "scene_emotion_calibrator": {
-        "model": "microsoft/Phi-3-mini-4k-instruct",
-        "temperature": 0.4,
-        "max_tokens": 2000,
-    },
-    
-    # Content Development Director and Teams
-    "content_development_director": {
-        "model": "mistralai/mixtral-8x7b-instruct-v0.1",
-        "temperature": 0.3,
-        "max_tokens": 3500,
-    },
-    "domain_knowledge_specialist": {
-        "model": "anthropic/claude-3-opus",
-        "temperature": 0.2,
-        "max_tokens": 4000,
-    },
-    "cultural_authenticity_expert": {
-        "model": "meta-llama/Meta-Llama-3-70B-Instruct",
-        "temperature": 0.3,
-        "max_tokens": 3500,
-    },
-    "historical_context_researcher": {
-        "model": "anthropic/claude-3-sonnet",
-        "temperature": 0.2,
-        "max_tokens": 3000,
-    },
-    "chapter_drafters": {
-        "model": "Salesforce/xgen-7b-8k-inst",
-        "temperature": 0.6,
-        "max_tokens": 6000,
-    },
-    "scene_construction_specialists": {
-        "model": "google/gemma-7b-it",
-        "temperature": 0.5,
-        "max_tokens": 3000,
-    },
-    "dialogue_crafters": {
-        "model": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
-        "temperature": 0.6,
-        "max_tokens": 3000,
-    },
-    "continuity_manager": {
-        "model": "mistralai/mistral-7b-instruct-v0.2",
-        "temperature": 0.3,
-        "max_tokens": 2500,
-    },
-    "voice_consistency_monitor": {
-        "model": "anthropic/claude-3-haiku",
-        "temperature": 0.3,
-        "max_tokens": 2000,
-    },
-    "description_enhancement_specialist": {
-        "model": "microsoft/Phi-3-medium-4k-instruct",
-        "temperature": 0.5,
-        "max_tokens": 2500,
-    },
-    
-    # Editorial Director and Teams
-    "editorial_director": {
-        "model": "anthropic/claude-3-opus",
-        "temperature": 0.2,
-        "max_tokens": 4000,
-    },
-    "structural_editor": {
-        "model": "databricks/dbrx-instruct",
-        "temperature": 0.3,
-        "max_tokens": 3000,
-    },
-    "character_arc_evaluator": {
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
-        "temperature": 0.3,
-        "max_tokens": 2500,
-    },
-    "thematic_coherence_analyst": {
-        "model": "mistralai/mistral-7b-instruct-v0.2",
-        "temperature": 0.3,
-        "max_tokens": 2500,
-    },
-    "prose_enhancement_specialist": {
-        "model": "NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO",
-        "temperature": 0.4,
-        "max_tokens": 2500,
-    },
-    "dialogue_refinement_expert": {
-        "model": "google/gemma-7b-it",
-        "temperature": 0.4,
-        "max_tokens": 2500,
-    },
-    "rhythm_cadence_optimizer": {
-        "model": "microsoft/Phi-3-medium-4k-instruct",
-        "temperature": 0.4,
-        "max_tokens": 2000,
-    },
-    "grammar_consistency_checker": {
-        "model": "microsoft/Phi-3-mini-4k-instruct",
-        "temperature": 0.2,
-        "max_tokens": 2000,
-    },
-    "fact_verification_specialist": {
-        "model": "anthropic/claude-3-opus",
-        "temperature": 0.1,
-        "max_tokens": 3000,
-    },
-    "formatting_standards_expert": {
-        "model": "microsoft/Phi-3-mini-4k-instruct",
-        "temperature": 0.2,
-        "max_tokens": 2000,
-    },
-    
-    # Market Alignment Director and Teams
-    "market_alignment_director": {
-        "model": "anthropic/claude-3-sonnet",
-        "temperature": 0.3,
-        "max_tokens": 3000,
-    },
-    "zeitgeist_analyst": {
-        "model": "anthropic/claude-3-sonnet",
-        "temperature": 0.4,
-        "max_tokens": 3000,
-    },
-    "cultural_conversation_mapper": {
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
-        "temperature": 0.4,
-        "max_tokens": 2500,
-    },
-    "trend_forecaster": {
-        "model": "mistralai/mixtral-8x7b-instruct-v0.1",
-        "temperature": 0.4,
-        "max_tokens": 3000,
-    },
-    "hook_optimization_expert": {
-        "model": "google/gemma-7b-it",
-        "temperature": 0.5,
-        "max_tokens": 2500,
-    },
-    "page_turner_designer": {
-        "model": "anthropic/claude-3-haiku",
-        "temperature": 0.4,
-        "max_tokens": 2000,
-    },
-    "satisfaction_engineer": {
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
-        "temperature": 0.4,
-        "max_tokens": 2500,
-    },
-    "positioning_specialist": {
-        "model": "anthropic/claude-3-sonnet",
-        "temperature": 0.3,
-        "max_tokens": 2500,
-    },
-    "title_blurb_optimizer": {
-        "model": "google/gemma-7b-it",
-        "temperature": 0.5,
-        "max_tokens": 2000,
-    },
-    "differentiation_strategist": {
-        "model": "databricks/dbrx-instruct",
-        "temperature": 0.3,
-        "max_tokens": 2500,
-    },
+import os
+from typing import Dict, Any
+from dotenv import load_dotenv
 
-    # Add the following configurations for Ollama models
-    "ollama_mistral": {
-        "model": "mistral:latest",
-        "temperature": 0.2,
-        "repeat_penalty": 1.1,
-        "context_window": 8000,
-    },
-    "ollama_llama": {
-        "model": "llama2:latest", 
-        "temperature": 0.3,
-        "repeat_penalty": 1.1,
-        "context_window": 4096,
-    },
-    "ollama_vicuna": {
-        "model": "vicuna:latest",
-        "temperature": 0.3,
-        "repeat_penalty": 1.1,
-        "context_window": 8000, 
-    },
-    "ollama_codellama": {
-        "model": "codellama:latest",
-        "temperature": 0.2,
-        "repeat_penalty": 1.1,
-        "context_window": 8000,
-    },
-    "ollama_neural": {
-        "model": "neural-chat:latest",
-        "temperature": 0.3,
-        "repeat_penalty": 1.1,
-        "context_window": 8000,
-    },
+# Load environment variables
+load_dotenv()
+
+def get_env_dict(prefix: str, default_value: Any = None) -> Dict[str, Any]:
+    """Get all environment variables with a specific prefix as a dictionary."""
+    return {
+        k[len(prefix):].lower(): os.getenv(k, default_value)
+        for k in os.environ
+        if k.startswith(prefix)
+    }
+
+# Model configurations for agents with environment variable overrides
+MODEL_CONFIGS = {
+    agent_name: {
+        "model": os.getenv(f"{agent_name.upper()}_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv(f"{agent_name.upper()}_TEMP", "0.2")),
+        "max_tokens": int(os.getenv(f"{agent_name.upper()}_MAX_TOKENS", "4000"))
+    }
+    for agent_name in [
+        "executive_director",
+        "human_feedback_manager",
+        "quality_assessment_director",
+        "project_timeline_manager",
+        "creative_director",
+        "structure_architect",
+        "plot_development_specialist",
+        "world_building_expert",
+        "character_psychology_specialist",
+        "character_voice_designer",
+        "character_relationship_mapper",
+        "emotional_arc_designer",
+        "reader_attachment_specialist",
+        "scene_emotion_calibrator",
+        "content_development_director",
+        "domain_knowledge_specialist",
+        "cultural_authenticity_expert",
+        "historical_context_researcher",
+        "chapter_drafters",
+        "scene_construction_specialists",
+        "dialogue_crafters",
+        "continuity_manager",
+        "voice_consistency_monitor",
+        "description_enhancement_specialist",
+        "editorial_director",
+        "structural_editor",
+        "character_arc_evaluator",
+        "thematic_coherence_analyst",
+        "prose_enhancement_specialist",
+        "dialogue_refinement_expert",
+        "rhythm_cadence_optimizer",
+        "grammar_consistency_checker",
+        "fact_verification_specialist",
+        "formatting_standards_expert",
+        "market_alignment_director",
+        "zeitgeist_analyst",
+        "cultural_conversation_mapper",
+        "trend_forecaster",
+        "hook_optimization_expert",
+        "page_turner_designer",
+        "satisfaction_engineer",
+        "positioning_specialist",
+        "title_blurb_optimizer",
+        "differentiation_strategist",
+        "ollama_mistral",
+        "ollama_llama",
+        "ollama_vicuna",
+        "ollama_codellama",
+        "ollama_neural",
+    ]
 }
 
-# MongoDB configuration
+# MongoDB configuration from environment
 MONGODB_CONFIG = {
-    "connection_string": "mongodb://localhost:27017/",
-    "database_name": "novel_writing_system",
+    "connection_string": os.getenv("MONGODB_CONNECTION_STRING", "mongodb://localhost:27017/"),
+    "database_name": os.getenv("MONGODB_DATABASE", "novel_writing_system"),
     "collections": {
-        "project_state": "project_state",
-        "documents": "documents",
-        "research": "research",
-        "feedback": "feedback",
-        "metrics": "metrics",
+        "project_state": os.getenv("MONGODB_COLLECTION_PROJECT_STATE", "project_state"),
+        "documents": os.getenv("MONGODB_COLLECTION_DOCUMENTS", "documents"),
+        "research": os.getenv("MONGODB_COLLECTION_RESEARCH", "research"),
+        "feedback": os.getenv("MONGODB_COLLECTION_FEEDBACK", "feedback"),
+        "metrics": os.getenv("MONGODB_COLLECTION_METRICS", "metrics"),
     }
 }
 
-# Server configuration
+# Server configuration from environment
 SERVER_CONFIG = {
-    "host": "0.0.0.0",
-    "port": 8000,
-    "debug": False,
-    "workers": 4,
+    "host": os.getenv("SERVER_HOST", "0.0.0.0"),
+    "port": int(os.getenv("SERVER_PORT", "8000")),
+    "debug": os.getenv("SERVER_DEBUG", "False").lower() == "true",
+    "workers": int(os.getenv("SERVER_WORKERS", "4")),
 }
 
-# Add Ollama host configuration
+# Add Ollama host configuration from environment
 OLLAMA_CONFIG = {
-    "host": "http://localhost:11434",
-    "timeout": 120,
+    "host": os.getenv("OLLAMA_HOST", "http://localhost:11434"),
+    "timeout": int(os.getenv("OLLAMA_TIMEOUT", "120")),
 }
 
-# Phase thresholds and quality gates
+# Phase thresholds and quality gates from environment or defaults
 QUALITY_GATES = {
     "initialization_to_development": {
-        "project_setup_completion": 100,  # Percentage
-        "initial_research_depth": 70,     # Percentage
-        "human_approval_required": True,
+        "project_setup_completion": float(os.getenv("QUALITY_INIT_SETUP", "100")),  # Percentage
+        "initial_research_depth": float(os.getenv("QUALITY_INIT_RESEARCH", "70")),     # Percentage
+        "human_approval_required": os.getenv("QUALITY_INIT_HUMAN_APPROVAL", "True").lower() == "true",
     },
     "development_to_creation": {
         "character_development_completion": 90,  # Percentage
