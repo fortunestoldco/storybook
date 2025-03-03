@@ -12,7 +12,7 @@ class DevelopmentInput(BaseModel):
     elements: Optional[List[str]] = None
 
 @tool
-def develop_plot_structure(input_data: Dict[str, Any]) -> Dict:
+def develop_plot_structure(input_data: DevelopmentInput) -> Dict:
     """Tool for developing plot structure."""
     return {
         "plot_elements": {
@@ -26,7 +26,7 @@ def develop_plot_structure(input_data: Dict[str, Any]) -> Dict:
     }
 
 @tool
-def develop_characters(input_data: Dict[str, Any]) -> Dict:
+def develop_characters(input_data: DevelopmentInput) -> Dict:
     """Tool for developing characters."""
     return {
         "characters": {
@@ -45,7 +45,7 @@ def develop_characters(input_data: Dict[str, Any]) -> Dict:
     }
 
 @tool
-def develop_world_building(input_data: Dict[str, Any]) -> Dict:
+def develop_world_building(input_data: DevelopmentInput) -> Dict:
     """Tool for developing world-building elements."""
     return {
         "world_elements": {
