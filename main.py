@@ -13,15 +13,15 @@ from utils import generate_id, current_timestamp
 
 import logging
 
-app = FastAPI(title="NovelSystem Langgraph Server")
-
-mongo_manager = MongoDBManager()
-agent_factory = AgentFactory(mongo_manager)
+app = FastAPI(title="Storybook API")
+db = MongoDBManager()
+agent_factory = AgentFactory(db)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+class ProjectCreate(BaseModel):
 class ProjectRequest(BaseModel):
     """Request model for creating a new project."""
     title: str

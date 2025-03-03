@@ -2,7 +2,7 @@
   "version": "1.0",
   "graphs": {
     "storybook": {
-      "path": "./workflows.py:create_storybook_workflow",
+      "path": "./graph.py:create_storybook_workflow",
       "config": {
         "metadata": {
           "description": "Complete story creation workflow",
@@ -10,11 +10,11 @@
         }
       }
     },
-    "initialization": "./workflows.py:create_initialization_graph",
-    "development": "./workflows.py:create_development_graph",
-    "creation": "./workflows.py:create_creation_graph",
-    "refinement": "./workflows.py:create_refinement_graph",
-    "finalization": "./workflows.py:create_finalization_graph"
+    "initialization": "./graph.py:create_initialization_graph",
+    "development": "./graph.py:create_development_graph",
+    "creation": "./graph.py:create_creation_graph",
+    "refinement": "./graph.py:create_refinement_graph",
+    "finalization": "./graph.py:create_finalization_graph"
   },
   "dependencies": ["."],
   "env": ".env"
