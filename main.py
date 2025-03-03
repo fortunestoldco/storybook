@@ -3,25 +3,24 @@ import uuid
 from typing import Dict, List, Optional, Any
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
-from agents import AgentFactory
-from state import ProjectState, NovelSystemState
+from agents.factory import AgentFactory
+from state import ProjectState
 from mongodb import MongoDBManager
 from workflows import get_phase_workflow
 from utils import generate_id, current_timestamp
 
 import logging
 
-app = FastAPI(title="Storybook API")
-db = MongoDBManager()
-agent_factory = AgentFactory(db)
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class ProjectCreate(BaseModel):
+app = FastAPI(title="Novel Writing System API")
+mongo_manager = MongoDBManager()
+agent_factory = AgentFactory(mongo_manager)
+
 class ProjectRequest(BaseModel):
     """Request model for creating a new project."""
     title: str
@@ -49,16 +48,16 @@ class FeedbackRequest(BaseModel):
 @app.post("/projects", response_model=Dict)
 async def create_project(request: ProjectRequest) -> Dict:
     """Create a new project.
-    
+
     Args:
         request: The project request.
-        
+
     Returns:
         The created project.
     """
     try:
         project_id = generate_id()
-        
+
         # Create initial project state
         project_state = ProjectState(
             project_id=project_id,
@@ -67,24 +66,21 @@ async def create_project(request: ProjectRequest) -> Dict:
             target_audience=request.target_audience,
             word_count_target=request.word_count_target
         )
-        
+
         # Save to MongoDB
         mongo_manager.save_state(project_id, project_state.dict())
-        
+
         logger.info(f"Project created with ID: {project_id}")
-        
+
         return {
             "project_id": project_id,
             "title": request.title,
             "status": "created",
             "current_phase": "initialization"
         }
-    except ValidationError as e:
-        logger.error(f"Validation error: {e}")
-        raise HTTPException(status_code=422, detail=e.errors())
     except Exception as e:
         logger.error(f"Error creating project: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/projects/{project_id}", response_model=Dict)
@@ -106,20 +102,29 @@ async def run_task(project_id: str, request: TaskRequest, background_tasks: Back
         project_data = mongo_manager.load_state(project_id)
         if not project_data:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         phase = request.phase or project_data.get("current_phase", "initialization")
         workflow = get_phase_workflow(phase, project_id, agent_factory)
-        
-        background_tasks.add_task(
-            workflow.invoke,
-            {
-                "title": project_data["title"],
+
+        # Create initial state for the workflow
+        initial_state = {
+            "project": project_data,
+            "current_phase": phase,
+            "current_input": {
                 "task": request.task,
-                "content": request.content,
-                "phase": phase
-            }
+                "content": request.content
+            },
+            "current_output": None,
+            "messages": [],
+            "errors": [],
+            "metrics": {}
+        }
+
+        # Run the workflow in the background
+        background_tasks.add_task(
+            lambda: workflow.invoke(initial_state)
         )
-        
+
         return {
             "project_id": project_id,
             "status": "running",
@@ -127,6 +132,7 @@ async def run_task(project_id: str, request: TaskRequest, background_tasks: Back
             "phase": phase
         }
     except Exception as e:
+        logger.error(f"Error running task: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -142,8 +148,9 @@ async def add_feedback(project_id: str, request: FeedbackRequest) -> Dict:
             "timestamp": current_timestamp()
         }
         mongo_manager.save_feedback(feedback)
-        return {"status": "feedback_added", "feedback_id": str(feedback.get("_id"))}
+        return {"status": "feedback_added", "feedback_id": feedback.get("_id", "")}
     except Exception as e:
+        logger.error(f"Error adding feedback: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -161,6 +168,7 @@ async def get_project_status(project_id: str) -> Dict:
             "last_update": project.get("last_update", None)
         }
     except Exception as e:
+        logger.error(f"Error getting project status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -178,64 +186,16 @@ async def get_manuscript(project_id: str) -> Dict:
             "version": project.get("version", "1.0")
         }
     except Exception as e:
+        logger.error(f"Error getting manuscript: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-if __name__ >= "__main__":
+if __name__ == "__main__":
     import uvicorn
     from config import SERVER_CONFIG
-    
-    uvicorn.run("main:app", 
-                host=SERVER_CONFIG["host"], 
-                port=SERVER_CONFIG["port"], 
+
+    uvicorn.run("main:app",
+                host=SERVER_CONFIG["host"],
+                port=SERVER_CONFIG["port"],
                 workers=SERVER_CONFIG["workers"],
                 log_level="info")
-
-from typing import Dict, Any
-from workflow import NovelWorkflow
-from state import ProjectState
-from mongodb import MongoDBManager
-
-def create_novel(input_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Main entry point for novel creation process."""
-    # Initialize state
-    state = ProjectState(
-        project_id=input_data.get("project_id", "default"),
-        title=input_data["title"],
-        genre=input_data.get("genre", "fiction"),
-        target_audience=input_data.get("target_audience", "general"),
-        word_count_target=input_data.get("word_count_target", 50000)
-    )
-    
-    # Initialize workflow
-    workflow = NovelWorkflow(state)
-    
-    # Execute workflow until completion
-    while state.current_phase != "complete":
-        try:
-            result = workflow.execute()
-            print(f"Completed phase: {state.current_phase}")
-            if result.get("status") == "error":
-                break
-        except Exception as e:
-            print(f"Error in phase {state.current_phase}: {str(e)}")
-            break
-    
-    return {
-        "status": "complete" if state.current_phase == "complete" else "error",
-        "final_state": state.dict(),
-        "metrics": state.progress_metrics
-    }
-
-if __name__ == "__main__":
-    # Example usage
-    input_data = {
-        "title": "The Test Novel",
-        "genre": "science fiction",
-        "target_audience": "young adult",
-        "word_count_target": 60000
-    }
-    
-    result = create_novel(input_data)
-    print(f"Novel creation completed with status: {result['status']}")
-    print(f"Final metrics: {result['metrics']}")

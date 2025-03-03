@@ -27,28 +27,28 @@ class ProjectState(BaseModel):
     genre: str
     target_audience: str
     word_count_target: int
-    
+
     # Phase tracking
     current_phase: str = "initialization"
     phase_history: List[Dict] = Field(default_factory=list)
-    
+
     # Director-level states
     executive_director: Dict = Field(default_factory=dict)
     creative_director: DirectorState = Field(default_factory=DirectorState)
     content_development_director: DirectorState = Field(default_factory=DirectorState)
     editorial_director: DirectorState = Field(default_factory=DirectorState)
     market_alignment_director: DirectorState = Field(default_factory=DirectorState)
-    
+
     # Overall manuscript state
     manuscript: Dict = Field(default_factory=dict)
-    
+
     # Quality and progress tracking
     quality_assessment: Dict = Field(default_factory=dict)
     progress_metrics: Dict = Field(default_factory=dict)
-    
+
     # Human feedback
     human_feedback: List[Dict] = Field(default_factory=list)
-    
+
     def update_phase(self, new_phase: str) -> None:
         """Update the current phase and record in history."""
         self.phase_history.append({
@@ -56,25 +56,33 @@ class ProjectState(BaseModel):
             "timestamp": str(datetime.now())
         })
         self.current_phase = new_phase
-    
+
     def get_team_state(self, director: str, team: str) -> TeamState:
         """Get the state for a specific team under a director."""
         director_state = getattr(self, director)
         return director_state.teams.get(team, TeamState())
-    
+
     def set_team_state(self, director: str, team: str, state: TeamState) -> None:
         """Set the state for a specific team under a director."""
         director_state = getattr(self, director)
         director_state.teams[team] = state
 
 
-class NovelSystemState(BaseModel):
-    """Pydantic model for validating system state."""
-    project: Dict = Field(default_factory=dict)
-    current_phase: str = Field(default="initialization")
-    current_input: Dict = Field(default_factory=dict)
-    current_output: Optional[Dict] = None
-    messages: List[Dict] = Field(default_factory=list)
-    errors: List[Dict] = Field(default_factory=list)
-    metrics: Dict = Field(default_factory=dict)
+class NovelSystemState(TypedDict):
+    """System state for the novel writing workflow."""
+    project: ProjectState
+    current_phase: str
+    current_input: Dict
+    current_output: Optional[Dict]
+    messages: List[Dict]
+    errors: List[Dict]
+    metrics: Dict
 
+
+class StoryState(TypedDict):
+    """State for the story creation workflow."""
+    title: str
+    manuscript: str
+    model_provider: str
+    model_name: str
+    feedback: List[str]
