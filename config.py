@@ -18,63 +18,221 @@ def get_env_dict(prefix: str, default_value: Any = None) -> Dict[str, Any]:
     }
 
 # Model configurations for agents with environment variable overrides
-MODEL_CONFIGS = {
-    agent_name: {
-        "model": os.getenv(f"{agent_name.upper()}_MODEL", "anthropic/claude-3-opus"),
-        "temperature": float(os.getenv(f"{agent_name.upper()}_TEMP", "0.2")),
-        "max_tokens": int(os.getenv(f"{agent_name.upper()}_MAX_TOKENS", "4000"))
+MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
+    "executive_director": {
+        "model": "anthropic/claude-3-opus-20240229",
+        "temperature": 0.2
+    },
+    "human_feedback_manager": {
+        "model": os.getenv("HUMAN_FEEDBACK_MANAGER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("HUMAN_FEEDBACK_MANAGER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("HUMAN_FEEDBACK_MANAGER_MAX_TOKENS", "4000"))
+    },
+    "quality_assessment_director": {
+        "model": os.getenv("QUALITY_ASSESSMENT_DIRECTOR_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("QUALITY_ASSESSMENT_DIRECTOR_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("QUALITY_ASSESSMENT_DIRECTOR_MAX_TOKENS", "4000"))
+    },
+    "project_timeline_manager": {
+        "model": os.getenv("PROJECT_TIMELINE_MANAGER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("PROJECT_TIMELINE_MANAGER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("PROJECT_TIMELINE_MANAGER_MAX_TOKENS", "4000"))
+    },
+    "creative_director": {
+        "model": os.getenv("CREATIVE_DIRECTOR_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CREATIVE_DIRECTOR_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CREATIVE_DIRECTOR_MAX_TOKENS", "4000"))
+    },
+    "structure_architect": {
+        "model": os.getenv("STRUCTURE_ARCHITECT_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("STRUCTURE_ARCHITECT_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("STRUCTURE_ARCHITECT_MAX_TOKENS", "4000"))
+    },
+    "plot_development_specialist": {
+        "model": os.getenv("PLOT_DEVELOPMENT_SPECIALIST_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("PLOT_DEVELOPMENT_SPECIALIST_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("PLOT_DEVELOPMENT_SPECIALIST_MAX_TOKENS", "4000"))
+    },
+    "world_building_expert": {
+        "model": os.getenv("WORLD_BUILDING_EXPERT_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("WORLD_BUILDING_EXPERT_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("WORLD_BUILDING_EXPERT_MAX_TOKENS", "4000"))
+    },
+    "character_psychology_specialist": {
+        "model": os.getenv("CHARACTER_PSYCHOLOGY_SPECIALIST_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CHARACTER_PSYCHOLOGY_SPECIALIST_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CHARACTER_PSYCHOLOGY_SPECIALIST_MAX_TOKENS", "4000"))
+    },
+    "character_voice_designer": {
+        "model": os.getenv("CHARACTER_VOICE_DESIGNER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CHARACTER_VOICE_DESIGNER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CHARACTER_VOICE_DESIGNER_MAX_TOKENS", "4000"))
+    },
+    "character_relationship_mapper": {
+        "model": os.getenv("CHARACTER_RELATIONSHIP_MAPPER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CHARACTER_RELATIONSHIP_MAPPER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CHARACTER_RELATIONSHIP_MAPPER_MAX_TOKENS", "4000"))
+    },
+    "emotional_arc_designer": {
+        "model": os.getenv("EMOTIONAL_ARC_DESIGNER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("EMOTIONAL_ARC_DESIGNER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("EMOTIONAL_ARC_DESIGNER_MAX_TOKENS", "4000"))
+    },
+    "reader_attachment_specialist": {
+        "model": os.getenv("READER_ATTACHMENT_SPECIALIST_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("READER_ATTACHMENT_SPECIALIST_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("READER_ATTACHMENT_SPECIALIST_MAX_TOKENS", "4000"))
+    },
+    "scene_emotion_calibrator": {
+        "model": os.getenv("SCENE_EMOTION_CALIBRATOR_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("SCENE_EMOTION_CALIBRATOR_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("SCENE_EMOTION_CALIBRATOR_MAX_TOKENS", "4000"))
+    },
+    "content_development_director": {
+        "model": os.getenv("CONTENT_DEVELOPMENT_DIRECTOR_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CONTENT_DEVELOPMENT_DIRECTOR_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CONTENT_DEVELOPMENT_DIRECTOR_MAX_TOKENS", "4000"))
+    },
+    "domain_knowledge_specialist": {
+        "model": os.getenv("DOMAIN_KNOWLEDGE_SPECIALIST_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("DOMAIN_KNOWLEDGE_SPECIALIST_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("DOMAIN_KNOWLEDGE_SPECIALIST_MAX_TOKENS", "4000"))
+    },
+    "cultural_authenticity_expert": {
+        "model": os.getenv("CULTURAL_AUTHENTICITY_EXPERT_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CULTURAL_AUTHENTICITY_EXPERT_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CULTURAL_AUTHENTICITY_EXPERT_MAX_TOKENS", "4000"))
+    },
+    "historical_context_researcher": {
+        "model": os.getenv("HISTORICAL_CONTEXT_RESEARCHER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("HISTORICAL_CONTEXT_RESEARCHER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("HISTORICAL_CONTEXT_RESEARCHER_MAX_TOKENS", "4000"))
+    },
+    "chapter_drafters": {
+        "model": os.getenv("CHAPTER_DRAFTERS_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CHAPTER_DRAFTERS_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CHAPTER_DRAFTERS_MAX_TOKENS", "4000"))
+    },
+    "scene_construction_specialists": {
+        "model": os.getenv("SCENE_CONSTRUCTION_SPECIALISTS_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("SCENE_CONSTRUCTION_SPECIALISTS_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("SCENE_CONSTRUCTION_SPECIALISTS_MAX_TOKENS", "4000"))
+    },
+    "dialogue_crafters": {
+        "model": os.getenv("DIALOGUE_CRAFTERS_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("DIALOGUE_CRAFTERS_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("DIALOGUE_CRAFTERS_MAX_TOKENS", "4000"))
+    },
+    "continuity_manager": {
+        "model": os.getenv("CONTINUITY_MANAGER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CONTINUITY_MANAGER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CONTINUITY_MANAGER_MAX_TOKENS", "4000"))
+    },
+    "voice_consistency_monitor": {
+        "model": os.getenv("VOICE_CONSISTENCY_MONITOR_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("VOICE_CONSISTENCY_MONITOR_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("VOICE_CONSISTENCY_MONITOR_MAX_TOKENS", "4000"))
+    },
+    "description_enhancement_specialist": {
+        "model": os.getenv("DESCRIPTION_ENHANCEMENT_SPECIALIST_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("DESCRIPTION_ENHANCEMENT_SPECIALIST_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("DESCRIPTION_ENHANCEMENT_SPECIALIST_MAX_TOKENS", "4000"))
+    },
+    "editorial_director": {
+        "model": os.getenv("EDITORIAL_DIRECTOR_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("EDITORIAL_DIRECTOR_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("EDITORIAL_DIRECTOR_MAX_TOKENS", "4000"))
+    },
+    "structural_editor": {
+        "model": os.getenv("STRUCTURAL_EDITOR_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("STRUCTURAL_EDITOR_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("STRUCTURAL_EDITOR_MAX_TOKENS", "4000"))
+    },
+    "character_arc_evaluator": {
+        "model": os.getenv("CHARACTER_ARC_EVALUATOR_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CHARACTER_ARC_EVALUATOR_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CHARACTER_ARC_EVALUATOR_MAX_TOKENS", "4000"))
+    },
+    "thematic_coherence_analyst": {
+        "model": os.getenv("THEMATIC_COHERENCE_ANALYST_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("THEMATIC_COHERENCE_ANALYST_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("THEMATIC_COHERENCE_ANALYST_MAX_TOKENS", "4000"))
+    },
+    "prose_enhancement_specialist": {
+        "model": os.getenv("PROSE_ENHANCEMENT_SPECIALIST_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("PROSE_ENHANCEMENT_SPECIALIST_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("PROSE_ENHANCEMENT_SPECIALIST_MAX_TOKENS", "4000"))
+    },
+    "dialogue_refinement_expert": {
+        "model": os.getenv("DIALOGUE_REFINEMENT_EXPERT_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("DIALOGUE_REFINEMENT_EXPERT_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("DIALOGUE_REFINEMENT_EXPERT_MAX_TOKENS", "4000"))
+    },
+    "rhythm_cadence_optimizer": {
+        "model": os.getenv("RHYTHM_CADENCE_OPTIMIZER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("RHYTHM_CADENCE_OPTIMIZER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("RHYTHM_CADENCE_OPTIMIZER_MAX_TOKENS", "4000"))
+    },
+    "grammar_consistency_checker": {
+        "model": os.getenv("GRAMMAR_CONSISTENCY_CHECKER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("GRAMMAR_CONSISTENCY_CHECKER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("GRAMMAR_CONSISTENCY_CHECKER_MAX_TOKENS", "4000"))
+    },
+    "fact_verification_specialist": {
+        "model": os.getenv("FACT_VERIFICATION_SPECIALIST_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("FACT_VERIFICATION_SPECIALIST_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("FACT_VERIFICATION_SPECIALIST_MAX_TOKENS", "4000"))
+    },
+    "formatting_standards_expert": {
+        "model": os.getenv("FORMATTING_STANDARDS_EXPERT_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("FORMATTING_STANDARDS_EXPERT_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("FORMATTING_STANDARDS_EXPERT_MAX_TOKENS", "4000"))
+    },
+    "market_alignment_director": {
+        "model": os.getenv("MARKET_ALIGNMENT_DIRECTOR_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("MARKET_ALIGNMENT_DIRECTOR_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("MARKET_ALIGNMENT_DIRECTOR_MAX_TOKENS", "4000"))
+    },
+    "zeitgeist_analyst": {
+        "model": os.getenv("ZEITGEIST_ANALYST_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("ZEITGEIST_ANALYST_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("ZEITGEIST_ANALYST_MAX_TOKENS", "4000"))
+    },
+    "cultural_conversation_mapper": {
+        "model": os.getenv("CULTURAL_CONVERSATION_MAPPER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("CULTURAL_CONVERSATION_MAPPER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("CULTURAL_CONVERSATION_MAPPER_MAX_TOKENS", "4000"))
+    },
+    "trend_forecaster": {
+        "model": os.getenv("TREND_FORECASTER_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("TREND_FORECASTER_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("TREND_FORECASTER_MAX_TOKENS", "4000"))
+    },
+    "ollama_mistral": {
+        "model": os.getenv("OLLAMA_MISTRAL_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("OLLAMA_MISTRAL_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("OLLAMA_MISTRAL_MAX_TOKENS", "4000"))
+    },
+    "ollama_llama": {
+        "model": os.getenv("OLLAMA_LLAMA_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("OLLAMA_LLAMA_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("OLLAMA_LLAMA_MAX_TOKENS", "4000"))
+    },
+    "ollama_vicuna": {
+        "model": os.getenv("OLLAMA_VICUNA_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("OLLAMA_VICUNA_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("OLLAMA_VICUNA_MAX_TOKENS", "4000"))
+    },
+    "ollama_codellama": {
+        "model": os.getenv("OLLAMA_CODELLAMA_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("OLLAMA_CODELLAMA_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("OLLAMA_CODELLAMA_MAX_TOKENS", "4000"))
+    },
+    "ollama_neural": {
+        "model": os.getenv("OLLAMA_NEURAL_MODEL", "anthropic/claude-3-opus"),
+        "temperature": float(os.getenv("OLLAMA_NEURAL_TEMP", "0.2")),
+        "max_tokens": int(os.getenv("OLLAMA_NEURAL_MAX_TOKENS", "4000"))
     }
-    for agent_name in [
-        "executive_director",
-        "human_feedback_manager",
-        "quality_assessment_director",
-        "project_timeline_manager",
-        "creative_director",
-        "structure_architect",
-        "plot_development_specialist",
-        "world_building_expert",
-        "character_psychology_specialist",
-        "character_voice_designer",
-        "character_relationship_mapper",
-        "emotional_arc_designer",
-        "reader_attachment_specialist",
-        "scene_emotion_calibrator",
-        "content_development_director",
-        "domain_knowledge_specialist",
-        "cultural_authenticity_expert",
-        "historical_context_researcher",
-        "chapter_drafters",
-        "scene_construction_specialists",
-        "dialogue_crafters",
-        "continuity_manager",
-        "voice_consistency_monitor",
-        "description_enhancement_specialist",
-        "editorial_director",
-        "structural_editor",
-        "character_arc_evaluator",
-        "thematic_coherence_analyst",
-        "prose_enhancement_specialist",
-        "dialogue_refinement_expert",
-        "rhythm_cadence_optimizer",
-        "grammar_consistency_checker",
-        "fact_verification_specialist",
-        "formatting_standards_expert",
-        "market_alignment_director",
-        "zeitgeist_analyst",
-        "cultural_conversation_mapper",
-        "trend_forecaster",
-        "hook_optimization_expert",
-        "page_turner_designer",
-        "satisfaction_engineer",
-        "positioning_specialist",
-        "title_blurb_optimizer",
-        "differentiation_strategist",
-        "ollama_mistral",
-        "ollama_llama",
-        "ollama_vicuna",
-        "ollama_codellama",
-        "ollama_neural",
-    ]
 }
 
 # MongoDB configuration from environment
@@ -105,11 +263,10 @@ OLLAMA_CONFIG = {
 }
 
 # Phase thresholds and quality gates from environment or defaults
-QUALITY_GATES = {
+QUALITY_GATES: Dict[str, Dict[str, float]] = {
     "initialization_to_development": {
-        "project_setup_completion": float(os.getenv("QUALITY_INIT_SETUP", "100")),  # Percentage
-        "initial_research_depth": float(os.getenv("QUALITY_INIT_RESEARCH", "70")),     # Percentage
-        "human_approval_required": os.getenv("QUALITY_INIT_HUMAN_APPROVAL", "True").lower() == "true",
+        "planning_completeness": 0.8,
+        "human_approval_required": True
     },
     "development_to_creation": {
         "character_development_completion": 90,  # Percentage

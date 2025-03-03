@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Any
 import os
 from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
 
 from langgraph.server import Server
 from langgraph.runtime import RuntimeEnvironment
@@ -40,8 +41,7 @@ server = Server(
     )
 )
 
-# Register graphs as endpoints
-@server.register("/initialize/{project_id}")
+app = FastAPI()
 def get_initialization_graph(project_id: str) -> StateGraph:
     return get_phase_workflow("initialization", project_id, agent_factory)
 

@@ -68,12 +68,13 @@ class ProjectState(BaseModel):
         director_state.teams[team] = state
 
 
-# Define the state record that gets passed between agents
-class NovelSystemState(TypedDict):
-    """State record for the novel writing system."""
-    project: ProjectState
-    current_input: Dict
-    current_output: Dict
-    messages: List[Dict]
-    errors: List[Dict]
+class NovelSystemState(BaseModel):
+    """Pydantic model for validating system state."""
+    project: Dict = Field(default_factory=dict)
+    current_phase: str = Field(default="initialization")
+    current_input: Dict = Field(default_factory=dict)
+    current_output: Optional[Dict] = None
+    messages: List[Dict] = Field(default_factory=list)
+    errors: List[Dict] = Field(default_factory=list)
+    metrics: Dict = Field(default_factory=dict)
 

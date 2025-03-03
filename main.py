@@ -190,3 +190,52 @@ if __name__ >= "__main__":
                 port=SERVER_CONFIG["port"], 
                 workers=SERVER_CONFIG["workers"],
                 log_level="info")
+
+from typing import Dict, Any
+from workflow import NovelWorkflow
+from state import ProjectState
+from mongodb import MongoDBManager
+
+def create_novel(input_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Main entry point for novel creation process."""
+    # Initialize state
+    state = ProjectState(
+        project_id=input_data.get("project_id", "default"),
+        title=input_data["title"],
+        genre=input_data.get("genre", "fiction"),
+        target_audience=input_data.get("target_audience", "general"),
+        word_count_target=input_data.get("word_count_target", 50000)
+    )
+    
+    # Initialize workflow
+    workflow = NovelWorkflow(state)
+    
+    # Execute workflow until completion
+    while state.current_phase != "complete":
+        try:
+            result = workflow.execute()
+            print(f"Completed phase: {state.current_phase}")
+            if result.get("status") == "error":
+                break
+        except Exception as e:
+            print(f"Error in phase {state.current_phase}: {str(e)}")
+            break
+    
+    return {
+        "status": "complete" if state.current_phase == "complete" else "error",
+        "final_state": state.dict(),
+        "metrics": state.progress_metrics
+    }
+
+if __name__ == "__main__":
+    # Example usage
+    input_data = {
+        "title": "The Test Novel",
+        "genre": "science fiction",
+        "target_audience": "young adult",
+        "word_count_target": 60000
+    }
+    
+    result = create_novel(input_data)
+    print(f"Novel creation completed with status: {result['status']}")
+    print(f"Final metrics: {result['metrics']}")

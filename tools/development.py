@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from langchain_core.tools import tool
 from pydantic import BaseModel
 from langchain_core.agents import AgentExecutor
@@ -12,58 +12,47 @@ class DevelopmentInput(BaseModel):
     elements: Optional[List[str]] = None
 
 @tool
-def develop_plot_structure(input_data: DevelopmentInput) -> Dict:
-    """Develops and refines plot structure and story arcs."""
+def develop_plot_structure(input_data: Dict[str, Any]) -> Dict:
+    """Tool for developing plot structure."""
     return {
         "plot_elements": {
-            "main_arc": "Hero's journey structure identified",
-            "subplots": ["Romance subplot", "Mystery element"],
-            "plot_points": [
-                "Inciting incident",
-                "First plot point",
-                "Midpoint",
-                "Crisis",
-                "Climax"
-            ]
+            "exposition": "Initial story setup and character introduction",
+            "rising_action": "Series of events building tension",
+            "climax": "Peak of conflict and tension",
+            "falling_action": "Events following climax",
+            "resolution": "Story conclusion and loose end resolution"
         },
-        "recommendations": [
-            "Strengthen midpoint conflict",
-            "Add more tension before climax"
-        ]
+        "completion_score": 0.85
     }
 
 @tool
-def develop_characters(input_data: DevelopmentInput) -> Dict:
-    """Develops character profiles, arcs, and relationships."""
+def develop_characters(input_data: Dict[str, Any]) -> Dict:
+    """Tool for developing characters."""
     return {
-        "character_development": {
-            "main_characters": [
-                {
-                    "name": "Protagonist",
-                    "arc": "Growth through adversity",
-                    "motivations": ["Primary goal", "Internal conflict"]
-                }
-            ],
-            "relationships": ["Mentor-student", "Rivals", "Allies"],
-            "development_points": [
-                "Character growth opportunities",
-                "Relationship dynamics"
-            ]
-        }
+        "characters": {
+            "protagonist": {
+                "arc": "Growth and transformation",
+                "motivation": "Primary character goals",
+                "conflicts": ["Internal struggle", "External opposition"]
+            },
+            "antagonist": {
+                "arc": "Resistance to change",
+                "motivation": "Opposition to protagonist",
+                "conflicts": ["Power struggle", "Moral conflict"]
+            }
+        },
+        "completion_score": 0.90
     }
 
 @tool
-def develop_world_building(input_data: DevelopmentInput) -> Dict:
-    """Creates and refines world-building elements."""
+def develop_world_building(input_data: Dict[str, Any]) -> Dict:
+    """Tool for developing world-building elements."""
     return {
         "world_elements": {
-            "setting": "Detailed environment description",
-            "rules": ["Magic system rules", "Social structures"],
-            "history": "Relevant historical context",
-            "culture": ["Customs", "Beliefs", "Social norms"]
+            "setting": "Primary story location and time period",
+            "rules": "Laws and constraints of the story world",
+            "culture": "Social and cultural elements",
+            "history": "Relevant historical context"
         },
-        "integration_points": [
-            "Story-world connection opportunities",
-            "World impact on characters"
-        ]
+        "completion_score": 0.80
     }

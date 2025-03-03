@@ -8,6 +8,19 @@ from typing import Dict, List, Optional, Any
 from config import QUALITY_GATES
 
 
+class StoryBookError(Exception):
+    """Base error class for StoryBook application."""
+    pass
+
+class AgentError(StoryBookError):
+    """Error raised when an agent fails."""
+    pass
+
+class WorkflowError(StoryBookError):
+    """Error raised when a workflow fails."""
+    pass
+
+
 def generate_id() -> str:
     """Generate a unique ID.
     
