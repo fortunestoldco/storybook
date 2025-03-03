@@ -7,6 +7,7 @@ from tools.development import (
     develop_characters,
     develop_world_building
 )
+from langchain_core.llms import get_llm_from_state
 
 @traceable(name="Plot Development Agent")
 def plot_development_agent(state: StoryState) -> Dict:
