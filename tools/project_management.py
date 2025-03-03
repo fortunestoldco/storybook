@@ -15,27 +15,46 @@ class ProjectInput(BaseModel):
 @tool
 def create_project_timeline(input_data: ProjectInput) -> Dict:
     """Creates a detailed project timeline with milestones."""
+    start_date = datetime.now()
+    estimated_completion = input_data.target_completion or (start_date + timedelta(days=30))
+    
+    # Detailed milestone breakdown
+    milestones = input_data.milestones or ["Development", "Creation", "Refinement"]
+    detailed_milestones = []
+    for milestone in milestones:
+        if milestone == "Development":
+            detailed_milestones.append({
+                "name": "Development",
+                "duration": "10 days",
+                "sub_tasks": ["Character profiles", "Plot outline"],
+                "dependencies": [],
+                "resource_allocation": ["Team A"],
+                "progress_tracking": "0%"
+            })
+        elif milestone == "Creation":
+            detailed_milestones.append({
+                "name": "Creation",
+                "duration": "14 days",
+                "sub_tasks": ["First draft", "Review points"],
+                "dependencies": ["Development"],
+                "resource_allocation": ["Team B"],
+                "progress_tracking": "0%"
+            })
+        elif milestone == "Refinement":
+            detailed_milestones.append({
+                "name": "Refinement",
+                "duration": "6 days",
+                "sub_tasks": ["Editing", "Final polish"],
+                "dependencies": ["Creation"],
+                "resource_allocation": ["Team C"],
+                "progress_tracking": "0%"
+            })
+    
     return {
         "timeline": {
-            "start_date": datetime.now().isoformat(),
-            "estimated_completion": (datetime.now() + timedelta(days=30)).isoformat(),
-            "phases": [
-                {
-                    "name": "Development",
-                    "duration": "10 days",
-                    "milestones": ["Character profiles", "Plot outline"]
-                },
-                {
-                    "name": "Creation",
-                    "duration": "14 days",
-                    "milestones": ["First draft", "Review points"]
-                },
-                {
-                    "name": "Refinement",
-                    "duration": "6 days",
-                    "milestones": ["Editing", "Final polish"]
-                }
-            ]
+            "start_date": start_date.isoformat(),
+            "estimated_completion": estimated_completion.isoformat(),
+            "phases": detailed_milestones
         }
     }
 

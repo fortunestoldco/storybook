@@ -58,38 +58,3 @@ def manage_continuity(input_data: ContentCreationInput) -> Dict:
         },
         "flags": []
     }
-
-def generate_content(input_data: Dict[str, Any]) -> Dict:
-    """Tool for generating story content."""
-    return {
-        "content": {
-            "chapter_1": "Generated chapter content...",
-            "scenes": ["Scene 1", "Scene 2", "Scene 3"],
-            "dialogue": ["Character interactions..."]
-        },
-        "completion_score": 0.85,
-        "quality_score": 0.80
-    }
-
-def review_content(input_data: Dict[str, Any]) -> Dict:
-    """Tool for reviewing generated content."""
-    return {
-        "review": {
-            "structure": "Well-organized content",
-            "pacing": "Good flow between scenes",
-            "coherence": "Consistent narrative"
-        },
-        "quality_score": 0.85,
-        "recommendations": ["Polish dialogue", "Enhance descriptions"]
-    }
-
-def manage_continuity(input_data: Dict[str, Any]) -> Dict:
-    """Tool for managing story continuity."""
-    return {
-        "continuity_check": {
-            "character_consistency": True,
-            "plot_consistency": True,
-            "timeline_consistency": True
-        },
-        "quality_score": 0.90
-    }
