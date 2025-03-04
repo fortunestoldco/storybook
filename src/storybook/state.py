@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Any
+from datetime import datetime
 
 from langchain_core.messages import AnyMessage
 from langgraph.graph import add_messages
@@ -12,18 +13,15 @@ from typing_extensions import Annotated
 
 
 @dataclass
-class ProjectInfo:
-    """Information about the novel project."""
-    
-    title: str = ""
-    genre: List[str] = field(default_factory=list)
-    target_audience: List[str] = field(default_factory=list)
-    style_preferences: Dict[str, Any] = field(default_factory=dict)
-    length_target: Dict[str, Any] = field(default_factory=dict)
-    content_guidelines: Dict[str, Any] = field(default_factory=dict)
-    timeline: Dict[str, Any] = field(default_factory=dict)
-    quality_assessment: Dict[str, Any] = field(default_factory=dict)
-    content: Dict[str, Any] = field(default_factory=dict)
+class Project:
+    """Project state container."""
+    title: str
+    genre: List[str]
+    target_audience: List[str]
+    content: Dict[str, Any]
+    quality_assessment: Dict[str, float]
+    created_at: datetime = datetime.now()
+    updated_at: datetime = datetime.now()
 
 
 @dataclass
@@ -50,7 +48,7 @@ class NovelSystemState(InputState):
     is_last_step: IsLastStep = field(default=False)
     """Indicates whether the current step is the last one before the graph raises an error."""
     
-    project: ProjectInfo = field(default_factory=ProjectInfo)
+    project: Project = field(default_factory=Project)
     """Information about the current novel project."""
     
     current_input: Dict[str, Any] = field(default_factory=dict)

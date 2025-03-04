@@ -1,4 +1,4 @@
-from react_agent.configuration import Configuration
+from storybook.configuration import Configuration
 
 
 def test_configuration_empty() -> None:

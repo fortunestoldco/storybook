@@ -467,9 +467,9 @@ def create_supervisor_graph(config: Configuration) -> StateGraph:
     builder.name = "storybook - Phase Supervisor"
 
     # Compile the supervisor graph with the checkpointer
-    graph = builder.compile(checkpointer=checkpointer)
+    supervisor = builder.compile(checkpointer=checkpointer)
 
-    return graph
+    return supervisor
 
 
 def create_storybook_graph(runnable_config: RunnableConfig) -> StateGraph:
