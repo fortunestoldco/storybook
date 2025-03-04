@@ -1,0 +1,12 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "storybook": "storybook.graph:get_storybook",
+    "storybook_supervisor": "storybook.graph:get_storybook_supervisor",
+    "storybook_initialization": "storybook.graph:get_storybook_initialization",
+    "storybook_creation": "storybook.graph:get_storybook_creation",
+    "storybook_refinement": "storybook.graph:get_storybook_refinement",
+    "storybook_finalization": "storybook.graph:get_storybook_finalization"
+    },
+  "env": ".env"
+}
