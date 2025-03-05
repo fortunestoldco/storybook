@@ -5,6 +5,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.mongodb import MongoDBCheckpointHandler
 
 from storybook.configuration import StoryBookConfig, Configuration
 from storybook.state import NovelSystemState, InputState
@@ -383,27 +384,24 @@ def create_phase_graph(phase: str, project_id: str, config: Configuration) -> St
         builder.add_edge("market_alignment_director", "executive_director")
         builder.add_edge("formatting_standards_expert", "editorial_director")
 
-    # Set up memory checkpointing
-    checkpointer = MemorySaver()
-
-    # Name the graph
-    builder.name = f"storybook - {phase.capitalize()} Phase"
-
-    # Create and compile the graph with the checkpointer
-    graph = builder.compile(checkpointer=checkpointer)
+    # Set up MongoDB checkpointing if configured
+    if config.mongodb_connection_string and config.mongodb_database_name:
+        checkpointer = MongoDBCheckpointHandler(
+            connection_string=config.mongodb_connection_string,
+            database_name=config.mongodb_database_name,
+            collection_name=f"checkpoint_{phase}_{project_id}"
+        )
+        graph = builder.compile(checkpointer=checkpointer)
+    else:
+        # Fallback to memory checkpointing
+        checkpointer = MemorySaver()
+        graph = builder.compile(checkpointer=checkpointer)
 
     return graph
 
 
 def create_supervisor_graph(config: Configuration) -> StateGraph:
-    """Create the supervisor graph that manages phase transitions.
-
-    Args:
-        config: System configuration.
-
-    Returns:
-        A supervisor StateGraph.
-    """
+    """Create the supervisor graph that manages phase transitions."""
     builder = StateGraph(NovelSystemState, input=InputState, config_schema=Configuration)
 
     # Phase transition node
@@ -460,14 +458,18 @@ def create_supervisor_graph(config: Configuration) -> StateGraph:
     builder.set_entry_point("phase_manager")
     builder.add_edge("phase_manager", "__end__")
 
-    # Set up memory checkpointing for the supervisor
-    checkpointer = MemorySaver()
-
-    # Name the graph
-    builder.name = "storybook - Phase Supervisor"
-
-    # Compile the supervisor graph with the checkpointer
-    graph = builder.compile(checkpointer=checkpointer)
+    # Set up MongoDB checkpointing if configured
+    if config.mongodb_connection_string and config.mongodb_database_name:
+        checkpointer = MongoDBCheckpointHandler(
+            connection_string=config.mongodb_connection_string,
+            database_name=config.mongodb_database_name,
+            collection_name="checkpoint_supervisor"
+        )
+        graph = builder.compile(checkpointer=checkpointer)
+    else:
+        # Fallback to memory checkpointing
+        checkpointer = MemorySaver()
+        graph = builder.compile(checkpointer=checkpointer)
 
     return graph
 

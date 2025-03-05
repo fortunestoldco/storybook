@@ -241,6 +241,8 @@ class StoryBookConfig(TypedDict, total=False):
     azure_openai_endpoint: Optional[str]
     azure_deployment_name: Optional[str]
     azure_api_version: Optional[str]
+    mongodb_connection_string: Optional[str]  # Add MongoDB config
+    mongodb_database_name: Optional[str]
     default_model: Optional[AgentModelConfig]  # Default model config
     agent_models: Optional[Dict[str, AgentModelConfig]]  # Per-agent configs
 
