@@ -8,6 +8,11 @@ from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 from langchain_community.llms import Replicate, Ollama
 from langchain.chat_models import ChatOllama
 from storybook.configuration import ModelProvider, Configuration
+import multiprocessing
+from langchain_community.chat_models import ChatLlamaCpp
+from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
+from langchain_aws import ChatBedrock, ChatBedrockConverse
 
 
 def get_message_text(msg: BaseMessage) -> str:
@@ -62,6 +67,66 @@ def load_chat_model(agent_name: str, config: Configuration) -> BaseChatModel:
             base_url=config.ollama_base_url,
             repeat_penalty=model_config.get("repetition_penalty", 1.03),
             num_ctx=model_config.get("max_new_tokens", 512)
+        )
+        
+    # Add llama.cpp handling
+    elif provider == ModelProvider.LLAMA_CPP:
+        if not config.llama_cpp_model_path:
+            raise ValueError("llama_cpp_model_path must be set for llama.cpp provider")
+            
+        return ChatLlamaCpp(
+            model_path=config.llama_cpp_model_path,
+            temperature=model_config.get("temperature", 0.7),
+            n_ctx=model_config.get("context_length", 2048),
+            n_gpu_layers=model_config.get("n_gpu_layers", 8),
+            n_batch=model_config.get("n_batch", 300),
+            max_tokens=model_config.get("max_new_tokens", 512),
+            n_threads=multiprocessing.cpu_count() - 1,
+            repeat_penalty=model_config.get("repetition_penalty", 1.1),
+            top_p=model_config.get("top_p", 0.95),
+            verbose=model_config.get("verbose", False)
+        )
+
+    # Add OpenAI handling
+    elif provider == ModelProvider.OPENAI:
+        if not config.openai_api_key:
+            raise ValueError("openai_api_key must be set for OpenAI provider")
+            
+        return ChatOpenAI(
+            model=model_config["model_name"],
+            temperature=model_config.get("temperature", 0.7),
+            max_tokens=model_config.get("max_new_tokens", 512),
+            model_kwargs=model_config.get("model_kwargs", {}),
+            openai_api_key=config.openai_api_key
+        )
+
+    # Add Anthropic handling 
+    elif provider == ModelProvider.ANTHROPIC:
+        if not config.anthropic_api_key:
+            raise ValueError("anthropic_api_key must be set for Anthropic provider")
+            
+        return ChatAnthropic(
+            model=model_config["model_name"],
+            temperature=model_config.get("temperature", 0.7),
+            max_tokens=model_config.get("max_new_tokens", 512),
+            anthropic_api_key=config.anthropic_api_key
+        )
+
+    # Add AWS Bedrock handling
+    elif provider == ModelProvider.BEDROCK:
+        if not (config.aws_access_key_id and config.aws_secret_access_key and config.aws_region):
+            raise ValueError("AWS credentials and region must be set for Bedrock provider")
+            
+        # Use ChatBedrockConverse by default since it's recommended for most users
+        return ChatBedrockConverse(
+            model=model_config["model_name"],  # e.g. "anthropic.claude-3-sonnet-20240229-v1:0"
+            temperature=model_config.get("temperature", 0.7),
+            max_tokens=model_config.get("max_new_tokens", 512),
+            model_kwargs=model_config.get("model_kwargs", {}),
+            credentials_profile_name=model_config.get("aws_profile"),
+            region_name=config.aws_region,
+            aws_access_key_id=config.aws_access_key_id,
+            aws_secret_access_key=config.aws_secret_access_key
         )
         
     raise ValueError(f"Unsupported model provider: {provider}")

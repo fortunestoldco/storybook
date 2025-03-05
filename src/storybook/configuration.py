@@ -207,7 +207,11 @@ class ModelProvider(str, Enum):
     """Supported model providers."""
     HUGGINGFACE = "huggingface"
     REPLICATE = "replicate"
-    OLLAMA = "ollama"  # Add Ollama provider
+    OLLAMA = "ollama"
+    LLAMA_CPP = "llama.cpp"
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    BEDROCK = "bedrock"  # Add AWS Bedrock
 
 class AgentModelConfig(TypedDict, total=False):
     """Configuration for an individual agent's model."""
@@ -226,6 +230,12 @@ class StoryBookConfig(TypedDict, total=False):
     huggingface_token: Optional[str]  # HuggingFace API token
     replicate_token: Optional[str]  # Replicate API token
     ollama_base_url: Optional[str]  # Add Ollama base URL config
+    llama_cpp_model_path: Optional[str]  # Add path to llama.cpp model weights
+    openai_api_key: Optional[str]  # Add OpenAI API key
+    anthropic_api_key: Optional[str]  # Add Anthropic API key
+    aws_access_key_id: Optional[str]  # Add AWS credentials
+    aws_secret_access_key: Optional[str]
+    aws_region: Optional[str]
     default_model: Optional[AgentModelConfig]  # Default model config
     agent_models: Optional[Dict[str, AgentModelConfig]]  # Per-agent configs
 
