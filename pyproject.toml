@@ -23,7 +23,9 @@ dependencies = [
     "langchain-huggingface",
     "replicate",
     "langchain-mongodb",
-    "langgraph-checkpoint-mongodb"
+    "langgraph-checkpoint-mongodb",
+    "pymongo",
+    "python-dotenv"
 ]
 
 
