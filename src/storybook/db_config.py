@@ -21,9 +21,7 @@ def initialize_config(config: Configuration):
 def get_client() -> MongoClient:
     """Get or create MongoDB client singleton."""
     global _client, _config
-    if _client is None:
-        if _config is None:
-            raise ValueError("Database configuration not initialized. Call initialize_config first.")
+    if (_client is None) and (_config is not None):
         _client = MongoClient(_config.mongodb_connection_string)
     return _client
 

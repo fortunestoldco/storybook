@@ -98,7 +98,7 @@ class Configuration:
     )
 
     replicate_api_key: str = field(
-        default=os.getenv("REPLICATE_API_KEY", ""),  # Fixed: removed default() call
+        default(os.getenv("REPLICATE_API_KEY", ""),  # Fixed: removed default() call
         metadata={
             "description": "API key for Replicate models."
         },
@@ -231,6 +231,8 @@ class Configuration:
             huggingface_api_key=hf_token,
             default_model_config=default_model,
             agent_model_configs=agent_models,
+            mongodb_connection_string=configurable.get("mongodb_connection_string", os.getenv("MONGODB_CONNECTION_STRING", "mongodb://localhost:27017")),
+            mongodb_database_name=configurable.get("mongodb_database_name", os.getenv("MONGODB_DATABASE_NAME", "storybook_system")),
             # ...other fields...
         )
 
