@@ -435,15 +435,27 @@ def create_phase_graph(phase: str, project_id: str, config: Configuration) -> St
         builder.add_edge("market_alignment_director", "executive_director")
         builder.add_edge("formatting_standards_expert", "editorial_director")
 
-    # Add MongoDB collection for research results
+    # Set up MongoDB checkpointing if configured
     if config.mongodb_connection_string and config.mongodb_database_name:
-        checkpointer = MongoDBCheckpointHandler(
+        checkpointer = MongoDBCheckpointHandler.from_connection_string(
             connection_string=config.mongodb_connection_string,
             database_name=config.mongodb_database_name,
             collection_name=f"checkpoint_{phase}_{project_id}",
-            collections={
-                "research_reports": f"research_reports_{project_id}",
-                "research_iterations": f"research_iterations_{project_id}"
+            collection_config={
+                "research_reports": {
+                    "name": f"research_reports_{project_id}",
+                    "indexes": [
+                        {"keys": [("project_id", 1)]},
+                        {"keys": [("type", 1), ("created_at", -1)]}
+                    ]
+                },
+                "research_iterations": {
+                    "name": f"research_iterations_{project_id}",
+                    "indexes": [
+                        {"keys": [("project_id", 1)]},
+                        {"keys": [("iteration", 1)]}
+                    ]
+                }
             }
         )
         graph = builder.compile(checkpointer=checkpointer)
@@ -520,16 +532,15 @@ def create_supervisor_graph(config: Configuration) -> StateGraph:
     builder.set_entry_point("phase_manager")
     builder.add_edge("phase_manager", "__end__")
 
-    # Set up MongoDB checkpointing if configured
+    # Set up checkpointing in create_supervisor_graph
     if config.mongodb_connection_string and config.mongodb_database_name:
-        checkpointer = MongoDBCheckpointHandler(
+        checkpointer = MongoDBCheckpointHandler.from_connection_string(
             connection_string=config.mongodb_connection_string,
             database_name=config.mongodb_database_name,
             collection_name="checkpoint_supervisor"
         )
         graph = builder.compile(checkpointer=checkpointer)
     else:
-        # Fallback to memory checkpointing
         checkpointer = MemorySaver()
         graph = builder.compile(checkpointer=checkpointer)
 
@@ -591,12 +602,20 @@ def create_storybook_graph(runnable_config: RunnableConfig) -> StateGraph:
     # Connect initialization to phase start
     builder.add_edge("initialize", "executive_director")
     
-    # Set up checkpointing
+    # Set up checkpointing in create_storybook_graph
     if config.mongodb_connection_string:
-        checkpointer = MongoDBCheckpointHandler(
+        checkpointer = MongoDBCheckpointHandler.from_connection_string(
             connection_string=config.mongodb_connection_string,
             database_name=config.mongodb_database_name,
-            collection_name="storybook_projects"
+            collection_name="storybook_projects",
+            collection_config={
+                "projects": {
+                    "name": "projects",
+                    "indexes": [
+                        {"keys": [("created_at", -1)]}
+                    ]
+                }
+            }
         )
     else:
         checkpointer = MemorySaver()

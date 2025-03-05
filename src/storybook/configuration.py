@@ -3,13 +3,34 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field, fields
 from typing import Annotated, Dict, Optional, Any, TypedDict, List, Union
-from dotenv import load_dotenv
-from langchain_huggingface import HuggingFaceEndpoint
 from enum import Enum
-from pydantic import BaseModel, Field
 from uuid import uuid4
 
-from langchain_core.runnables import RunnableConfig, ensure_config
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    print("Warning: python-dotenv not installed. Environment variables will not be loaded from .env file")
+    def load_dotenv(): pass
+
+try:
+    from langchain_huggingface import HuggingFaceEndpoint
+except ImportError:
+    print("Warning: langchain-huggingface not installed. HuggingFace functionality will be limited")
+    HuggingFaceEndpoint = None
+
+try:
+    from pydantic import BaseModel, Field
+except ImportError:
+    print("Warning: pydantic not installed. Schema validation will be disabled")
+    BaseModel = object
+    Field = lambda *args, **kwargs: None
+
+try:
+    from langchain_core.runnables import RunnableConfig, ensure_config
+except ImportError:
+    print("Warning: langchain-core not installed. Runtime configuration will be limited")
+    RunnableConfig = dict
+    def ensure_config(x): return x
 
 # Load environment variables from .env file
 load_dotenv()
@@ -231,8 +252,6 @@ class Configuration:
             huggingface_api_key=hf_token,
             default_model_config=default_model,
             agent_model_configs=agent_models,
-            mongodb_connection_string=configurable.get("mongodb_connection_string", os.getenv("MONGODB_CONNECTION_STRING", "mongodb://localhost:27017")),
-            mongodb_database_name=configurable.get("mongodb_database_name", os.getenv("MONGODB_DATABASE_NAME", "storybook_system")),
             # ...other fields...
         )
 
