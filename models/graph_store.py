@@ -2,7 +2,7 @@ from typing import Dict, Any, List, Optional
 from langchain_mongodb.graphrag.graph import MongoDBGraphStore
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
-from db_config import MONGODB_URI, DB_NAME
+from storybook.db_config import MONGODB_URI, DB_NAME
 
 class GraphStoreManager:
     """Manager for MongoDB-based knowledge graph operations."""
