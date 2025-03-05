@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field, fields
-from typing import Annotated, Dict, Optional, Any, TypedDict
+from typing import Annotated, Dict, Optional, Any, TypedDict, List
 from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEndpoint
 from enum import Enum
+from pydantic import BaseModel
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 
@@ -222,6 +223,9 @@ class AgentModelConfig(TypedDict, total=False):
     max_new_tokens: int 
     temperature: float
     repetition_penalty: float
+    model_version: Optional[str]
+    streaming: Optional[bool]
+    model_kwargs: Optional[Dict]
 
 class StoryBookConfig(TypedDict, total=False):
     """Runtime configuration schema for the storybook system."""
