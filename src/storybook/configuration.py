@@ -98,7 +98,7 @@ class Configuration:
     )
 
     replicate_api_key: str = field(
-        default(os.getenv("REPLICATE_API_KEY", ""),  # Fixed: removed default() call
+        default=os.getenv("REPLICATE_API_KEY", ""),  # Fixed: removed default() call
         metadata={
             "description": "API key for Replicate models."
         },
