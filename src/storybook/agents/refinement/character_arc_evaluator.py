@@ -22,6 +22,7 @@ class CharacterArcEvaluator(BaseAgent):
                 ConsistencyCheckTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,

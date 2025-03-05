@@ -4,9 +4,9 @@ from langchain_core.runnables import RunnableConfig
 
 from storybook.state import NovelSystemState
 from storybook.tools.dialogue import (
-    DialoguePolishingTool,
-    ConversationFlowTool,
-    SubtextEnhancementTool
+    DialogueRevisionTool,
+    DialogueStyleTool,
+    DialogueConsistencyTool
 )
 from storybook.agents.base_agent import BaseAgent
 
@@ -17,11 +17,12 @@ class DialogueRefinementExpert(BaseAgent):
         super().__init__(
             name="dialogue_refinement_expert",
             tools=[
-                DialoguePolishingTool(),
-                ConversationFlowTool(),
-                SubtextEnhancementTool()
+                DialogueRevisionTool(),
+                DialogueStyleTool(),
+                DialogueConsistencyTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,

@@ -20,6 +20,7 @@ class ExecutiveDirector(BaseAgent):
                 ProjectManagementTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,

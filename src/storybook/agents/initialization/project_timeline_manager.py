@@ -13,6 +13,7 @@ class ProjectTimelineManager(BaseAgent):
             name="project_timeline_manager",
             tools=[]
         )
+        self._validate_tools()
 
     async def process(
         self,
