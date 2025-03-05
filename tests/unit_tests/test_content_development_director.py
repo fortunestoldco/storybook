@@ -56,4 +56,4 @@ async def test_progress_tracking(mock_state):
     
     assert "messages" in result
     assert "content_updates" in result
-    assert "progress" in result["content_updates"]
+    assert "progress" in result "content_updates"

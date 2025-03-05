@@ -25,7 +25,7 @@ def mock_state():
     )
 
 @pytest.mark.asyncio
-async def test_scene_construction():
+async def test_scene_construction(mock_state):
     """Test scene construction functionality."""
     specialist = SceneConstructionSpecialist()
     result = await specialist.process(mock_state, {})
@@ -35,7 +35,7 @@ async def test_scene_construction():
     assert "scene" in result["scene_updates"]
 
 @pytest.mark.asyncio
-async def test_flow_analysis():
+async def test_flow_analysis(mock_state):
     """Test scene flow analysis."""
     mock_state.current_input["task"]["type"] = "flow_analysis"
     specialist = SceneConstructionSpecialist()
@@ -46,7 +46,7 @@ async def test_flow_analysis():
     assert "flow" in result["scene_updates"]
 
 @pytest.mark.asyncio
-async def test_transition_crafting():
+async def test_transition_crafting(mock_state):
     """Test scene transition crafting."""
     mock_state.current_input["task"]["type"] = "transition"
     specialist = SceneConstructionSpecialist()
