@@ -8,7 +8,13 @@ from langgraph.graph import StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.checkpoint.mongodb import MongoDBCheckpointHandler
 
-from storybook.configuration import StoryBookConfig, Configuration
+from storybook.configuration import (
+    StoryBookConfig, 
+    Configuration, 
+    ProjectType,
+    NewProjectInput,
+    ExistingProjectInput
+)
 from storybook.state import NovelSystemState, InputState
 from storybook.agents import AgentFactory
 from storybook.utils import check_quality_gate
@@ -483,7 +489,7 @@ def create_storybook_graph(runnable_config: RunnableConfig) -> StateGraph:
     builder = StateGraph(NovelSystemState, input_schema=InputState)
     
     async def initialize_project(state: NovelSystemState, config: RunnableConfig) -> Dict[str, Any]:
-        """Initialize new project or load existing one."""
+        """Initialize new project or load existing one.""" 
         input_state = cast(InputState, state.input)
         
         if input_state.project_type == ProjectType.NEW:
