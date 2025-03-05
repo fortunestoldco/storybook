@@ -8,6 +8,15 @@ from langgraph.graph import StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.checkpoint.mongodb import MongoDBCheckpointHandler
 
+# Add research imports
+from storybook.research.graphs import create_research_subgraph
+from storybook.research.states import (
+    DomainResearchState,
+    CulturalResearchState,
+    MarketResearchState,
+    FactVerificationState
+)
+
 from storybook.configuration import (
     StoryBookConfig, 
     Configuration, 
@@ -99,10 +108,45 @@ def create_phase_graph(phase: str, project_id: str, config: Configuration) -> St
     # Create the graph builder
     builder = StateGraph(NovelSystemState, input=InputState, config_schema=Configuration)
 
+    # Create research subgraphs for research agents
+    research_agents = {
+        "domain_knowledge_specialist": {
+            "research_type": "domain",
+            "state_class": DomainResearchState
+        },
+        "cultural_authenticity_expert": {
+            "research_type": "cultural", 
+            "state_class": CulturalResearchState
+        },
+        "market_alignment_director": {
+            "research_type": "market",
+            "state_class": MarketResearchState
+        },
+        "fact_verification_specialist": {
+            "research_type": "fact",
+            "state_class": FactVerificationState
+        }
+    }
+
     # Create and add all agents for this phase
     for agent_name in agents[phase]:
-        agent_function = agent_factory.create_agent(agent_name, project_id)
-        builder.add_node(agent_name, agent_function)
+        if agent_name in research_agents:
+            # Create research subgraph for research agents
+            research_config = research_agents[agent_name]
+            research_graph = create_research_subgraph(
+                research_type=research_config["research_type"],
+                state_class=research_config["state_class"],
+                config=config
+            )
+            builder.add_subgraph(
+                research_graph, 
+                node_name=agent_name,
+                include_edges=True
+            )
+        else:
+            # Create regular agent node
+            agent_function = agent_factory.create_agent(agent_name, project_id)
+            builder.add_node(agent_name, agent_function)
 
     # Set executive_director as the entry point
     builder.add_edge("__start__", "executive_director")
@@ -391,12 +435,16 @@ def create_phase_graph(phase: str, project_id: str, config: Configuration) -> St
         builder.add_edge("market_alignment_director", "executive_director")
         builder.add_edge("formatting_standards_expert", "editorial_director")
 
-    # Set up MongoDB checkpointing if configured
+    # Add MongoDB collection for research results
     if config.mongodb_connection_string and config.mongodb_database_name:
         checkpointer = MongoDBCheckpointHandler(
             connection_string=config.mongodb_connection_string,
             database_name=config.mongodb_database_name,
-            collection_name=f"checkpoint_{phase}_{project_id}"
+            collection_name=f"checkpoint_{phase}_{project_id}",
+            collections={
+                "research_reports": f"research_reports_{project_id}",
+                "research_iterations": f"research_iterations_{project_id}"
+            }
         )
         graph = builder.compile(checkpointer=checkpointer)
     else:
@@ -439,6 +487,16 @@ def create_supervisor_graph(config: Configuration) -> StateGraph:
 
         if gate_result["passed"]:
             next_phase = next_phase_map[current_phase]
+            
+            # Archive research reports before phase transition
+            if config.mongodb_connection_string:
+                await archive_phase_research(
+                    project_id=state.project.id,
+                    phase=current_phase,
+                    connection_string=config.mongodb_connection_string,
+                    database_name=config.mongodb_database_name
+                )
+
             # Record phase transition in history
             phase_history = state.phase_history.copy()
             if current_phase not in phase_history:

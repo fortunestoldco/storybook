@@ -6,6 +6,7 @@ from datetime import datetime
 from db_config import get_collection, COLLECTIONS, VECTOR_COLLECTIONS
 from models.style import StyleGuide
 from vector_search import VectorSearchManager
+from ..utils.vector_search import VectorSearch, SearchResult
 
 @tool
 def creative_vision_board(action: str, project_id: str, content: Dict[str, Any] = None) -> Dict[str, Any]:

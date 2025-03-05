@@ -1,10 +1,46 @@
+import os
+from typing import Dict, Any, List, Optional, Type
+from langchain_core.tools import BaseTool
+from langchain_core.messages import AIMessage
+from langchain_core.runnables import RunnableConfig
+from ..agents.base import BaseAgent
+from ..models.system import NovelSystemState
+from ..storage.research import ResearchStorage
+from .tools import (
+    execute_research,
+    analyze_research_quality,
+    identify_knowledge_gaps,
+    generate_followup_queries
+)
+from .states import (
+    ResearchState,
+    ResearchReport,
+    ResearchIteration,
+    ResearchQuery
+)
+from .config import validate_api_configuration, get_api_key
+
 class ResearchAgent(BaseAgent):
     """Base class for research-focused agents."""
     
     def __init__(self, name: str, tools: List[BaseTool], config: Dict[str, Any]):
         super().__init__(name, tools)
+        if not validate_api_configuration(config):
+            raise ValueError(f"Invalid API configuration for {name}")
+            
         self.research_config = config
+        self.research_config["api_key"] = get_api_key(config["search_api"])
         self.storage = ResearchStorage()
+        
+        # Configure from env defaults if not specified
+        self.max_iterations = config.get("max_iterations", 
+            int(os.getenv("DEFAULT_MAX_RESEARCH_ITERATIONS", 3)))
+        self.queries_per_iteration = config.get("queries_per_iteration",
+            int(os.getenv("DEFAULT_QUERIES_PER_ITERATION", 3)))
+        self.quality_threshold = config.get("quality_threshold",
+            float(os.getenv("DEFAULT_QUALITY_THRESHOLD", 0.8)))
+        self.cache_results = config.get("cache_results",
+            os.getenv("ENABLE_RESEARCH_CACHE", "true").lower() == "true")
     
     async def execute_research_cycle(self, state: ResearchState) -> Dict[str, Any]:
         """Execute a full research cycle with storage."""

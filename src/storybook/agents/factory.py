@@ -53,6 +53,15 @@ from storybook.research.agents import (
     MarketAlignmentDirector,
     FactVerificationSpecialist
 )
+from .research.graphs import create_research_subgraph
+from ..research.agents import ResearchAgent
+from ..research.states import (
+    DomainResearchState,
+    CulturalResearchState, 
+    MarketResearchState,
+    FactVerificationState
+)
+from ..research import graphs
 
 
 class AgentFactory:
@@ -108,16 +117,39 @@ class AgentFactory:
 
     def create_agent(self, agent_name: str, project_id: str) -> BaseAgent:
         """Create an agent instance."""
-        if agent_name == "domain_knowledge_specialist":
-            return DomainKnowledgeSpecialist(
+        
+        # Research agents use the deep research subgraph
+        research_agents = {
+            "domain_knowledge_specialist": {
+                "research_type": "domain",
+                "state_class": DomainResearchState
+            },
+            "cultural_authenticity_expert": {
+                "research_type": "cultural",
+                "state_class": CulturalResearchState  
+            },
+            "market_alignment_director": {
+                "research_type": "market",
+                "state_class": MarketResearchState
+            },
+            "fact_verification_specialist": {
+                "research_type": "fact",
+                "state_class": FactVerificationState
+            }
+        }
+        
+        if agent_name in research_agents:
+            # Create research subgraph for this agent
+            research_config = research_agents[agent_name]
+            research_graph = create_research_subgraph(research_config["research_type"])
+            
+            return ResearchAgent(
                 name=agent_name,
-                tools=self.get_research_tools(),
-                config=self.config.domain_knowledge_config
+                research_graph=research_graph,
+                state_class=research_config["state_class"],
+                config=self.get_research_config(agent_name)
             )
-        # ... similar for other research agents ...
-
-    def create_agent(self, agent_name: str, project_id: str) -> Callable:
-        """Create an agent function for the specified role."""
+            
         if agent_name not in self.agent_roles:
             raise ValueError(f"Unknown agent role: {agent_name}")
 

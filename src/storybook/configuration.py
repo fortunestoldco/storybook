@@ -33,6 +33,9 @@ class SearchAPI(str, Enum):
     ARXIV = "arxiv"
     PUBMED = "pubmed"
     LINKUP = "linkup"
+    SERPER = "serper"
+    GOOGLE = "google"
+    BING = "bing"
 
 @dataclass(kw_only=True)
 class Configuration:
@@ -115,10 +118,26 @@ class Configuration:
     )
 
     agent_model_configs: Dict[str, Dict[str, Any]] = field(
-        default_factory=dict,
-        metadata={
-            "description": "Per-agent model configurations."
+        default_factory=lambda: {
+            "research_quality_analyzer": {
+                "provider": "anthropic",
+                "model": "claude-3-sonnet-20240229",
+                "temperature": 0
+            },
+            "research_gap_analyzer": {
+                "provider": "anthropic", 
+                "model": "claude-3-sonnet-20240229",
+                "temperature": 0
+            },
+            "research_query_generator": {
+                "provider": "anthropic",
+                "model": "claude-3-sonnet-20240229", 
+                "temperature": 0.2
+            }
         },
+        metadata={
+            "description": "Model configurations for specialized research agents."
+        }
     )
 
     quality_gates: Dict[str, Dict[str, Any]] = field(
@@ -227,13 +246,14 @@ class AgentModelConfig(TypedDict, total=False):
     streaming: Optional[bool]
     model_kwargs: Optional[Dict]
 
-class ResearchAgentConfig(TypedDict, total=False):
-    """Configuration for research agents."""
+class ResearchConfig(TypedDict, total=False):
+    """Configuration for research operations."""
     search_api: SearchAPI
     search_api_config: Optional[Dict[str, Any]]
-    max_iterations: int = 3
-    queries_per_iteration: int = 3
-    quality_threshold: float = 0.8
+    max_iterations: int
+    queries_per_iteration: int
+    quality_threshold: float
+    cache_results: bool
 
 class StoryBookConfig(TypedDict, total=False):
     """Runtime configuration schema for the storybook system."""
@@ -258,16 +278,22 @@ class StoryBookConfig(TypedDict, total=False):
     default_model: Optional[AgentModelConfig]  # Default model config
     agent_models: Optional[Dict[str, AgentModelConfig]]  # Per-agent configs
     
-    # Research configuration
-    tavily_api_key: Optional[str]
+    # Research API Keys
     perplexity_api_key: Optional[str]
+    tavily_api_key: Optional[str]
     exa_api_key: Optional[str]
+    arxiv_api_key: Optional[str]
+    pubmed_api_key: Optional[str]
     linkup_api_key: Optional[str]
+    serper_api_key: Optional[str]
+    google_api_key: Optional[str]
+    bing_api_key: Optional[str]
     
-    domain_knowledge_config: Optional[ResearchAgentConfig]
-    cultural_research_config: Optional[ResearchAgentConfig]
-    market_research_config: Optional[ResearchAgentConfig]
-    fact_verification_config: Optional[ResearchAgentConfig]
+    # Research Configurations
+    domain_research_config: Optional[ResearchConfig]
+    cultural_research_config: Optional[ResearchConfig]
+    market_research_config: Optional[ResearchConfig]
+    fact_verification_config: Optional[ResearchConfig]
 
 class ProjectType(str, Enum):
     """Type of project submission."""
