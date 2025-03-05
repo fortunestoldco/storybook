@@ -237,23 +237,40 @@ class Configuration:
         if not config:
             return cls()
             
-        configurable = config.get("configurable", {})
+        configurable = ensure_config(config).get("configurable", {})
         
-        # Get HF token from runtime config or environment
-        hf_token = configurable.get("huggingface_token") or os.getenv("HUGGINGFACE_API_KEY", "")
+        # Initialize with default values first
+        conf_dict = {}
         
-        # Get default model config
-        default_model = configurable.get("default_model", cls.default_model_config)
+        # Map all available fields from runtime config
+        for field in fields(cls):
+            if field.name in configurable:
+                conf_dict[field.name] = configurable[field.name]
         
-        # Get per-agent configurations
-        agent_models = configurable.get("agent_models", {})
+        # Handle special cases for API keys
+        api_keys = {
+            "huggingface_api_key": configurable.get("huggingface_token"),
+            "openai_api_key": configurable.get("openai_api_key"),
+            "anthropic_api_key": configurable.get("anthropic_api_key"),
+            "replicate_api_key": configurable.get("replicate_token"),
+        }
         
-        return cls(
-            huggingface_api_key=hf_token,
-            default_model_config=default_model,
-            agent_model_configs=agent_models,
-            # ...other fields...
-        )
+        # Only update API keys if they are provided in config
+        for key, value in api_keys.items():
+            if value is not None:
+                conf_dict[key] = value
+                
+        # Handle model configurations
+        if "default_model" in configurable:
+            conf_dict["default_model_config"] = configurable["default_model"]
+            
+        if "agent_models" in configurable:
+            conf_dict["agent_model_configs"] = configurable["agent_models"]
+            
+        try:
+            return cls(**conf_dict)
+        except Exception as e:
+            raise ValueError(f"Failed to create configuration from runnable config: {str(e)}")
 
 class AgentModelConfig(TypedDict, total=False):
     """Configuration for an individual agent's model."""
