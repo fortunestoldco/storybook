@@ -5,6 +5,8 @@ import os
 
 from storybook.configuration import Configuration
 from storybook.agents.factory import AgentFactory
+from storybook.tools.base import NovelWritingTool
+from storybook.tools.quality import QualityMetricsTool
 
 @pytest.fixture(autouse=True)
 def mock_env_vars():
@@ -35,6 +37,11 @@ async def agent_factory(mock_config, mock_env_vars):
         mock_init_model.return_value = Mock()
         factory = AgentFactory(mock_config)
         return factory
+
+@pytest.fixture
+def factory():
+    config = Configuration(model="test-model")
+    return AgentFactory(config)
 
 @pytest.mark.asyncio
 async def test_agent_factory_initialization(agent_factory):

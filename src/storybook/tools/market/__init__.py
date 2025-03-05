@@ -1,6 +1,5 @@
-"""Market analysis tools module."""
-
-from storybook.tools.market.analysis import (
+"""Market analysis and positioning tools."""
+from .analysis import (
     MarketAnalysisTool,
     PositioningStrategyTool,
     CompetitorAnalysisTool

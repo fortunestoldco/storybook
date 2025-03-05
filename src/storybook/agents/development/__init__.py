@@ -1,16 +1,16 @@
-"""Novel writing agents module."""
-from storybook.agents.factory import AgentFactory
-from storybook.agents.base_agent import BaseAgent
+"""Development phase agents."""
 from .creative_director import CreativeDirector
 from .structure_architect import StructureArchitect
-from .plot_specialist import PlotDevelopmentSpecialist
-from .world_expert import WorldBuildingExpert
+from .plot_development_specialist import PlotDevelopmentSpecialist
+from .world_building_expert import WorldBuildingExpert
+from .domain_knowledge_specialist import DomainKnowledgeSpecialist
+from .cultural_authenticity_expert import CulturalAuthenticityExpert
 
 __all__ = [
-    "AgentFactory",
-    "BaseAgent",
     "CreativeDirector",
     "StructureArchitect",
     "PlotDevelopmentSpecialist",
-    "WorldBuildingExpert"
+    "WorldBuildingExpert",
+    "DomainKnowledgeSpecialist",
+    "CulturalAuthenticityExpert"
 ]

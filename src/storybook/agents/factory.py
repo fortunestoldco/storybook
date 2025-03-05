@@ -1,21 +1,31 @@
-from typing import Dict, Type
+"""Agent factory module."""
+from typing import Dict, Type, Any
 from storybook.configuration import Configuration
 from storybook.agents.base_agent import BaseAgent
 
-# Import agent implementations directly
+# Initialization Phase
 from storybook.agents.initialization.executive_director import ExecutiveDirector
 from storybook.agents.initialization.quality_assessment_director import QualityAssessmentDirector
 from storybook.agents.initialization.human_feedback_manager import HumanFeedbackManager
 
+# Development Phase  
 from storybook.agents.development.creative_director import CreativeDirector
 from storybook.agents.development.structure_architect import StructureArchitect
-from storybook.agents.development.plot_specialist import PlotDevelopmentSpecialist
-from storybook.agents.development.world_expert import WorldBuildingExpert
+from storybook.agents.development.plot_development_specialist import PlotDevelopmentSpecialist
+from storybook.agents.development.world_building_expert import WorldBuildingExpert
+from storybook.agents.development.domain_knowledge_specialist import DomainKnowledgeSpecialist
+from storybook.agents.development.cultural_authenticity_expert import CulturalAuthenticityExpert
 
-from storybook.agents.creation.content_director import ContentDevelopmentDirector
-from storybook.agents.creation.chapter_drafter import ChapterDrafter
-from storybook.agents.creation.dialogue_crafter import DialogueCrafter
-from storybook.agents.creation.continuity_manager import ContinuityManager
+# Creation Phase
+from storybook.agents.creation import (
+    ContentDevelopmentDirector,
+    ChapterDrafter,
+    DialogueCrafter,
+    ContinuityManager,
+    SceneConstructionSpecialist,
+    VoiceConsistencyMonitor,
+    EmotionalArcDesigner
+)
 
 from storybook.agents.refinement.editorial_director import EditorialDirector
 from storybook.agents.refinement.prose_enhancement_specialist import ProseEnhancementSpecialist
@@ -45,12 +55,17 @@ class AgentFactory:
             "structure_architect": StructureArchitect,
             "plot_development_specialist": PlotDevelopmentSpecialist,
             "world_building_expert": WorldBuildingExpert,
+            "domain_knowledge_specialist": DomainKnowledgeSpecialist,
+            "cultural_authenticity_expert": CulturalAuthenticityExpert,
             
             # Creation Phase
             "content_development_director": ContentDevelopmentDirector,
             "chapter_drafter": ChapterDrafter,
             "dialogue_crafter": DialogueCrafter,
             "continuity_manager": ContinuityManager,
+            "scene_construction_specialist": SceneConstructionSpecialist,
+            "voice_consistency_monitor": VoiceConsistencyMonitor,
+            "emotional_arc_designer": EmotionalArcDesigner,
             
             # Refinement Phase
             "editorial_director": EditorialDirector,

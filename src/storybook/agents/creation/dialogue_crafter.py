@@ -11,7 +11,7 @@ from storybook.tools.dialogue import (
 from storybook.agents.base_agent import BaseAgent
 
 class DialogueCrafter(BaseAgent):
-    """Specialist responsible for crafting character dialogue."""
+    """Agent responsible for crafting dialogue."""
     
     def __init__(self):
         super().__init__(
@@ -28,48 +28,39 @@ class DialogueCrafter(BaseAgent):
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
-        """Craft and refine dialogue."""
-        task = state.current_input.get("task", "")
-        scene_id = task.get("scene_id", "")
+        """Process dialogue crafting tasks."""
+        task = state.current_input.get("task", {})
+        scene_id = task.get("scene_id")
         characters = task.get("characters", [])
-
-        if "voice" in task.lower():
-            voice_adjustments = await self.tools[1].arun(
-                characters=characters,
-                dialogue=task.get("dialogue", ""),
-                character_profiles=state.project.content.get("characters", {})
+        
+        if "voice" in task.get("type", "").lower():
+            voices = await self.tools[1].arun(
+                content=state.project.content,
+                characters=characters
             )
             return {
-                "messages": [AIMessage(content="Character voices adjusted in dialogue")],
-                "dialogue_updates": {
-                    scene_id: {"voice_adjustments": voice_adjustments}
-                }
+                "messages": [AIMessage(content="Character voices defined")],
+                "dialogue_updates": {"voices": voices}
             }
-
-        if "subtext" in task.lower():
+            
+        if "subtext" in task.get("type", "").lower():
             subtext = await self.tools[2].arun(
-                dialogue=task.get("dialogue", ""),
-                context=task.get("context", {}),
-                character_relationships=state.project.content.get("relationship_graph", {})
+                content=state.project.content,
+                scene_id=scene_id,
+                dialogue=task.get("dialogue", {})
             )
             return {
-                "messages": [AIMessage(content="Dialogue subtext enhanced")],
-                "dialogue_updates": {
-                    scene_id: {"subtext": subtext}
-                }
+                "messages": [AIMessage(content="Dialogue subtext analyzed")],
+                "dialogue_updates": {"subtext": subtext}
             }
-
-        # Default to dialogue generation
+        
         dialogue = await self.tools[0].arun(
+            content=state.project.content,
             scene_id=scene_id,
             characters=characters,
-            scene_context=state.project.content.get("scenes", {}).get(scene_id, {}),
-            character_profiles=state.project.content.get("characters", {})
+            parameters=task.get("parameters", {})
         )
-
         return {
-            "messages": [AIMessage(content=f"Dialogue generated for scene: {scene_id}")],
-            "dialogue_updates": {
-                scene_id: {"dialogue": dialogue}
-            }
+            "messages": [AIMessage(content="Dialogue generated")],
+            "dialogue_updates": {"dialogue": dialogue}
         }

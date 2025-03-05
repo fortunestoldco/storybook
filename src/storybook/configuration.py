@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass, field, fields
 from typing import Annotated, Dict, Optional, Any
 from dotenv import load_dotenv
+from pydantic import BaseModel, Field
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 
@@ -144,3 +145,24 @@ class Configuration:
         configurable = config.get("configurable") or {}
         _fields = {f.name for f in fields(cls) if f.init}
         return cls(**{k: v for k, v in configurable.items() if k in _fields})
+
+
+class AgentConfig(BaseModel):
+    """Configuration for individual agents."""
+    name: str
+    enabled: bool = True
+    system_prompt: Optional[str] = None
+    tools: Dict[str, Any] = Field(default_factory=dict)
+    parameters: Dict[str, Any] = Field(default_factory=dict)
+
+class SystemConfig(BaseModel):
+    """System-wide configuration."""
+    model: str = Field(default="anthropic/claude-3-5-sonnet-20240620")
+    agents: Dict[str, AgentConfig] = Field(default_factory=dict)
+    quality_gates: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+    checkpointing: bool = True
+    debug_mode: bool = False
+    
+    class Config:
+        validate_assignment = True
+        extra = "forbid"

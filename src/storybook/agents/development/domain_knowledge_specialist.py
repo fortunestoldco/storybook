@@ -4,64 +4,62 @@ from langchain_core.runnables import RunnableConfig
 
 from storybook.state import NovelSystemState
 from storybook.tools.domain import (
-    ResearchTool,
-    FactCheckingTool,
-    TerminologyManagerTool
+    DomainResearchTool,
+    FactVerificationTool,
+    ExpertKnowledgeTool
 )
 from storybook.agents.base_agent import BaseAgent
 
 class DomainKnowledgeSpecialist(BaseAgent):
-    """Specialist responsible for domain-specific knowledge and accuracy."""
-    
+    """Specialist responsible for domain-specific knowledge and research."""
+
     def __init__(self):
         super().__init__(
             name="domain_knowledge_specialist",
             tools=[
-                ResearchTool(),
-                FactCheckingTool(),
-                TerminologyManagerTool()
+                DomainResearchTool(),
+                FactVerificationTool(),
+                ExpertKnowledgeTool()
             ]
         )
-    
+
     async def process(
         self,
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
-        """Process domain knowledge requirements."""
-        task = state.current_input.get("task", "")
+        """Process domain knowledge tasks."""
+        task = state.current_input.get("task", {})
         domain = task.get("domain", "")
-        
-        if "fact_check" in task.lower():
+
+        if "verify" in task.get("type", "").lower():
             verification = await self.tools[1].arun(
                 content=state.project.content,
                 domain=domain,
-                claims=task.get("claims", [])
+                facts=task.get("facts", [])
             )
             return {
-                "messages": [AIMessage(content=f"Facts verified for domain: {domain}")],
-                "domain_updates": {"fact_check": verification}
+                "messages": [AIMessage(content="Facts verified")],
+                "domain_updates": {"verification": verification}
             }
-        
-        if "terminology" in task.lower():
-            terms = await self.tools[2].arun(
+
+        if "expert" in task.get("type", "").lower():
+            expertise = await self.tools[2].arun(
+                content=state.project.content,
                 domain=domain,
-                context=state.project.content,
-                term_list=task.get("terms", [])
+                query=task.get("query", "")
             )
             return {
-                "messages": [AIMessage(content=f"Terminology updated for: {domain}")],
-                "domain_updates": {"terminology": terms}
+                "messages": [AIMessage(content="Expert knowledge applied")],
+                "domain_updates": {"expertise": expertise}
             }
-        
-        # Default to research
+
         research = await self.tools[0].arun(
+            content=state.project.content,
             domain=domain,
-            query=task.get("query", ""),
-            context=state.project.content
+            research_params=task.get("parameters", {})
         )
-        
         return {
-            "messages": [AIMessage(content=f"Research completed for: {domain}")],
+            "messages": [AIMessage(content="Domain research completed")],
             "domain_updates": {"research": research}
         }

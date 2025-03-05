@@ -11,7 +11,7 @@ from storybook.tools.content import (
 from storybook.agents.base_agent import BaseAgent
 
 class ContentDevelopmentDirector(BaseAgent):
-    """Director responsible for overseeing content development process."""
+    """Director responsible for content development and planning."""
     
     def __init__(self):
         super().__init__(
@@ -28,39 +28,36 @@ class ContentDevelopmentDirector(BaseAgent):
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
-        """Manage content development process."""
+        """Process content development tasks."""
         task = state.current_input.get("task", "")
         
+        if "plan" in task.lower():
+            plan = await self.tools[0].arun(
+                content=state.project.content,
+                outline=state.project.content.get("outline", {}),
+                milestones=state.project.content.get("milestones", {})
+            )
+            return {
+                "messages": [AIMessage(content="Content plan updated")],
+                "content_updates": {"plan": plan}
+            }
+            
         if "quality" in task.lower():
-            assessment = await self.tools[1].arun(
+            quality = await self.tools[1].arun(
                 content=state.project.content,
-                quality_metrics=state.project.quality_assessment,
-                phase=state.phase
+                criteria=state.project.content.get("quality_criteria", {})
             )
             return {
-                "messages": [AIMessage(content="Content quality assessment complete")],
-                "content_updates": {"quality_assessment": assessment}
+                "messages": [AIMessage(content="Content quality assessed")],
+                "content_updates": {"quality": quality}
             }
-        
-        if "progress" in task.lower():
-            progress = await self.tools[2].arun(
-                content=state.project.content,
-                milestones=state.project.content.get("milestones", {}),
-                timeline=state.project.content.get("timeline", {})
-            )
-            return {
-                "messages": [AIMessage(content="Content progress tracked")],
-                "content_updates": {"progress": progress}
-            }
-        
-        # Default to content planning
-        plan = await self.tools[0].arun(
+            
+        # Default to progress tracking
+        progress = await self.tools[2].arun(
             content=state.project.content,
-            outline=state.project.content.get("outline", {}),
-            style_preferences=state.project.style_preferences
+            milestones=state.project.content.get("milestones", {})
         )
-        
         return {
-            "messages": [AIMessage(content="Content development plan updated")],
-            "content_updates": {"plan": plan}
+            "messages": [AIMessage(content="Content progress tracked")],
+            "content_updates": {"progress": progress}
         }

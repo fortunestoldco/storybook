@@ -4,21 +4,21 @@ from langchain_core.runnables import RunnableConfig
 
 from storybook.state import NovelSystemState
 from storybook.tools.scene import (
-    SceneStructureTool,
-    ScenePacingTool,
+    SceneConstructionTool,
+    SceneFlowAnalysisTool,
     SceneTransitionTool
 )
 from storybook.agents.base_agent import BaseAgent
 
 class SceneConstructionSpecialist(BaseAgent):
-    """Specialist responsible for crafting individual scenes."""
+    """Specialist responsible for scene construction and organization."""
     
     def __init__(self):
         super().__init__(
             name="scene_construction_specialist",
             tools=[
-                SceneStructureTool(),
-                ScenePacingTool(),
+                SceneConstructionTool(),
+                SceneFlowAnalysisTool(),
                 SceneTransitionTool()
             ]
         )
@@ -28,43 +28,38 @@ class SceneConstructionSpecialist(BaseAgent):
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
-        """Construct and refine scenes."""
-        task = state.current_input.get("task", "")
-        scene_id = task.get("scene_id", "")
-        chapter_id = task.get("chapter_id", "")
-
-        if "pacing" in task.lower():
-            pacing = await self.tools[1].arun(
+        """Process scene construction tasks."""
+        task = state.current_input.get("task", {})
+        scene_id = task.get("scene_id")
+        
+        if "flow" in task.get("type", "").lower():
+            flow = await self.tools[1].arun(
+                content=state.project.content,
                 scene_id=scene_id,
-                content=state.project.content.get("scenes", {}).get(scene_id, {}),
-                chapter_context=state.project.content.get("chapters", {}).get(chapter_id, {})
+                context=state.project.content.get("scene_context", {})
             )
             return {
-                "messages": [AIMessage(content=f"Scene pacing optimized: {scene_id}")],
-                "scene_updates": {scene_id: {"pacing": pacing}}
+                "messages": [AIMessage(content="Scene flow analyzed")],
+                "scene_updates": {"flow": flow}
             }
-
-        if "transition" in task.lower():
+            
+        if "transition" in task.get("type", "").lower():
             transition = await self.tools[2].arun(
+                content=state.project.content,
                 scene_id=scene_id,
-                prev_scene=task.get("prev_scene", ""),
-                next_scene=task.get("next_scene", ""),
-                chapter_content=state.project.content.get("chapters", {}).get(chapter_id, {})
+                next_scene=task.get("next_scene_id")
             )
             return {
-                "messages": [AIMessage(content=f"Scene transitions updated: {scene_id}")],
-                "scene_updates": {scene_id: {"transitions": transition}}
+                "messages": [AIMessage(content="Scene transition crafted")],
+                "scene_updates": {"transition": transition}
             }
-
-        # Default to scene structure
-        structure = await self.tools[0].arun(
+        
+        scene = await self.tools[0].arun(
+            content=state.project.content,
             scene_id=scene_id,
-            chapter_id=chapter_id,
-            plot_threads=state.project.content.get("plot_threads", []),
-            characters=state.project.content.get("characters", {})
+            parameters=task.get("parameters", {})
         )
-
         return {
-            "messages": [AIMessage(content=f"Scene structure created: {scene_id}")],
-            "scene_updates": {scene_id: {"structure": structure}}
+            "messages": [AIMessage(content="Scene constructed")],
+            "scene_updates": {"scene": scene}
         }
