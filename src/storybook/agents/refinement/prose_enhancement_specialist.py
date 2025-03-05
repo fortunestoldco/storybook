@@ -22,6 +22,7 @@ class ProseEnhancementSpecialist(BaseAgent):
                 SentenceStructureTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,

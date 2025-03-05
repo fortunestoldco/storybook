@@ -22,6 +22,7 @@ class FormattingStandardsExpert(BaseAgent):
                 PublishingStandardsTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,

@@ -22,6 +22,7 @@ class ThematicCoherenceAnalyst(BaseAgent):
                 SymbolismTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,

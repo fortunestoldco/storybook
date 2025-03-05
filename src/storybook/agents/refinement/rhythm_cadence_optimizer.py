@@ -17,11 +17,10 @@ class RhythmCadenceOptimizer(BaseAgent):
         super().__init__(
             name="rhythm_cadence_optimizer",
             tools=[
-                ProseCadenceTool(),
-                SentenceVariationTool(),
-                PacingOptimizationTool()
+                ProseCadenceTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,

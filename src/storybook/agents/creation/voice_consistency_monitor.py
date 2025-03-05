@@ -17,11 +17,10 @@ class VoiceConsistencyMonitor(BaseAgent):
         super().__init__(
             name="voice_consistency_monitor",
             tools=[
-                NarrativeVoiceTool(),
-                VoiceConsistencyTool(),
-                ToneManagementTool()
+                VoiceConsistencyTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,

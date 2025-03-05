@@ -3,59 +3,63 @@ from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableConfig
 
 from storybook.state import NovelSystemState
-from storybook.tools.dialogue.refinement import (
-    ConversationFlowTool,
-    DialoguePolishingTool,
-    SubtextEnhancementTool
+from storybook.tools.dialogue import (
+    DialogueRevisionTool,
+    DialogueStyleTool,
+    DialogueConsistencyTool
 )
 from storybook.agents.base_agent import BaseAgent
 
 class DialogueRefinementExpert(BaseAgent):
-    """Expert responsible for refining and polishing dialogue."""
+    """Expert responsible for polishing and enhancing dialogue."""
     
     def __init__(self):
         super().__init__(
             name="dialogue_refinement_expert",
             tools=[
-                ConversationFlowTool(),
-                DialoguePolishingTool(),
-                SubtextEnhancementTool()
+                DialogueRevisionTool(),
+                DialogueStyleTool(),
+                DialogueConsistencyTool()
             ]
         )
-
+        self._validate_tools()
+    
     async def process(
         self,
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
-        """Process dialogue refinement tasks."""
-        task = state.current_input.get("task", {})
+        """Refine and enhance dialogue."""
+        task = state.current_input.get("task", "")
+        scene_id = task.get("scene_id", "")
         
-        if "subtext" in task.get("type", "").lower():
-            subtext = await self.tools[2].invoke({
-                "content": state.project.content,
-                "dialogue_id": task.get("dialogue_id")
-            })
+        if "flow" in task.lower():
+            flow = await self.tools[1].arun(
+                scene=state.project.content.get("scenes", {}).get(scene_id, {}),
+                characters=state.project.content.get("characters", {})
+            )
             return {
-                "messages": [AIMessage(content="Subtext enhancement completed")],
-                "dialogue_updates": {"subtext": subtext}
+                "messages": [AIMessage(content="Conversation flow optimized")],
+                "dialogue_updates": {scene_id: {"flow": flow}}
             }
             
-        if "polish" in task.get("type", "").lower():
-            polish = await self.tools[1].invoke({
-                "content": state.project.content,
-                "section_id": task.get("section_id")
-            })
+        if "subtext" in task.lower():
+            subtext = await self.tools[2].arun(
+                dialogue=task.get("dialogue", ""),
+                character_relationships=state.project.content.get("relationship_graph", {})
+            )
             return {
-                "messages": [AIMessage(content="Dialogue polishing completed")],
-                "dialogue_updates": {"polish": polish}
+                "messages": [AIMessage(content="Dialogue subtext enhanced")],
+                "dialogue_updates": {scene_id: {"subtext": subtext}}
             }
         
-        flow = await self.tools[0].invoke({
-            "content": state.project.content,
-            "scene_id": task.get("scene_id")
-        })
+        # Default to dialogue polishing
+        polished = await self.tools[0].arun(
+            dialogue=task.get("dialogue", ""),
+            character_voices=state.project.content.get("character_voices", {})
+        )
+        
         return {
-            "messages": [AIMessage(content="Conversation flow analysis completed")],
-            "dialogue_updates": {"flow": flow}
+            "messages": [AIMessage(content="Dialogue polished")],
+            "dialogue_updates": {scene_id: {"polished": polished}}
         }

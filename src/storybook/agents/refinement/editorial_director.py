@@ -5,56 +5,46 @@ from langchain_core.runnables import RunnableConfig
 from storybook.state import NovelSystemState
 from storybook.tools.editorial import (
     EditorialPlanningTool,
-    EditorialRevisionTool,
-    StyleGuideTool
+    EditorialRevisionTool
 )
 from storybook.agents.base_agent import BaseAgent
 
 class EditorialDirector(BaseAgent):
-    """Director responsible for editorial oversight and planning."""
+    """Director responsible for editorial process."""
     
     def __init__(self):
         super().__init__(
             name="editorial_director",
             tools=[
                 EditorialPlanningTool(),
-                EditorialRevisionTool(),
-                StyleGuideTool()
+                EditorialRevisionTool()
             ]
         )
+        self._validate_tools()
 
     async def process(
         self,
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
+        """Process editorial tasks."""
         task = state.current_input.get("task", {})
-        
-        if "style" in task.get("type", "").lower():
-            style = await self.tools[2].invoke({
-                "content": state.project.content,
-                "style_guide": task.get("style_guide", {})
-            })
-            return {
-                "messages": [AIMessage(content="Style guide application completed")],
-                "editorial_updates": {"style": style}
-            }
         
         if "revision" in task.get("type", "").lower():
             revision = await self.tools[1].invoke({
                 "content": state.project.content,
-                "scope": task.get("scope", "global")
+                "revision_type": task.get("revision_type", "comprehensive")
             })
             return {
                 "messages": [AIMessage(content="Editorial revision completed")],
                 "editorial_updates": {"revision": revision}
             }
         
-        planning = await self.tools[0].invoke({
+        plan = await self.tools[0].invoke({
             "content": state.project.content,
-            "scope": task.get("scope", "global")
+            "editorial_phase": task.get("phase", "initial")
         })
         return {
             "messages": [AIMessage(content="Editorial planning completed")],
-            "editorial_updates": {"planning": planning}
+            "editorial_updates": {"plan": plan}
         }

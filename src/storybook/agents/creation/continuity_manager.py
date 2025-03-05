@@ -22,6 +22,7 @@ class ContinuityManager(BaseAgent):
                 CharacterTrackingTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,

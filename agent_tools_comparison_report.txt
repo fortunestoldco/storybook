@@ -1,5 +1,0 @@
-AGENT TOOL COMPARISON REPORT
-===========================
-
-MISSING TOOLS BY AGENT:
----------------------

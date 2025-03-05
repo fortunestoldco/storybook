@@ -14,6 +14,7 @@ class FactVerificationSpecialist(BaseAgent):
             name="fact_verification_specialist",
             tools=[FactVerificationTool()]
         )
+        self._validate_tools()
     
     async def process(
         self,

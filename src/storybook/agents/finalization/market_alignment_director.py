@@ -22,6 +22,7 @@ class MarketAlignmentDirector(BaseAgent):
                 CompetitorAnalysisTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,
