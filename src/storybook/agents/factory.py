@@ -7,6 +7,7 @@ from storybook.agents.base_agent import BaseAgent
 from storybook.agents.initialization.executive_director import ExecutiveDirector
 from storybook.agents.initialization.quality_assessment_director import QualityAssessmentDirector
 from storybook.agents.initialization.human_feedback_manager import HumanFeedbackManager
+from storybook.agents.initialization.project_timeline_manager import ProjectTimelineManager
 
 # Development Phase  
 from storybook.agents.development.creative_director import CreativeDirector
@@ -26,14 +27,21 @@ from storybook.agents.creation import (
     VoiceConsistencyMonitor,
     EmotionalArcDesigner
 )
+from storybook.agents.creation.chapter_drafters import ChapterDrafters
+from storybook.agents.creation.scene_construction_specialists import SceneConstructionSpecialists
+from storybook.agents.creation.dialogue_crafters import DialogueCrafters
 
+# Refinement Phase
 from storybook.agents.refinement.editorial_director import EditorialDirector
 from storybook.agents.refinement.prose_enhancement_specialist import ProseEnhancementSpecialist
 from storybook.agents.refinement.structural_editor import StructuralEditor
+from storybook.agents.refinement.fact_verification_specialist import FactVerificationSpecialist
 
+# Finalization Phase
 from storybook.agents.finalization.formatting_standards_expert import FormattingStandardsExpert
 from storybook.agents.finalization.positioning_specialist import PositioningSpecialist
 from storybook.agents.finalization.market_alignment_director import MarketAlignmentDirector
+from storybook.agents.finalization.differentiation_strategist import DifferentiationStrategist
 
 class AgentFactory:
     """Factory for creating novel writing agents."""
@@ -49,6 +57,7 @@ class AgentFactory:
             "executive_director": ExecutiveDirector,
             "quality_assessment_director": QualityAssessmentDirector,
             "human_feedback_manager": HumanFeedbackManager,
+            "project_timeline_manager": ProjectTimelineManager,
             
             # Development Phase
             "creative_director": CreativeDirector,
@@ -66,16 +75,21 @@ class AgentFactory:
             "scene_construction_specialist": SceneConstructionSpecialist,
             "voice_consistency_monitor": VoiceConsistencyMonitor,
             "emotional_arc_designer": EmotionalArcDesigner,
+            "chapter_drafters": ChapterDrafters,
+            "scene_construction_specialists": SceneConstructionSpecialists,
+            "dialogue_crafters": DialogueCrafters,
             
             # Refinement Phase
             "editorial_director": EditorialDirector,
             "prose_enhancement_specialist": ProseEnhancementSpecialist,
             "structural_editor": StructuralEditor,
+            "fact_verification_specialist": FactVerificationSpecialist,
             
             # Finalization Phase
             "formatting_standards_expert": FormattingStandardsExpert,
             "positioning_specialist": PositioningSpecialist,
-            "market_alignment_director": MarketAlignmentDirector
+            "market_alignment_director": MarketAlignmentDirector,
+            "differentiation_strategist": DifferentiationStrategist
         }
     
     def create_agent(self, agent_name: str) -> BaseAgent:
