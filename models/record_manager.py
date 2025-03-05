@@ -1,7 +1,7 @@
 from typing import Dict, Any, List, Optional
 from langchain_mongodb.indexes import MongoDBRecordManager
 from pymongo.collection import Collection
-from db_config import get_collection, MONGODB_URI, DB_NAME
+from storybook.db_config import get_collection, MONGODB_URI, DB_NAME
 
 class RecordManagerFactory:
     """Factory for creating MongoDB record managers."""

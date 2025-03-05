@@ -3,7 +3,7 @@ from langchain_mongodb.retrievers.parent_document import MongoDBAtlasParentDocum
 from langchain_core.embeddings import Embeddings
 from langchain_core.documents import Document
 from langchain_text_splitters import TextSplitter
-from db_config import MONGODB_URI, DB_NAME
+from storybook.db_config import MONGODB_URI, DB_NAME
 
 class ParentDocumentRetrieverManager:
     """Manages parent document retriever operations."""

@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage
 from ..utils import load_chat_model
@@ -69,7 +69,7 @@ def identify_knowledge_gaps(report: ResearchReport, config: Dict[str, Any]) -> L
     return analysis.get("gaps", [])
 
 @tool
-def generate_followup_queries(gaps: List[str], context: str, config: Dict[str, Any]) -> List<ResearchQuery]:
+def generate_followup_queries(gaps: List[str], context: str, config: Dict[str, Any]) -> List[ResearchQuery]:
     """Generate targeted queries to fill knowledge gaps."""
     query_llm = load_chat_model("research_query_generator", config)
     

@@ -36,4 +36,16 @@ async def tavily_search_async(queries: List[str], **kwargs):
     
     return await asyncio.gather(*search_tasks)
 
+async def exa_search(queries: List[str], **kwargs):
+    """Execute searches using Exa API."""
+    client = Exa(api_key=os.getenv("EXA_API_KEY"))
+    
+    search_tasks = []
+    for query in queries:
+        search_tasks.append(
+            client.search(query, **kwargs)
+        )
+    
+    return await asyncio.gather(*search_tasks)
+
 # ... Implement other search functions from RESEARCHER-TO-INTEGRATE/utils.py ...

@@ -2,6 +2,12 @@ from typing import List, Dict, Any
 from langchain_core.tools import BaseTool
 from storybook.agents.base import BaseAgent
 from .states import ResearchState, ResearchQuery, ResearchReport
+from .tools import (
+    execute_research,
+    analyze_research_quality,
+    identify_knowledge_gaps,
+    generate_followup_queries
+)
 
 class ResearchAgent(BaseAgent):
     """Base class for research-focused agents."""

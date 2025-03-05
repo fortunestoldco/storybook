@@ -1,7 +1,7 @@
 from typing import Dict, Any, List, Optional
 from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, BaseMessage
-from db_config import MONGODB_URI, DB_NAME, COLLECTIONS
+from storybook.db_config import MONGODB_URI, DB_NAME, COLLECTIONS
 
 class ChatHistoryManager:
     """Manages chat message history using MongoDB."""

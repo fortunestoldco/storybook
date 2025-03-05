@@ -1,7 +1,7 @@
 from typing import Dict, Any, List, Optional
 from langchain_mongodb.cache import MongoDBCache, MongoDBAtlasSemanticCache
 from langchain_core.embeddings import Embeddings
-from db_config import MONGODB_URI, DB_NAME
+from storybook.db_config import MONGODB_URI, DB_NAME
 
 class CacheManager:
     """Manages different types of MongoDB caches."""

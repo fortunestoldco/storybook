@@ -2,7 +2,7 @@ from typing import Dict, Any, List, Optional, Sequence
 from langchain_mongodb.loaders import MongoDBLoader
 from langchain_core.documents import Document
 from pymongo.collection import Collection
-from db_config import get_collection
+from storybook.db_config import get_collection
 
 class MongoDBDocumentLoader:
     """Loader for documents from MongoDB collections."""
