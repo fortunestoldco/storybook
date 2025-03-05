@@ -15,11 +15,9 @@ class HumanFeedbackManager(BaseAgent):
     def __init__(self):
         super().__init__(
             name="human_feedback_manager",
-            tools=[
-                FeedbackProcessingTool(),
-                FeedbackIntegrationTool()
-            ]
+            tools=[]
         )
+        self._validate_tools()
     
     async def process(
         self,

@@ -17,11 +17,10 @@ class PositioningSpecialist(BaseAgent):
         super().__init__(
             name="positioning_specialist",
             tools=[
-                MarketAnalysisTool(),
-                PositioningStrategyTool(),
-                CompetitorAnalysisTool()
+                PositioningStrategyTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,

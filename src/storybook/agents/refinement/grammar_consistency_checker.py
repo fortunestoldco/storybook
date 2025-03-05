@@ -22,6 +22,7 @@ class GrammarConsistencyChecker(BaseAgent):
                 UsageVerificationTool()
             ]
         )
+        self._validate_tools()
     
     async def process(
         self,
