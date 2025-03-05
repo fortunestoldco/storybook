@@ -21,7 +21,9 @@ dependencies = [
     "tavily-python",
     "huggingface-hub",
     "langchain-huggingface",
-    "replicate"
+    "replicate",
+    "langchain-mongodb",
+    "langgraph-checkpoint-mongodb"
 ]
 
 

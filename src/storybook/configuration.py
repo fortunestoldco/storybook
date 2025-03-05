@@ -11,10 +11,19 @@ from uuid import uuid4
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 
-
 # Load environment variables from .env file
 load_dotenv()
 
+class ModelProvider(str, Enum):
+    """Supported model providers."""
+    HUGGINGFACE = "huggingface"
+    REPLICATE = "replicate"
+    OLLAMA = "ollama"
+    LLAMA_CPP = "llama.cpp"
+    OPENAI = "openai"
+    ANTHROPIC = "anthropic"
+    BEDROCK = "bedrock"
+    AZURE_OPENAI = "azure_openai"  # Add Azure OpenAI
 
 @dataclass(kw_only=True)
 class Configuration:
@@ -63,28 +72,21 @@ class Configuration:
     )
 
     openai_api_key: str = field(
-        default=os.getenv("OPENAI_API_KEY", ""),
+        default=os.getenv("OPENAI_API_KEY", ""),  # Fixed default syntax
         metadata={
             "description": "API key for OpenAI models."
         },
     )
 
-    google_api_key: str = field(
-        default=os.getenv("GOOGLE_API_KEY", ""),
-        metadata={
-            "description": "API key for Google models."
-        },
-    )
-
     huggingface_api_key: str = field(
-        default=os.getenv("HUGGINGFACE_API_KEY", ""),
+        default(os.getenv("HUGGINGFACE_API_KEY", "")),  # Fixed default syntax
         metadata={
             "description": "API key for Hugging Face models."
         },
     )
 
     replicate_api_key: str = field(
-        default=os.getenv("REPLICATE_API_KEY", ""),
+        default(os.getenv("REPLICATE_API_KEY", "")),  # Fixed default syntax
         metadata={
             "description": "API key for Replicate models."
         },
@@ -204,18 +206,6 @@ class Configuration:
             # ...other fields...
         )
 
-
-class ModelProvider(str, Enum):
-    """Supported model providers."""
-    HUGGINGFACE = "huggingface"
-    REPLICATE = "replicate"
-    OLLAMA = "ollama"
-    LLAMA_CPP = "llama.cpp"
-    OPENAI = "openai"
-    ANTHROPIC = "anthropic"
-    BEDROCK = "bedrock"
-    AZURE_OPENAI = "azure_openai"  # Add Azure OpenAI
-
 class AgentModelConfig(TypedDict, total=False):
     """Configuration for an individual agent's model."""
     provider: ModelProvider
@@ -250,9 +240,6 @@ class StoryBookConfig(TypedDict, total=False):
     mongodb_database_name: Optional[str]
     default_model: Optional[AgentModelConfig]  # Default model config
     agent_models: Optional[Dict[str, AgentModelConfig]]  # Per-agent configs
-
-# Update the graph builder to use this schema
-builder = StateGraph(NovelSystemState, config_schema=StoryBookConfig)
 
 class ProjectType(str, Enum):
     """Type of project submission."""
