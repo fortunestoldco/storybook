@@ -1,15 +1,17 @@
 from typing import Dict, Any, List, Optional
-from pymongo.collection import Collection
 from datetime import datetime
+import uuid
+import json
+
 from .states import ResearchReport, ResearchIteration
-from ..db_config import get_collection
 
 class ResearchStorage:
     """Manages storage of research reports and iterations."""
     
     def __init__(self):
-        self.reports_collection: Collection = get_collection("research_reports")
-        self.iterations_collection: Collection = get_collection("research_iterations")
+        # In a minimal functioning implementation, we'll use a simple in-memory storage
+        self.reports = {}
+        self.iterations = {}
     
     async def store_report(self, report: ResearchReport) -> str:
         """Store a research report.
@@ -32,9 +34,14 @@ class ResearchStorage:
         if "created_at" not in report_dict:
             report_dict["created_at"] = datetime.utcnow().isoformat()
             
-        # Insert into collection
-        result = await self.reports_collection.insert_one(report_dict)
-        return str(result.inserted_id)
+        # Generate ID if not present
+        report_id = report_dict.get("report_id", str(uuid.uuid4()))
+        report_dict["report_id"] = report_id
+        
+        # Store in memory
+        self.reports[report_id] = report_dict
+        
+        return report_id
     
     async def store_iteration(self, iteration: ResearchIteration) -> str:
         """Store a research iteration.
@@ -56,10 +63,15 @@ class ResearchStorage:
         # Add timestamp if not present
         if "created_at" not in iteration_dict:
             iteration_dict["created_at"] = datetime.utcnow().isoformat()
+        
+        # Generate ID if not present
+        iteration_id = iteration_dict.get("iteration_id", str(uuid.uuid4()))
+        iteration_dict["iteration_id"] = iteration_id
             
-        # Insert into collection
-        result = await self.iterations_collection.insert_one(iteration_dict)
-        return str(result.inserted_id)
+        # Store in memory
+        self.iterations[iteration_id] = iteration_dict
+        
+        return iteration_id
     
     async def get_report(self, report_id: str) -> Optional[Dict[str, Any]]:
         """Retrieve a research report by ID.
@@ -70,8 +82,7 @@ class ResearchStorage:
         Returns:
             Research report or None if not found
         """
-        report = await self.reports_collection.find_one({"report_id": report_id})
-        return report
+        return self.reports.get(report_id)
     
     async def get_project_reports(self, project_id: str) -> List[Dict[str, Any]]:
         """Get all research reports for a project.
@@ -82,8 +93,10 @@ class ResearchStorage:
         Returns:
             List of research reports
         """
-        cursor = self.reports_collection.find({"project_id": project_id})
-        return [report async for report in cursor]
+        return [
+            report for report in self.reports.values() 
+            if report.get("project_id") == project_id
+        ]
     
     async def get_report_iterations(self, report_id: str) -> List[Dict[str, Any]]:
         """Get all iterations for a research report.
@@ -94,5 +107,7 @@ class ResearchStorage:
         Returns:
             List of research iterations
         """
-        cursor = self.iterations_collection.find({"report_id": report_id})
-        return [iteration async for iteration in cursor]
+        return [
+            iteration for iteration in self.iterations.values()
+            if iteration.get("report_id") == report_id
+        ]

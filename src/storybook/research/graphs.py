@@ -1,16 +1,28 @@
-from typing import Dict, Any, List, Literal, Type
+from typing import Dict, Any, List, Literal, Type, Optional
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph, START, END
 from datetime import datetime
 
-from ..utils.vector_search import VectorSearch
-from .states import *
-from .prompts import *
-from .tools import *
+from .states import (
+    ResearchState,
+    DomainResearchState,
+    CulturalResearchState,
+    MarketResearchState,
+    FactVerificationState
+)
+from .tools import (
+    execute_research,
+    analyze_research_quality,
+    identify_knowledge_gaps,
+    generate_followup_queries
+)
 from .configuration import Configuration
-from .search import select_and_execute_search
 
-def create_research_subgraph(research_type: str, state_class: Type[ResearchState], config: Configuration) -> StateGraph:
+def create_research_subgraph(
+    research_type: str, 
+    state_class: Type[ResearchState], 
+    config: Optional[Configuration] = None
+) -> StateGraph:
     """Create a research subgraph for a specific type of research.
     
     Args:
@@ -24,213 +36,103 @@ def create_research_subgraph(research_type: str, state_class: Type[ResearchState
     # Create state graph
     builder = StateGraph(state_class)
     
-    # Add nodes for research workflow
-    async def generate_research_plan(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
-        """Generate an initial research plan based on the query context."""
-        # Get configuration
-        configuration = Configuration.from_runnable_config(config)
-        
-        # Generate search queries
-        writer_model = load_chat_model("research_query_generator", configuration)
-        
-        # Format system instructions based on research type
-        if research_type == "domain":
-            instructions = domain_research_instructions
-        elif research_type == "cultural":
-            instructions = cultural_research_instructions
-        elif research_type == "market": 
-            instructions = market_research_instructions
-        elif research_type == "fact":
-            instructions = fact_verification_instructions
-        else:
-            instructions = general_research_instructions
-            
-        # Generate queries for initial research
-        query_messages = [
-            SystemMessage(content=instructions),
-            HumanMessage(content=f"Generate {configuration.queries_per_iteration} research queries for: {state.query_context}")
-        ]
-        
-        query_results = await writer_model.ainvoke(query_messages)
-        
-        # Process queries
-        queries = []
-        for q in query_results.queries:
-            queries.append(ResearchQuery(
-                query=q,
-                context=state.query_context,
-                topic=state.topic,
-                depth="standard"
-            ))
-        
-        return {"queries": queries, "status": "plan_generated"}
+    # Define research configuration if not provided
+    if config is None:
+        config = Configuration()
     
-    async def conduct_research(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
-        """Conduct research by executing queries."""
-        # Get configuration
-        configuration = Configuration.from_runnable_config(config)
-        search_api = configuration.search_api
-        search_api_config = configuration.search_api_config or {}
-        
-        # Execute searches
-        query_list = [q.query for q in state.queries]
-        search_results = await select_and_execute_search(
-            search_api=search_api,
-            query_list=query_list,
-            params_to_pass=search_api_config
-        )
-        
-        # Process search results
-        processed_results = []
-        sources = []
-        
-        for result in search_results:
-            if not result["results"]:
-                continue
-                
-            for item in result["results"]:
-                processed_results.append(ResearchResult(
-                    source_title=item.get("title", "Unknown Source"),
-                    source_url=item.get("url", ""),
-                    content=item.get("content", ""),
-                    relevance_score=item.get("score", 0.5)
-                ))
-                
-                sources.append(item.get("url", ""))
-        
+    # Add nodes for the research workflow
+    async def initialize_research(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
+        """Initialize the research process by setting up the state."""
+        # Keep any existing state properties
         return {
-            "research_results": processed_results, 
-            "sources": list(set(sources)),
-            "status": "research_conducted"
+            "status": "initialized",
+            "iterations": 0
         }
     
-    async def analyze_findings(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
-        """Analyze and synthesize research findings."""
-        # Get configuration
-        configuration = Configuration.from_runnable_config(config)
+    async def execute_search(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
+        """Execute search queries and update state with results."""
+        # Execute research queries
+        results = await execute_research(state.queries, {
+            "search_api": config.get("configurable", {}).get("search_api", "tavily"),
+            "search_api_config": config.get("configurable", {}).get("search_api_config", {})
+        })
         
-        # Load analysis model
-        analysis_model = load_chat_model("research_quality_analyzer", configuration)
+        # Create a simple report from results
+        findings = [f"Finding from {r.source_title}: {r.content}" for r in results]
+        sources = [r.source_url for r in results]
         
-        # Format research results as context
-        research_context = "\n\n".join([
-            f"Source: {r.source_title}\nURL: {r.source_url}\n{r.content}"
-            for r in state.research_results
-        ])
-        
-        # Format analysis prompt based on research type
-        if research_type == "domain":
-            instructions = domain_synthesis_instructions
-        elif research_type == "cultural":
-            instructions = cultural_synthesis_instructions
-        elif research_type == "market":
-            instructions = market_synthesis_instructions
-        elif research_type == "fact":
-            instructions = fact_verification_synthesis_instructions
-        else:
-            instructions = general_synthesis_instructions
-        
-        # Generate synthesis
-        synthesis_messages = [
-            SystemMessage(content=instructions),
-            HumanMessage(content=f"Topic: {state.topic}\n\nResearch Results:\n{research_context}")
-        ]
-        
-        synthesis_result = await analysis_model.ainvoke(synthesis_messages)
-        
-        # Create research report
-        report = ResearchReport(
-            project_id=state.project_id,
-            agent_name=research_type + "_research_agent",
-            topic=state.topic,
-            query_context=state.query_context,
-            findings=synthesis_result.findings,
-            sources=state.sources,
-            confidence_score=synthesis_result.confidence
-        )
+        # Create a research report
+        report = {
+            "agent_name": f"{research_type}_research_agent",
+            "topic": state.queries[0].topic if state.queries else "Unknown",
+            "query_context": state.query_context,
+            "findings": findings,
+            "sources": sources,
+            "confidence_score": 0.7  # Placeholder confidence score
+        }
         
         return {
+            "results": results,
             "report": report,
-            "status": "findings_analyzed"
+            "status": "search_completed"
         }
     
-    async def evaluate_quality(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
-        """Evaluate the quality of research findings."""
-        # Get configuration
-        configuration = Configuration.from_runnable_config(config)
-        
-        # Execute quality assessment
-        quality_assessment = await analyze_research_quality(
-            state.report,
-            {
-                "model": configuration.agent_model_configs.get("research_quality_analyzer", {})
-            }
-        )
-        
-        return {
-            "quality_assessment": quality_assessment,
-            "status": "quality_evaluated"
-        }
-    
-    def determine_next_steps(state: ResearchState) -> Literal["identify_gaps", "compile_report"]:
-        """Determine whether to continue research or finalize the report."""
-        # Check if we've reached max iterations
-        if state.iterations >= state.max_iterations:
-            return "compile_report"
-            
-        # Check if quality is sufficient
-        quality_score = state.quality_assessment.get("score", 0)
-        if quality_score >= state.quality_threshold:
-            return "compile_report"
-            
-        return "identify_gaps"
-    
-    async def identify_gaps(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
-        """Identify gaps in current research."""
-        # Get configuration
-        configuration = Configuration.from_runnable_config(config)
-        
-        # Identify knowledge gaps
-        gaps = await identify_knowledge_gaps(state.report, {
-            "model": configuration.agent_model_configs.get("research_gap_analyzer", {})
+    async def analyze_quality(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
+        """Analyze the quality of research results."""
+        quality_assessment = await analyze_research_quality(state.report, {
+            "model": config.get("configurable", {}).get("agent_model_configs", {}).get("research_quality_analyzer", {})
         })
         
         return {
-            "identified_gaps": gaps,
+            "quality_assessment": quality_assessment,
+            "status": "quality_analyzed"
+        }
+    
+    def determine_next_steps(state: ResearchState) -> Literal["identify_gaps", "finalize_research"]:
+        """Determine whether more research is needed or we can finalize."""
+        # Check if max iterations reached
+        if state.iterations >= state.metadata.get("max_iterations", 3):
+            return "finalize_research"
+        
+        # Check if quality threshold met
+        quality_score = state.quality_assessment.get("score", 0.0)
+        if quality_score >= state.metadata.get("quality_threshold", 0.7):
+            return "finalize_research"
+        
+        # Otherwise, continue with more research
+        return "identify_gaps"
+    
+    async def identify_research_gaps(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
+        """Identify gaps in the research."""
+        gaps = await identify_knowledge_gaps(state.report, {
+            "model": config.get("configurable", {}).get("agent_model_configs", {}).get("research_gap_analyzer", {})
+        })
+        
+        return {
+            "gaps": gaps,
             "status": "gaps_identified"
         }
     
-    async def generate_followup_queries(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
-        """Generate follow-up queries based on identified gaps."""
-        # Get configuration
-        configuration = Configuration.from_runnable_config(config)
-        
-        # Generate follow-up queries
+    async def generate_new_queries(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
+        """Generate new queries based on identified gaps."""
         followup_queries = await generate_followup_queries(
-            state.identified_gaps,
+            state.gaps,
             state.query_context,
             {
-                "model": configuration.agent_model_configs.get("research_query_generator", {}),
-                "queries_per_iteration": configuration.queries_per_iteration
+                "model": config.get("configurable", {}).get("agent_model_configs", {}).get("research_query_generator", {}),
+                "queries_per_iteration": config.get("configurable", {}).get("queries_per_iteration", 3)
             }
         )
         
         return {
             "queries": followup_queries,
             "iterations": state.iterations + 1,
-            "status": "queries_generated"
+            "status": "new_queries_generated"
         }
     
-    async def compile_report(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
-        """Compile the final research report."""
-        # Get configuration
-        configuration = Configuration.from_runnable_config(config)
-        
-        # Store report in database if MongoDB is configured
-        if configuration.mongodb_connection_string:
-            from .storage import ResearchStorage
-            storage = ResearchStorage()
-            await storage.store_report(state.report)
+    async def finalize_research(state: ResearchState, config: RunnableConfig) -> Dict[str, Any]:
+        """Finalize the research report."""
+        # Could store to a database here in a full implementation
         
         return {
             "final_report": state.report,
@@ -238,30 +140,28 @@ def create_research_subgraph(research_type: str, state_class: Type[ResearchState
         }
     
     # Add nodes to the graph
-    builder.add_node("generate_research_plan", generate_research_plan)
-    builder.add_node("conduct_research", conduct_research)
-    builder.add_node("analyze_findings", analyze_findings)
-    builder.add_node("evaluate_quality", evaluate_quality)
-    builder.add_node("identify_gaps", identify_gaps)
-    builder.add_node("generate_followup_queries", generate_followup_queries)
-    builder.add_node("compile_report", compile_report)
+    builder.add_node("initialize_research", initialize_research)
+    builder.add_node("execute_search", execute_search)
+    builder.add_node("analyze_quality", analyze_quality)
+    builder.add_node("identify_gaps", identify_research_gaps)
+    builder.add_node("generate_new_queries", generate_new_queries)
+    builder.add_node("finalize_research", finalize_research)
     
     # Define the edges of the graph
-    builder.add_edge(START, "generate_research_plan")
-    builder.add_edge("generate_research_plan", "conduct_research")
-    builder.add_edge("conduct_research", "analyze_findings")
-    builder.add_edge("analyze_findings", "evaluate_quality")
+    builder.add_edge(START, "initialize_research")
+    builder.add_edge("initialize_research", "execute_search")
+    builder.add_edge("execute_search", "analyze_quality")
     builder.add_conditional_edges(
-        "evaluate_quality",
+        "analyze_quality",
         determine_next_steps,
         {
             "identify_gaps": "identify_gaps",
-            "compile_report": "compile_report"
+            "finalize_research": "finalize_research"
         }
     )
-    builder.add_edge("identify_gaps", "generate_followup_queries")
-    builder.add_edge("generate_followup_queries", "conduct_research")
-    builder.add_edge("compile_report", END)
+    builder.add_edge("identify_gaps", "generate_new_queries")
+    builder.add_edge("generate_new_queries", "execute_search")
+    builder.add_edge("finalize_research", END)
     
     # Compile and return the graph
     return builder.compile()
