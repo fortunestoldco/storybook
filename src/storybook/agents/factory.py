@@ -1,5 +1,3 @@
-"""Factory for creating specialized novel writing agents."""
-
 from typing import Dict, Any, List, Callable, Optional, Type
 from datetime import datetime
 
@@ -115,7 +113,7 @@ class AgentFactory:
             "formatting_standards_expert": FormattingStandardsExpert
         }
 
-    def create_agent(self, agent_name: str, project_id: str) -> BaseAgent:
+    def create_agent(self, agent_name: str, project_id: str) -> Callable:
         """Create an agent instance."""
         
         # Research agents use the deep research subgraph
@@ -141,7 +139,11 @@ class AgentFactory:
         if agent_name in research_agents:
             # Create research subgraph for this agent
             research_config = research_agents[agent_name]
-            research_graph = create_research_subgraph(research_config["research_type"])
+            research_graph = create_research_subgraph(
+                research_type=research_config["research_type"],
+                state_class=research_config["state_class"],
+                config=self.config
+            )
             
             return ResearchAgent(
                 name=agent_name,
@@ -205,3 +207,30 @@ class AgentFactory:
             }
 
         return agent_function
+    
+    def get_research_config(self, agent_name: str) -> Dict[str, Any]:
+        """Get research-specific configuration for an agent."""
+        # Map agent names to their config keys in the configuration
+        config_map = {
+            "domain_knowledge_specialist": "domain_research_config",
+            "cultural_authenticity_expert": "cultural_research_config",
+            "market_alignment_director": "market_research_config",
+            "fact_verification_specialist": "fact_verification_config"
+        }
+        
+        # Get agent-specific config if available, otherwise use defaults
+        if agent_name in config_map and hasattr(self.config, config_map[agent_name]):
+            research_config = getattr(self.config, config_map[agent_name]) or {}
+        else:
+            research_config = {}
+            
+        # Set required fields with defaults
+        default_config = {
+            "search_api": self.config.search_api,
+            "max_iterations": 3,
+            "queries_per_iteration": 3,
+            "quality_threshold": 0.8
+        }
+        
+        # Merge configs, with agent-specific overriding defaults
+        return {**default_config, **research_config}

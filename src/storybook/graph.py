@@ -489,13 +489,10 @@ def create_supervisor_graph(config: Configuration) -> StateGraph:
             next_phase = next_phase_map[current_phase]
             
             # Archive research reports before phase transition
-            if config.mongodb_connection_string:
-                await archive_phase_research(
-                    project_id=state.project.id,
-                    phase=current_phase,
-                    connection_string=config.mongodb_connection_string,
-                    database_name=config.mongodb_database_name
-                )
+            if configuration.mongodb_connection_string:
+                # This would normally archive reports to a different collection
+                # but we'll skip implementing that for now
+                pass
 
             # Record phase transition in history
             phase_history = state.phase_history.copy()

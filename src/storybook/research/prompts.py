@@ -1,14 +1,6 @@
-# Copy all prompts from RESEARCHER-TO-INTEGRATE/prompts.py
-report_planner_query_writer_instructions = """You are performing research...
-# ... rest of prompts ...
-"""
+"""Prompts for research operations."""
 
-# Add our specialized prompts
-domain_research_instructions = """You are analyzing domain-specific knowledge...
-# ... additional specialized prompts ...
-the t"""
-
-# Copy quality analysis prompts from RESEARCHER-TO-INTEGRATE
+# Quality analysis prompts
 quality_analysis_instructions = """Analyze the quality and completeness of research findings.
 
 <Format>
@@ -41,6 +33,3 @@ followup_query_instructions = """Generate targeted search queries to fill knowle
     ]
 }
 </Format>
-"""
-
-# ... rest of specialized prompts ...

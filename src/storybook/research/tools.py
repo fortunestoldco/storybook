@@ -1,18 +1,15 @@
 from typing import List, Dict, Any, Optional, Union
 from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage
-import json
-import re
-from datetime import datetime
 from ..utils import load_chat_model
 
 from .states import ResearchQuery, ResearchResult, ResearchReport
+from .search import select_and_execute_search
 from .prompts import (
     quality_analysis_instructions,
     gap_analysis_instructions,
     followup_query_instructions
 )
-from .search import select_and_execute_search
 
 @tool
 async def execute_research(queries: List[ResearchQuery], config: Dict[str, Any]) -> List[ResearchResult]:
@@ -62,7 +59,7 @@ async def analyze_research_quality(report: ResearchReport, config: Dict[str, Any
     Returns:
         Quality assessment with score and feedback
     """
-    analysis_llm = load_chat_model("research_quality_analyzer", config.get("model", {}))
+    analysis_llm = load_chat_model("research_quality_analyzer", config)
     
     analysis_result = await analysis_llm.ainvoke([
         SystemMessage(content=quality_analysis_instructions),
@@ -78,6 +75,7 @@ async def analyze_research_quality(report: ResearchReport, config: Dict[str, Any
     if isinstance(content, str):
         # Try to parse JSON response
         try:
+            import json
             parsed = json.loads(content)
             return {
                 "score": parsed.get("score", 0.0),
@@ -85,6 +83,7 @@ async def analyze_research_quality(report: ResearchReport, config: Dict[str, Any
             }
         except:
             # Fallback to simple extraction
+            import re
             score_match = re.search(r'"score":\s*([\d.]+)', content)
             score = float(score_match.group(1)) if score_match else 0.0
             
@@ -114,7 +113,7 @@ async def identify_knowledge_gaps(report: ResearchReport, config: Dict[str, Any]
     Returns:
         List of identified knowledge gaps
     """
-    analysis_llm = load_chat_model("research_gap_analyzer", config.get("model", {}))
+    analysis_llm = load_chat_model("research_gap_analyzer", config)
     
     analysis_result = await analysis_llm.ainvoke([
         SystemMessage(content=gap_analysis_instructions),
@@ -130,6 +129,7 @@ async def identify_knowledge_gaps(report: ResearchReport, config: Dict[str, Any]
     if isinstance(content, str):
         # Try to parse JSON response
         try:
+            import json
             parsed = json.loads(content)
             return parsed.get("gaps", [])
         except:
@@ -155,7 +155,7 @@ async def generate_followup_queries(gaps: List[str], context: str, config: Dict[
     Returns:
         List of follow-up research queries
     """
-    query_llm = load_chat_model("research_query_generator", config.get("model", {}))
+    query_llm = load_chat_model("research_query_generator", config)
     
     query_result = await query_llm.ainvoke([
         SystemMessage(content=followup_query_instructions),
@@ -172,6 +172,7 @@ async def generate_followup_queries(gaps: List[str], context: str, config: Dict[
     if isinstance(content, str):
         # Try to parse JSON response
         try:
+            import json
             parsed = json.loads(content)
             query_list = parsed.get("queries", [])
             

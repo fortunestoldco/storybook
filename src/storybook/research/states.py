@@ -12,6 +12,8 @@ class ResearchState(BaseModel):
     query_context: str = ""
     iterations: int = 0
     queries: List[Dict[str, Any]] = Field(default_factory=list)
+    max_iterations: int = 3
+    quality_threshold: float = 0.8
 
 class Section(BaseModel):
     """Research section details"""
