@@ -5,7 +5,8 @@ from langchain_core.messages import BaseMessage
 from datetime import datetime
 import os
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
-from langchain_community.llms import Replicate
+from langchain_community.llms import Replicate, Ollama
+from langchain.chat_models import ChatOllama
 from storybook.configuration import ModelProvider, Configuration
 
 
@@ -52,6 +53,15 @@ def load_chat_model(agent_name: str, config: Configuration) -> BaseChatModel:
                 "top_p": model_config.get("repetition_penalty", 1.03)
             },
             api_key=config.replicate_api_key
+        )
+        
+    elif provider == ModelProvider.OLLAMA:
+        return ChatOllama(
+            model=model_config["model_name"],
+            temperature=model_config.get("temperature", 0.7),
+            base_url=config.ollama_base_url,
+            repeat_penalty=model_config.get("repetition_penalty", 1.03),
+            num_ctx=model_config.get("max_new_tokens", 512)
         )
         
     raise ValueError(f"Unsupported model provider: {provider}")

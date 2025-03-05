@@ -207,6 +207,7 @@ class ModelProvider(str, Enum):
     """Supported model providers."""
     HUGGINGFACE = "huggingface"
     REPLICATE = "replicate"
+    OLLAMA = "ollama"  # Add Ollama provider
 
 class AgentModelConfig(TypedDict, total=False):
     """Configuration for an individual agent's model."""
@@ -224,6 +225,7 @@ class StoryBookConfig(TypedDict, total=False):
     model_provider: ModelProvider  # The model provider to use
     huggingface_token: Optional[str]  # HuggingFace API token
     replicate_token: Optional[str]  # Replicate API token
+    ollama_base_url: Optional[str]  # Add Ollama base URL config
     default_model: Optional[AgentModelConfig]  # Default model config
     agent_models: Optional[Dict[str, AgentModelConfig]]  # Per-agent configs
 
