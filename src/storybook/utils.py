@@ -10,7 +10,7 @@ from langchain.chat_models import ChatOllama
 from storybook.configuration import ModelProvider, Configuration
 import multiprocessing
 from langchain_community.chat_models import ChatLlamaCpp
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_aws import ChatBedrock, ChatBedrockConverse
 
@@ -127,6 +127,23 @@ def load_chat_model(agent_name: str, config: Configuration) -> BaseChatModel:
             region_name=config.aws_region,
             aws_access_key_id=config.aws_access_key_id,
             aws_secret_access_key=config.aws_secret_access_key
+        )
+
+    # Add Azure OpenAI handling
+    elif provider == ModelProvider.AZURE_OPENAI:
+        if not (config.azure_openai_api_key and config.azure_openai_endpoint):
+            raise ValueError("Azure OpenAI API key and endpoint must be set")
+            
+        return AzureChatOpenAI(
+            azure_deployment=config.azure_deployment_name or model_config["model_name"],
+            api_version=config.azure_api_version or "2023-07-01-preview",
+            azure_endpoint=config.azure_openai_endpoint,
+            api_key=config.azure_openai_api_key,
+            temperature=model_config.get("temperature", 0.7),
+            max_tokens=model_config.get("max_new_tokens", 512),
+            model_version=model_config.get("model_version"),
+            streaming=model_config.get("streaming", False),
+            model_kwargs=model_config.get("model_kwargs", {})
         )
         
     raise ValueError(f"Unsupported model provider: {provider}")

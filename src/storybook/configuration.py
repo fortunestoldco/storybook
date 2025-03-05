@@ -211,7 +211,8 @@ class ModelProvider(str, Enum):
     LLAMA_CPP = "llama.cpp"
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
-    BEDROCK = "bedrock"  # Add AWS Bedrock
+    BEDROCK = "bedrock"
+    AZURE_OPENAI = "azure_openai"  # Add Azure OpenAI
 
 class AgentModelConfig(TypedDict, total=False):
     """Configuration for an individual agent's model."""
@@ -236,6 +237,10 @@ class StoryBookConfig(TypedDict, total=False):
     aws_access_key_id: Optional[str]  # Add AWS credentials
     aws_secret_access_key: Optional[str]
     aws_region: Optional[str]
+    azure_openai_api_key: Optional[str]  # Add Azure OpenAI credentials
+    azure_openai_endpoint: Optional[str]
+    azure_deployment_name: Optional[str]
+    azure_api_version: Optional[str]
     default_model: Optional[AgentModelConfig]  # Default model config
     agent_models: Optional[Dict[str, AgentModelConfig]]  # Per-agent configs
 
