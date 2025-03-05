@@ -25,6 +25,15 @@ class ModelProvider(str, Enum):
     BEDROCK = "bedrock"
     AZURE_OPENAI = "azure_openai"  # Add Azure OpenAI
 
+class SearchAPI(str, Enum):
+    """Available search APIs for research."""
+    PERPLEXITY = "perplexity"
+    TAVILY = "tavily" 
+    EXA = "exa"
+    ARXIV = "arxiv"
+    PUBMED = "pubmed"
+    LINKUP = "linkup"
+
 @dataclass(kw_only=True)
 class Configuration:
     """The configuration for the storybook system."""
@@ -218,6 +227,14 @@ class AgentModelConfig(TypedDict, total=False):
     streaming: Optional[bool]
     model_kwargs: Optional[Dict]
 
+class ResearchAgentConfig(TypedDict, total=False):
+    """Configuration for research agents."""
+    search_api: SearchAPI
+    search_api_config: Optional[Dict[str, Any]]
+    max_iterations: int = 3
+    queries_per_iteration: int = 3
+    quality_threshold: float = 0.8
+
 class StoryBookConfig(TypedDict, total=False):
     """Runtime configuration schema for the storybook system."""
     project_id: str  # Required project identifier
@@ -240,6 +257,17 @@ class StoryBookConfig(TypedDict, total=False):
     mongodb_database_name: Optional[str]
     default_model: Optional[AgentModelConfig]  # Default model config
     agent_models: Optional[Dict[str, AgentModelConfig]]  # Per-agent configs
+    
+    # Research configuration
+    tavily_api_key: Optional[str]
+    perplexity_api_key: Optional[str]
+    exa_api_key: Optional[str]
+    linkup_api_key: Optional[str]
+    
+    domain_knowledge_config: Optional[ResearchAgentConfig]
+    cultural_research_config: Optional[ResearchAgentConfig]
+    market_research_config: Optional[ResearchAgentConfig]
+    fact_verification_config: Optional[ResearchAgentConfig]
 
 class ProjectType(str, Enum):
     """Type of project submission."""

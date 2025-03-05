@@ -47,6 +47,12 @@ from storybook.agents.phase_agents import (
     FormattingStandardsExpert
 )
 from storybook.tools import tool_registry
+from storybook.research.agents import (
+    DomainKnowledgeSpecialist,
+    CulturalAuthenticityExpert, 
+    MarketAlignmentDirector,
+    FactVerificationSpecialist
+)
 
 
 class AgentFactory:
@@ -99,6 +105,16 @@ class AgentFactory:
             "differentiation_strategist": DifferentiationStrategist,
             "formatting_standards_expert": FormattingStandardsExpert
         }
+
+    def create_agent(self, agent_name: str, project_id: str) -> BaseAgent:
+        """Create an agent instance."""
+        if agent_name == "domain_knowledge_specialist":
+            return DomainKnowledgeSpecialist(
+                name=agent_name,
+                tools=self.get_research_tools(),
+                config=self.config.domain_knowledge_config
+            )
+        # ... similar for other research agents ...
 
     def create_agent(self, agent_name: str, project_id: str) -> Callable:
         """Create an agent function for the specified role."""

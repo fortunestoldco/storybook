@@ -4,28 +4,36 @@ from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
 from dotenv import load_dotenv
+from .configuration import Configuration
 
 # Load environment variables
 load_dotenv()
 
-# MongoDB connection settings
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-DB_NAME = os.getenv("DB_NAME", "storybook_db")
-
-# Singleton client
+# Singleton client and configuration
 _client: Optional[MongoClient] = None
+_config: Optional[Configuration] = None
+
+def initialize_config(config: Configuration):
+    """Initialize database configuration."""
+    global _config
+    _config = config
 
 def get_client() -> MongoClient:
     """Get or create MongoDB client singleton."""
-    global _client
+    global _client, _config
     if _client is None:
-        _client = MongoClient(MONGODB_URI)
+        if _config is None:
+            raise ValueError("Database configuration not initialized. Call initialize_config first.")
+        _client = MongoClient(_config.mongodb_connection_string)
     return _client
 
 def get_database() -> Database:
     """Get the storybook database."""
+    global _config
+    if _config is None:
+        raise ValueError("Database configuration not initialized. Call initialize_config first.")
     client = get_client()
-    return client[DB_NAME]
+    return client[_config.mongodb_database_name]
 
 def get_collection(collection_name: str) -> Collection:
     """Get a specific collection from the database."""
@@ -58,6 +66,8 @@ COLLECTIONS = {
     "style_guides": "style_guides",
     "chat_history": "chat_history",
     "continuity_facts": "continuity_facts",
+    "research_reports": "research_reports",
+    "research_iterations": "research_iterations",
 }
 
 # Vector Search Collections
