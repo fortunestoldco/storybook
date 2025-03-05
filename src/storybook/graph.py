@@ -1,5 +1,6 @@
 from typing import Dict, Any, List, Literal, cast
 from datetime import datetime
+from uuid import uuid4
 
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
@@ -477,28 +478,69 @@ def create_supervisor_graph(config: Configuration) -> StateGraph:
 def create_storybook_graph(runnable_config: RunnableConfig) -> StateGraph:
     """Create the main storybook graph."""
     config = Configuration.from_runnable_config(runnable_config)
-    project_id = runnable_config.get("configurable", {}).get("project_id", "default_project")
     
     # Create graph with runtime config schema
-    builder = StateGraph(NovelSystemState, config_schema=StoryBookConfig)
+    builder = StateGraph(NovelSystemState, input_schema=InputState)
     
-    # Add phase transition management
-    phase = runnable_config.get("configurable", {}).get("phase", "initialization")
+    async def initialize_project(state: NovelSystemState, config: RunnableConfig) -> Dict[str, Any]:
+        """Initialize new project or load existing one."""
+        input_state = cast(InputState, state.input)
+        
+        if input_state.project_type == ProjectType.NEW:
+            project_data = cast(NewProjectInput, input_state.project_data)
+            project_id = str(uuid4())
+            
+            return {
+                "project": {
+                    "id": project_id,
+                    "title": project_data.title,
+                    "synopsis": project_data.synopsis,
+                    "manuscript": project_data.manuscript,
+                    "notes": project_data.notes,
+                    "type": "revision" if project_data.manuscript else "creation",
+                    "quality_assessment": {},
+                    "created_at": datetime.now().isoformat()
+                },
+                "phase": "initialization",
+                "current_input": {
+                    "task": "Initial project assessment and planning",
+                    "phase": "initialization"
+                }
+            }
+        else:
+            # Load existing project state from checkpointer
+            project_data = cast(ExistingProjectInput, input_state.project_data)
+            checkpoint = config.get("configurable", {}).get("checkpointer").get_tuple({
+                "configurable": {"thread_id": project_data.project_id}
+            })
+            return checkpoint.checkpoint["channel_values"]
+
+    # Add initialization node
+    builder.add_node("initialize", initialize_project)
+    builder.set_entry_point("initialize")
     
-    # Create phase-specific subgraph
-    phase_graph = create_phase_graph(phase, project_id, config)
+    # Add phase graphs
+    phase_graph = create_phase_graph("initialization", "", config)
+    builder.add_subgraph(phase_graph, include_edges=True)
     
-    # Add phase graph nodes and edges
-    builder.add_subgraph(phase_graph)
-    
-    # Add supervisor capabilities
+    # Add supervisor
     supervisor = create_supervisor_graph(config)
-    builder.add_subgraph(supervisor)
+    builder.add_subgraph(supervisor, include_edges=True)
     
-    # Compile final graph
-    graph = builder.compile()
-    graph.name = f"storybook - Main Graph ({phase} Phase)"
+    # Connect initialization to phase start
+    builder.add_edge("initialize", "executive_director")
     
+    # Set up checkpointing
+    if config.mongodb_connection_string:
+        checkpointer = MongoDBCheckpointHandler(
+            connection_string=config.mongodb_connection_string,
+            database_name=config.mongodb_database_name,
+            collection_name="storybook_projects"
+        )
+    else:
+        checkpointer = MemorySaver()
+    
+    graph = builder.compile(checkpointer=checkpointer)
     return graph
 
 

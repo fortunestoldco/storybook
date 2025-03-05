@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field, fields
-from typing import Annotated, Dict, Optional, Any, TypedDict, List
+from typing import Annotated, Dict, Optional, Any, TypedDict, List, Union
 from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEndpoint
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from uuid import uuid4
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 
@@ -252,3 +253,27 @@ class StoryBookConfig(TypedDict, total=False):
 
 # Update the graph builder to use this schema
 builder = StateGraph(NovelSystemState, config_schema=StoryBookConfig)
+
+class ProjectType(str, Enum):
+    """Type of project submission."""
+    NEW = "new"
+    EXISTING = "existing"
+
+class NewProjectInput(BaseModel):
+    """Schema for new project submission."""
+    title: str = Field(..., description="Title of the novel")
+    synopsis: str = Field(..., description="Synopsis or outline of the novel")
+    manuscript: Optional[str] = Field(None, description="Existing manuscript text for revision")
+    notes: Optional[str] = Field(None, description="Additional notes or context")
+
+class ExistingProjectInput(BaseModel):
+    """Schema for accessing existing project."""
+    project_id: str = Field(..., description="ID of existing project to resume")
+
+class InputState(BaseModel):
+    """Input state schema for the storybook graph."""
+    project_type: ProjectType
+    project_data: Union[NewProjectInput, ExistingProjectInput]
+
+    class Config:
+        use_enum_values = True
