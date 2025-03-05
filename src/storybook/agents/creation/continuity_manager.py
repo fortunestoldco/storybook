@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableConfig
 
@@ -43,3 +43,26 @@ class ContinuityManager(BaseAgent):
             }
         
         if "character_tracking" in task.lower():
+            character_tracking = await self.tools[2].arun(
+                content=state.project.content,
+                characters=task.get("characters", [])
+            )
+            return {
+                "messages": [AIMessage(content="Character tracking updated and verified")],
+                "continuity_updates": {"character_tracking": character_tracking}
+            }
+            
+        if "plot_consistency" in task.lower():
+            consistency = await self.tools[1].arun(
+                content=state.project.content,
+                plot_threads=task.get("plot_threads", [])
+            )
+            return {
+                "messages": [AIMessage(content="Plot consistency verified")],
+                "continuity_updates": {"plot_consistency": consistency}
+            }
+            
+        return {
+            "messages": [AIMessage(content="No specific continuity task identified")],
+            "continuity_updates": {}
+        }

@@ -20,7 +20,12 @@ def get_message_text(msg: BaseMessage) -> str:
 
 def load_chat_model(fully_specified_name: str) -> BaseChatModel:
     """Load a chat model from a fully specified name."""
-    provider, model = fully_specified_name.split("/", maxsplit=1)
+    # Handle case where provider is not specified
+    if "/" not in fully_specified_name:
+        provider = "openai"  # Default provider
+        model = fully_specified_name
+    else:
+        provider, model = fully_specified_name.split("/", maxsplit=1)
     
     # Set the appropriate API key for the model provider
     api_key = None

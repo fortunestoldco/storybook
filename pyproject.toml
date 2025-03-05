@@ -19,6 +19,7 @@ dependencies = [
     "langchain-experimental",
     "langchain-community",
     "tavily-python",
+    "pytest-asyncio>=0.23.0",
 ]
 
 
@@ -66,4 +67,13 @@ convention = "google"
 [dependency-groups]
 dev = [
     "langgraph-cli[inmem]>=0.1.71",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v -ra --strict-markers"
+markers = [
+    "asyncio: mark test as async",
 ]

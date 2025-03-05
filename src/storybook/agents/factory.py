@@ -1,102 +1,71 @@
-from typing import Dict, Any, Callable, List
-from langchain_core.runnables import RunnableConfig
-
+from typing import Dict, Type
 from storybook.configuration import Configuration
-from storybook.state import NovelSystemState
-from storybook.utils import load_chat_model
-from storybook.prompts import get_agent_prompt
-from storybook.tools import *
+from storybook.agents.base_agent import BaseAgent
+
+# Import agent implementations directly
+from storybook.agents.initialization.executive_director import ExecutiveDirector
+from storybook.agents.initialization.quality_assessment_director import QualityAssessmentDirector
+from storybook.agents.initialization.human_feedback_manager import HumanFeedbackManager
+
+from storybook.agents.development.creative_director import CreativeDirector
+from storybook.agents.development.structure_architect import StructureArchitect
+from storybook.agents.development.plot_specialist import PlotDevelopmentSpecialist
+from storybook.agents.development.world_expert import WorldBuildingExpert
+
+from storybook.agents.creation.content_director import ContentDevelopmentDirector
+from storybook.agents.creation.chapter_drafter import ChapterDrafter
+from storybook.agents.creation.dialogue_crafter import DialogueCrafter
+from storybook.agents.creation.continuity_manager import ContinuityManager
+
+from storybook.agents.refinement.editorial_director import EditorialDirector
+from storybook.agents.refinement.prose_enhancement_specialist import ProseEnhancementSpecialist
+from storybook.agents.refinement.structural_editor import StructuralEditor
+
+from storybook.agents.finalization.formatting_standards_expert import FormattingStandardsExpert
+from storybook.agents.finalization.positioning_specialist import PositioningSpecialist
+from storybook.agents.finalization.market_alignment_director import MarketAlignmentDirector
 
 class AgentFactory:
-    """Factory for creating specialized novel writing agents."""
+    """Factory for creating novel writing agents."""
     
     def __init__(self, config: Configuration):
         self.config = config
-        self.base_model = load_chat_model(config.model)
-        self._init_tool_registry()
+        self._init_agent_registry()
     
-    def _init_tool_registry(self) -> None:
-        """Initialize the tool registry for each agent."""
-        self.tool_registry = {
+    def _init_agent_registry(self) -> None:
+        """Initialize the agent registry."""
+        self.agent_registry: Dict[str, Type[BaseAgent]] = {
             # Initialization Phase
-            "executive_director": [QualityAssessmentTool(), TaskDelegationTool()],
-            "human_feedback_manager": [FeedbackProcessingTool()],
-            "quality_assessment_director": [QualityMetricsTool(), QualityGateTool()],
+            "executive_director": ExecutiveDirector,
+            "quality_assessment_director": QualityAssessmentDirector,
+            "human_feedback_manager": HumanFeedbackManager,
             
             # Development Phase
-            "creative_director": [StoryElementsTool(), CreativeAssessmentTool()],
-            "structure_architect": [StoryStructureTool(), PacingAnalysisTool(), ChapterOutlineTool()],
-            "plot_development_specialist": [PlotThreadTool(), ConflictDesignTool(), PlotCoherenceTool()],
-            "world_building_expert": [WorldDesignTool(), ConsistencyCheckerTool(), LocationManagerTool()],
+            "creative_director": CreativeDirector,
+            "structure_architect": StructureArchitect,
+            "plot_development_specialist": PlotDevelopmentSpecialist,
+            "world_building_expert": WorldBuildingExpert,
             
             # Creation Phase
-            "content_development_director": [ContentPlanningTool(), ContentQualityTool(), ContentProgressTool()],
-            "chapter_drafter": [ChapterStructureTool(), SceneSequenceTool(), NarrativeFlowTool()],
-            "dialogue_crafter": [DialogueGenerationTool(), CharacterVoiceTool(), SubtextTool()],
+            "content_development_director": ContentDevelopmentDirector,
+            "chapter_drafter": ChapterDrafter,
+            "dialogue_crafter": DialogueCrafter,
+            "continuity_manager": ContinuityManager,
             
             # Refinement Phase
-            "editorial_director": [EditorialPlanningTool(), QualityAssessmentTool(), RevisionCoordinationTool()],
-            "prose_enhancement_specialist": [StyleRefinementTool(), ImageryEnhancementTool(), SentenceStructureTool()],
+            "editorial_director": EditorialDirector,
+            "prose_enhancement_specialist": ProseEnhancementSpecialist,
+            "structural_editor": StructuralEditor,
             
             # Finalization Phase
-            "formatting_standards_expert": [FormatValidationTool(), StyleGuideComplianceTool(), PublishingStandardsTool()],
-            "positioning_specialist": [MarketAnalysisTool(), PositioningStrategyTool(), CompetitorAnalysisTool()]
+            "formatting_standards_expert": FormattingStandardsExpert,
+            "positioning_specialist": PositioningSpecialist,
+            "market_alignment_director": MarketAlignmentDirector
         }
     
-    def create_agent(self, agent_name: str, project_id: str) -> Callable:
-        """Create an agent function for the specified role."""
-        if agent_name not in self.config.agent_roles:
-            raise ValueError(f"Unknown agent role: {agent_name}")
-        
-        tools = self.tool_registry.get(agent_name, [])
-        
-        async def agent_function(
-            state: NovelSystemState, 
-            config: RunnableConfig
-        ) -> Dict[str, Any]:
-            configuration = Configuration.from_runnable_config(config)
-            system_prompt = get_agent_prompt(agent_name, project_id, state)
+    def create_agent(self, agent_name: str) -> BaseAgent:
+        """Create an agent instance."""
+        if agent_name not in self.agent_registry:
+            raise ValueError(f"Unknown agent: {agent_name}")
             
-            # Execute agent with its tools
-            result = await self._execute_agent(
-                agent_name=agent_name,
-                tools=tools,
-                state=state,
-                system_prompt=system_prompt,
-                config=configuration
-            )
-            
-            return result
-        
-        return agent_function
-    
-    async def _execute_agent(
-        self,
-        agent_name: str,
-        tools: List[NovelWritingTool],
-        state: NovelSystemState,
-        system_prompt: str,
-        config: Configuration
-    ) -> Dict[str, Any]:
-        """Execute the agent with its tools."""
-        # Basic implementation - to be expanded
-        try:
-            task = state.current_input.get("task", "")
-            result = {"messages": []}
-            
-            for tool in tools:
-                if tool.should_handle(task):
-                    tool_result = await tool._arun(
-                        content=state.project.content,
-                        task=task,
-                        config=config
-                    )
-                    result.update(tool_result)
-            
-            return result
-            
-        except Exception as e:
-            return {
-                "error": str(e),
-                "messages": [{"role": "system", "content": f"Error in {agent_name}: {str(e)}"}]
-            }
+        return self.agent_registry[agent_name]()

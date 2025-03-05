@@ -7,7 +7,7 @@ from storybook.tools.feedback import FeedbackProcessingTool
 from storybook.agents.base_agent import BaseAgent
 
 class HumanFeedbackManager(BaseAgent):
-    """Manager for processing and integrating human feedback."""
+    """Manager responsible for processing human feedback."""
     
     def __init__(self):
         super().__init__(
@@ -20,18 +20,12 @@ class HumanFeedbackManager(BaseAgent):
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
-        """Process human feedback and integrate into project state."""
-        task = state.current_input.get("task", "")
-        feedback = state.current_input.get("feedback", {})
-        
-        processed_feedback = await self.tools[0].arun(
-            feedback=feedback,
-            project_state=state.project
+        """Process human feedback."""
+        feedback = await self.tools[0].arun(
+            content=state.project.content,
+            feedback=state.current_input.get("feedback", {})
         )
-        
         return {
-            "messages": [
-                AIMessage(content=f"Processed feedback: {processed_feedback}")
-            ],
-            "feedback_updates": processed_feedback
+            "messages": [AIMessage(content="Feedback processed")],
+            "feedback_updates": feedback
         }
