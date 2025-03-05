@@ -26,23 +26,23 @@ class BaseAgent:
     def __init__(
         self,
         name: str,
-        model: BaseChatModel,
-        tools: List[BaseTool] = None,
-        project_id: str = "",
-        role_description: str = ""
+        chat_model: BaseChatModel,
+        tools: List[BaseTool],
+        project_id: str,
+        role_description: str
     ):
         """Initialize a base agent.
         
         Args:
             name: Agent name.
-            model: Language model to use.
+            chat_model: Language model to use.
             tools: List of tools available to the agent.
             project_id: ID of the project.
             role_description: Description of the agent's role.
         """
         self.name = name
-        self.model = model
-        self.tools = tools or []
+        self.chat_model = chat_model
+        self.tools = tools
         self.project_id = project_id
         self.role_description = role_description
         self.system_prompt_template = get_agent_prompt(name)
@@ -120,7 +120,7 @@ class BaseAgent:
         ]
         
         # Get the model's response
-        response = await self.model.ainvoke(messages)
+        response = await self.chat_model.ainvoke(messages)
         
         # Return the result
         return AgentResult(message=response)

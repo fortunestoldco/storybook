@@ -101,38 +101,27 @@ class AgentFactory:
         }
 
     def create_agent(self, agent_name: str, project_id: str) -> Callable:
-        """Create an agent function for the specified role.
-
-        Args:
-            agent_name: Name/role of the agent.
-            project_id: ID of the project.
-
-        Returns:
-            Agent function that processes state.
-        """
+        """Create an agent function for the specified role."""
         if agent_name not in self.agent_roles:
             raise ValueError(f"Unknown agent role: {agent_name}")
 
         role_description = self.agent_roles[agent_name]
-        
-        # Get agent-specific tools
         agent_tools = tool_registry.get_tools_for_agent(agent_name)
         
-        # Initialize the appropriate agent class
+        # Initialize agent with all required parameters
         if agent_name in self.agent_classes:
             agent_class = self.agent_classes[agent_name]
             agent_instance = agent_class(
-                model=self.base_model,
+                name=agent_name,
+                chat_model=self.base_model,
                 tools=agent_tools,
                 project_id=project_id,
                 role_description=role_description
             )
         else:
-            # Fallback for undefined agents
-            from storybook.agents.base import BaseAgent
             agent_instance = BaseAgent(
                 name=agent_name,
-                model=self.base_model,
+                chat_model=self.base_model,
                 tools=agent_tools,
                 project_id=project_id,
                 role_description=role_description

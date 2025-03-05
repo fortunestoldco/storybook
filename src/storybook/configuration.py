@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field, fields
-from typing import Annotated, Dict, Optional, Any
+from typing import Annotated, Dict, Optional, Any, TypedDict
 from dotenv import load_dotenv
+from langchain_huggingface import HuggingFaceEndpoint
+from enum import Enum
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 
@@ -24,9 +26,16 @@ class Configuration:
     )
 
     model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = field(
-        default="anthropic/claude-3-5-sonnet-20240620",
+        default="microsoft/phi-2",  # Changed default to Hugging Face model
         metadata={
             "description": "The name of the language model to use for the agents' interactions."
+        },
+    )
+
+    model_provider: ModelProvider = field(
+        default=ModelProvider.HUGGINGFACE,
+        metadata={
+            "description": "The model provider to use (huggingface or replicate)."
         },
     )
 
@@ -62,6 +71,40 @@ class Configuration:
         default=os.getenv("GOOGLE_API_KEY", ""),
         metadata={
             "description": "API key for Google models."
+        },
+    )
+
+    huggingface_api_key: str = field(
+        default=os.getenv("HUGGINGFACE_API_KEY", ""),
+        metadata={
+            "description": "API key for Hugging Face models."
+        },
+    )
+
+    replicate_api_key: str = field(
+        default=os.getenv("REPLICATE_API_KEY", ""),
+        metadata={
+            "description": "API key for Replicate models."
+        },
+    )
+
+    default_model_config: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "model_name": "microsoft/phi-2",
+            "task": "text-generation",
+            "max_new_tokens": 512,
+            "temperature": 0.7,
+            "repetition_penalty": 1.03
+        },
+        metadata={
+            "description": "Default model configuration for all agents."
+        },
+    )
+
+    agent_model_configs: Dict[str, Dict[str, Any]] = field(
+        default_factory=dict,
+        metadata={
+            "description": "Per-agent model configurations."
         },
     )
 
@@ -136,11 +179,53 @@ class Configuration:
     )
 
     @classmethod
-    def from_runnable_config(
-        cls, config: Optional[RunnableConfig] = None
-    ) -> Configuration:
-        """Create a Configuration instance from a RunnableConfig object."""
-        config = ensure_config(config)
-        configurable = config.get("configurable") or {}
-        _fields = {f.name for f in fields(cls) if f.init}
-        return cls(**{k: v for k, v in configurable.items() if k in _fields})
+    def from_runnable_config(cls, config: Optional[RunnableConfig] = None) -> 'Configuration':
+        """Create configuration from runtime config."""
+        if not config:
+            return cls()
+            
+        configurable = config.get("configurable", {})
+        
+        # Get HF token from runtime config or environment
+        hf_token = configurable.get("huggingface_token") or os.getenv("HUGGINGFACE_API_KEY", "")
+        
+        # Get default model config
+        default_model = configurable.get("default_model", cls.default_model_config)
+        
+        # Get per-agent configurations
+        agent_models = configurable.get("agent_models", {})
+        
+        return cls(
+            huggingface_api_key=hf_token,
+            default_model_config=default_model,
+            agent_model_configs=agent_models,
+            # ...other fields...
+        )
+
+
+class ModelProvider(str, Enum):
+    """Supported model providers."""
+    HUGGINGFACE = "huggingface"
+    REPLICATE = "replicate"
+
+class AgentModelConfig(TypedDict, total=False):
+    """Configuration for an individual agent's model."""
+    provider: ModelProvider
+    model_name: str  # e.g. "microsoft/phi-2" or "replicate/model-id"
+    task: str  # e.g. "text-generation"
+    max_new_tokens: int 
+    temperature: float
+    repetition_penalty: float
+
+class StoryBookConfig(TypedDict, total=False):
+    """Runtime configuration schema for the storybook system."""
+    project_id: str  # Required project identifier
+    system_prompt: Optional[str]  # Optional custom system prompt
+    model_provider: ModelProvider  # The model provider to use
+    huggingface_token: Optional[str]  # HuggingFace API token
+    replicate_token: Optional[str]  # Replicate API token
+    default_model: Optional[AgentModelConfig]  # Default model config
+    agent_models: Optional[Dict[str, AgentModelConfig]]  # Per-agent configs
+
+# Update the graph builder to use this schema
+builder = StateGraph(NovelSystemState, config_schema=StoryBookConfig)

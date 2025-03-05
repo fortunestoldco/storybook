@@ -6,7 +6,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 
-from storybook.configuration import Configuration
+from storybook.configuration import StoryBookConfig, Configuration
 from storybook.state import NovelSystemState, InputState
 from storybook.agents import AgentFactory
 from storybook.utils import check_quality_gate
@@ -473,84 +473,29 @@ def create_supervisor_graph(config: Configuration) -> StateGraph:
 
 
 def create_storybook_graph(runnable_config: RunnableConfig) -> StateGraph:
-    """Create and return the main storybook graph that integrates all phases.
-
-    Args:
-        runnable_config: The runnable configuration.
-
-    Returns:
-        The main storybook graph incorporating all phases.
-    """
+    """Create the main storybook graph."""
     config = Configuration.from_runnable_config(runnable_config)
-    project_id = runnable_config.get("configurable", {}).get("project_id")
-    if not project_id:
-        project_id = runnable_config.get("metadata", {}).get("project_id", "default_project")
+    project_id = runnable_config.get("configurable", {}).get("project_id", "default_project")
     
-    # Create the main graph
-    builder = StateGraph(NovelSystemState, input=InputState, config_schema=Configuration)
+    # Create graph with runtime config schema
+    builder = StateGraph(NovelSystemState, config_schema=StoryBookConfig)
     
-    # Create subgraphs for each phase
-    initialization_subgraph = create_phase_graph("initialization", project_id, config)
-    development_subgraph = create_phase_graph("development", project_id, config)
-    creation_subgraph = create_phase_graph("creation", project_id, config)
-    refinement_subgraph = create_phase_graph("refinement", project_id, config)
-    finalization_subgraph = create_phase_graph("finalization", project_id, config)
-    supervisor_subgraph = create_supervisor_graph(config)
+    # Add phase transition management
+    phase = runnable_config.get("configurable", {}).get("phase", "initialization")
     
-    # Add all subgraphs to the main graph
-    builder.add_node("initialization_phase", initialization_subgraph)
-    builder.add_node("development_phase", development_subgraph)
-    builder.add_node("creation_phase", creation_subgraph)
-    builder.add_node("refinement_phase", refinement_subgraph)
-    builder.add_node("finalization_phase", finalization_subgraph)
-    builder.add_node("phase_supervisor", supervisor_subgraph)
+    # Create phase-specific subgraph
+    phase_graph = create_phase_graph(phase, project_id, config)
     
-    # Create a router node to direct to the appropriate phase
-    def phase_router(state: NovelSystemState) -> str:
-        """Route to the appropriate phase based on the current phase in state."""
-        current_phase = state.phase
-        if current_phase == "initialization":
-            return "initialization_phase"
-        elif current_phase == "development":
-            return "development_phase"
-        elif current_phase == "creation":
-            return "creation_phase"
-        elif current_phase == "refinement":
-            return "refinement_phase"
-        elif current_phase == "finalization":
-            return "finalization_phase"
-        elif current_phase == "complete":
-            return "__end__"
-        else:
-            return "phase_supervisor"
+    # Add phase graph nodes and edges
+    builder.add_subgraph(phase_graph)
     
-    # Add the router node
-    builder.add_node("router", lambda state: state)
+    # Add supervisor capabilities
+    supervisor = create_supervisor_graph(config)
+    builder.add_subgraph(supervisor)
     
-    # Set the entry point
-    builder.set_entry_point("router")
-    
-    # Add conditional edges from router to phase subgraphs
-    builder.add_conditional_edges("router", phase_router)
-    
-    # After each phase completes, go back to the supervisor
-    builder.add_edge("initialization_phase", "phase_supervisor")
-    builder.add_edge("development_phase", "phase_supervisor")
-    builder.add_edge("creation_phase", "phase_supervisor")
-    builder.add_edge("refinement_phase", "phase_supervisor")
-    builder.add_edge("finalization_phase", "phase_supervisor")
-    
-    # From supervisor back to router
-    builder.add_edge("phase_supervisor", "router")
-    
-    # Set up memory checkpointing
-    checkpointer = MemorySaver()
-    
-    # Name the graph
-    builder.name = "storybook - Novel Writing System"
-    
-    # Compile the main graph with the checkpointer
-    graph = builder.compile(checkpointer=checkpointer)
+    # Compile final graph
+    graph = builder.compile()
+    graph.name = f"storybook - Main Graph ({phase} Phase)"
     
     return graph
 

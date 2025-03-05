@@ -19,6 +19,9 @@ dependencies = [
     "langchain-experimental",
     "langchain-community",
     "tavily-python",
+    "huggingface-hub",
+    "langchain-huggingface",
+    "replicate"
 ]
 
 
