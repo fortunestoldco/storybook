@@ -8,6 +8,11 @@ from storybook.tools.dialogue import (
     CharacterVoiceTool
 )
 
+from storybook.tools.dialogue.creation import (
+    DialogueCreationTool,
+    DialogueFlowTool
+)
+
 @pytest.mark.asyncio
 async def test_dialogue_generation():
     """Test dialogue generation functionality."""
@@ -67,4 +72,43 @@ async def test_character_voice_tool():
         "emotional_markers",
         "dialect_features",
         "consistency_score"
+    ])
+
+@pytest.mark.asyncio
+async def test_dialogue_creation_tool():
+    """Test dialogue creation functionality."""
+    tool = DialogueCreationTool()
+    result = await tool.invoke({
+        "content": {},
+        "scene_context": {
+            "scene_id": "scene_001",
+            "characters": ["protagonist", "antagonist"]
+        }
+    })
+    
+    assert "dialogue_creation" in result
+    assert all(k in result["dialogue_creation"] for k in [
+        "scene_id",
+        "character_interactions",
+        "conversation_beats",
+        "emotional_progression",
+        "dialogue_markers"
+    ])
+
+@pytest.mark.asyncio
+async def test_dialogue_flow_tool():
+    """Test dialogue flow functionality."""
+    tool = DialogueFlowTool()
+    result = await tool.invoke({
+        "content": {},
+        "scene_id": "scene_001"
+    })
+    
+    assert "dialogue_flow" in result
+    assert all(k in result["dialogue_flow"] for k in [
+        "scene_id",
+        "flow_metrics",
+        "transition_points",
+        "beat_structure",
+        "flow_optimization"
     ])

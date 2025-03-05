@@ -1,12 +1,10 @@
-"""Market analysis and positioning tools."""
-from .analysis import (
-    MarketAnalysisTool,
-    PositioningStrategyTool,
-    CompetitorAnalysisTool
-)
+"""Market analysis tools."""
+from .analysis import MarketAnalysisTool
+from .competition import CompetitorAnalysisTool
+from .positioning import PositioningStrategyTool
 
 __all__ = [
     "MarketAnalysisTool",
-    "PositioningStrategyTool",
-    "CompetitorAnalysisTool"
+    "CompetitorAnalysisTool",
+    "PositioningStrategyTool"
 ]

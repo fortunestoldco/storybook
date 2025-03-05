@@ -3,7 +3,7 @@ from storybook.tools.base import NovelWritingTool
 
 class SceneSequenceTool(NovelWritingTool):
     name = "scene_sequence"
-    description = "Manage and optimize scene sequences within chapters"
+    description = "Manage scene sequences"
     
     async def _arun(
         self,
@@ -15,11 +15,11 @@ class SceneSequenceTool(NovelWritingTool):
                 "chapter_id": chapter_id,
                 "scenes": [],
                 "transitions": [],
-                "pacing_analysis": {},
+                "pacing_points": [],
                 "flow_metrics": {
                     "coherence": 0.0,
                     "tension": 0.0,
-                    "rhythm": 0.0
+                    "engagement": 0.0
                 }
             }
         }

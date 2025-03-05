@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import argparse
 from collections import defaultdict
+import glob
 
 def parse_python_file(file_path):
     """Parse a Python file to extract agent and tool information with thorough pattern matching."""
@@ -155,105 +156,124 @@ def generate_report(agents, all_tools):
     
     return report
 
-def extract_agents_from_graph(src_dir):
-    """Extract agent names referenced in graph.py"""
+def find_agent_folders(src_dir):
+    """Find all agent folders in the source directory."""
+    agent_folders = []
+    
+    # Find all folders that start with "agent"
+    for root, dirs, _ in os.walk(src_dir):
+        for dir_name in dirs:
+            if dir_name.startswith("agent"):
+                agent_folders.append(os.path.join(root, dir_name))
+    
+    return agent_folders
+
+def get_implemented_agents(src_dir):
+    """Get all implemented agents from agent folders."""
+    agent_folders = find_agent_folders(src_dir)
+    implemented_agents = set()
+    
+    for folder in agent_folders:
+        for py_file in glob.glob(f"{folder}/**/*.py", recursive=True):
+            agent_name, _, _ = parse_python_file(py_file)
+            if agent_name:
+                implemented_agents.add(agent_name)
+    
+    return implemented_agents
+
+def parse_graph_file(src_dir):
+    """Parse the graph.py file to extract agent names."""
+    graph_agents = set()
     graph_file_path = None
     
-    # Find graph.py in src directory
+    # Try to find graph.py file
     for root, _, files in os.walk(src_dir):
-        if 'graph.py' in files:
-            graph_file_path = os.path.join(root, 'graph.py')
+        if "graph.py" in files:
+            graph_file_path = os.path.join(root, "graph.py")
             break
     
     if not graph_file_path:
-        print("Warning: graph.py file not found in the source directory")
-        return []
+        print("Error: graph.py file not found.")
+        return graph_agents
     
     try:
         with open(graph_file_path, 'r', encoding='utf-8', errors='replace') as file:
             content = file.read()
-        
-        # Look for agent patterns in the graph file
-        agents_in_graph = set()
-        
-        # Pattern for agents in node definitions
-        node_pattern = re.compile(r'agent\s*=\s*[\'"](.*?)[\'"]', re.DOTALL)
-        for match in node_pattern.finditer(content):
-            agent_name = match.group(1)
-            agents_in_graph.add(agent_name)
-        
-        # Another common pattern for agent declarations in graph
-        agent_pattern = re.compile(r'[\'"](.*?)[\'"]\s*:\s*{.*?[\'"](agent|type)[\'"]\s*:\s*[\'"]agent[\'"]', re.DOTALL)
+            
+        # Extract agent names from the graph
+        # This is a simple approach, might need refinement based on the actual graph.py structure
+        agent_pattern = re.compile(r'[\'"]agent[\'"]:\s*[\'"](\w+)[\'"]', re.IGNORECASE)
         for match in agent_pattern.finditer(content):
-            agent_name = match.group(1)
-            agents_in_graph.add(agent_name)
+            graph_agents.add(match.group(1))
             
-        # Additional pattern for agent properties
-        props_pattern = re.compile(r'props\s*=\s*{.*?[\'"](agent|name)[\'"]\s*:\s*[\'"]([^\'"]+)[\'"]', re.DOTALL)
-        for match in props_pattern.finditer(content):
-            agent_name = match.group(2)
-            agents_in_graph.add(agent_name)
-            
-        return list(agents_in_graph)
-    
+        # Try to catch any other agent references
+        agent_pattern2 = re.compile(r'Agent\([\'"](\w+)[\'"]', re.IGNORECASE)
+        for match in agent_pattern2.finditer(content):
+            graph_agents.add(match.group(1))
+        
     except Exception as e:
-        print(f"Error parsing graph.py: {e}")
-        return []
+        print(f"Error parsing graph file: {e}")
+    
+    return graph_agents
 
-def generate_graph_agent_report(agents, graph_agents):
-    """Generate report comparing implemented agents vs agents in graph.py"""
-    implemented_agents = set(agents.keys())
-    graph_agents_set = set(graph_agents)
+def check_graph_inclusion(src_dir):
+    """Check for agents in the graph vs. implemented agents."""
+    print("\nChecking graph inclusion...")
+    
+    graph_agents = parse_graph_file(src_dir)
+    implemented_agents = get_implemented_agents(src_dir)
     
     # Agents in graph but not implemented
-    agents_missing_implementation = graph_agents_set - implemented_agents
+    missing_agents = graph_agents - implemented_agents
     
     # Agents implemented but not in graph
-    agents_not_in_graph = implemented_agents - graph_agents_set
+    unused_agents = implemented_agents - graph_agents
     
-    report = {
-        "agents_in_graph_not_implemented": sorted(list(agents_missing_implementation)),
-        "agents_implemented_not_in_graph": sorted(list(agents_not_in_graph)),
-        "total_agents_in_graph": len(graph_agents_set),
-        "total_agents_implemented": len(implemented_agents),
-        "total_agents_missing_implementation": len(agents_missing_implementation),
-        "total_agents_not_in_graph": len(agents_not_in_graph)
-    }
+    print("\n===== Graph Inclusion Report =====\n")
+    print(f"Agents in graph: {len(graph_agents)}")
+    print(f"Implemented agents: {len(implemented_agents)}")
     
-    return report
+    print("\n1) Agents named in the graph but not implemented:")
+    if missing_agents:
+        for agent in sorted(missing_agents):
+            print(f"  - {agent}")
+    else:
+        print("  None")
+    
+    print("\n2) Agents implemented but not present in the graph:")
+    if unused_agents:
+        for agent in sorted(unused_agents):
+            print(f"  - {agent}")
+    else:
+        print("  None")
 
-def main():
-    parser = argparse.ArgumentParser(description='Scan Python files for agents and tools')
-    parser.add_argument('--dir', dest='src_dir', default="src", 
-                        help='Directory to scan (default: src)')
-    args = parser.parse_args()
-    
-    src_dir = args.src_dir
-    
-    # Check if directory exists
-    if not os.path.isdir(src_dir):
-        print(f"Error: Directory '{src_dir}' not found.")
-        return
-    
-    print(f"Scanning directory: {src_dir}")
+def display_menu():
+    """Display the menu options."""
+    print("\n===== Agent Analysis Tool =====")
+    print("1: Agents & Tools Analysis")
+    print("2: Graph Inclusion Check")
+    print("0: Exit")
+    return input("Enter your choice (0-2): ")
+
+def agents_and_tools_analysis(src_dir):
+    """Run the agents and tools analysis."""
+    print(f"\nScanning directory: {src_dir}")
     print("This may take a while for large codebases...")
     
     agents, all_tools = scan_directory(src_dir)
-    graph_agents = extract_agents_from_graph(src_dir)
     
     if not agents:
         print("No agents found in the source directory.")
         return
     
-    tool_report = generate_report(agents, all_tools)
-    graph_report = generate_graph_agent_report(agents, graph_agents)
+    report = generate_report(agents, all_tools)
     
-    # Display the agent tool report
+    # Display the report
     print("\n===== Agent Tool Verification Report =====\n")
     print(f"Total number of agents found: {len(agents)}")
     print(f"Total number of tools defined: {len(all_tools)}\n")
     
-    for agent_data in tool_report:
+    for agent_data in report:
         print(f"Agent: {agent_data['agent_name']} (in {agent_data['file_path']})")
         print(f"Total tools referenced: {agent_data['total_tools_referenced']}")
         print(f"Tools verified: {agent_data['total_tools_verified']}")
@@ -275,60 +295,48 @@ def main():
         
         print("\n" + "-"*50 + "\n")
     
-    # Display the graph agent report
-    print("\n===== Graph Agent Verification Report =====\n")
-    print(f"Total agents in graph.py: {graph_report['total_agents_in_graph']}")
-    print(f"Total agents implemented: {graph_report['total_agents_implemented']}")
-    
-    print("\nAgents in graph.py but not implemented:")
-    if graph_report['agents_in_graph_not_implemented']:
-        for agent in graph_report['agents_in_graph_not_implemented']:
-            print(f"  - {agent}")
-    else:
-        print("  None")
-    
-    print("\nAgents implemented but not used in graph.py:")
-    if graph_report['agents_implemented_not_in_graph']:
-        for agent in graph_report['agents_implemented_not_in_graph']:
-            print(f"  - {agent}")
-    else:
-        print("  None")
-    
-    print("\n" + "-"*50 + "\n")
-    
-    # Save the reports to JSON files
+    # Save the report to a JSON file
     timestamp = os.path.basename(os.path.normpath(src_dir))
+    report_filename = f'agent_tool_report_{timestamp}.json'
     
-    # Tool report
-    tool_report_filename = f'agent_tool_report_{timestamp}.json'
-    with open(tool_report_filename, 'w') as f:
+    with open(report_filename, 'w') as f:
         json.dump({
             "summary": {
                 "total_agents": len(agents),
                 "total_tools": len(all_tools),
                 "scan_directory": src_dir
             },
-            "agents": tool_report,
+            "agents": report,
             "all_tools": list(all_tools)
         }, f, indent=2)
     
-    # Graph report
-    graph_report_filename = f'graph_agent_report_{timestamp}.json'
-    with open(graph_report_filename, 'w') as f:
-        json.dump({
-            "summary": {
-                "total_agents_in_graph": graph_report['total_agents_in_graph'],
-                "total_agents_implemented": graph_report['total_agents_implemented'],
-                "scan_directory": src_dir
-            },
-            "agents_in_graph_not_implemented": graph_report['agents_in_graph_not_implemented'],
-            "agents_implemented_not_in_graph": graph_report['agents_implemented_not_in_graph'],
-            "all_agents_in_graph": graph_agents,
-            "all_implemented_agents": list(agents.keys())
-        }, f, indent=2)
+    print(f"Report saved to {report_filename}")
+
+def main():
+    parser = argparse.ArgumentParser(description='Agent and Tool Analysis')
+    parser.add_argument('--dir', dest='src_dir', default="src", 
+                        help='Directory to scan (default: src)')
+    args = parser.parse_args()
     
-    print(f"Tool report saved to {tool_report_filename}")
-    print(f"Graph agent report saved to {graph_report_filename}")
+    src_dir = args.src_dir
+    
+    # Check if directory exists
+    if not os.path.isdir(src_dir):
+        print(f"Error: Directory '{src_dir}' not found.")
+        return
+    
+    while True:
+        choice = display_menu()
+        
+        if choice == '0':
+            print("Exiting the program.")
+            break
+        elif choice == '1':
+            agents_and_tools_analysis(src_dir)
+        elif choice == '2':
+            check_graph_inclusion(src_dir)
+        else:
+            print("Invalid choice. Please try again.")
 
 if __name__ == "__main__":
     main()

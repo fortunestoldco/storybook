@@ -1,21 +1,22 @@
-from typing import Dict, Any, List
+from typing import Dict, Any
 from storybook.tools.base import NovelWritingTool
 
 class ProjectManagementTool(NovelWritingTool):
     name = "project_management"
-    description = "Manage project timeline and milestones"
+    description = "Manage project workflow and resources"
     
     async def _arun(
         self,
         content: Dict[str, Any],
-        phase: str
+        scope: str = "global"
     ) -> Dict[str, Any]:
         return {
-            "project_status": {
-                "phase": phase,
-                "completion": 0.0,
-                "milestones": [],
-                "next_actions": []
+            "project_management": {
+                "scope": scope,
+                "workflow_status": {},
+                "resource_allocation": {},
+                "timeline": {},
+                "milestones": []
             }
         }
 

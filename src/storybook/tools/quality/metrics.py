@@ -1,22 +1,25 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from storybook.tools.base import NovelWritingTool
 
 class QualityMetricsTool(NovelWritingTool):
     name = "quality_metrics"
-    description = "Assess and measure quality metrics"
+    description = "Evaluate content quality metrics"
     
     async def _arun(
         self,
         content: Dict[str, Any],
-        metric_types: list[str] = None
+        metric_types: List[str] = None
     ) -> Dict[str, Any]:
         return {
             "quality_metrics": {
-                "readability_score": 0.0,
-                "coherence_score": 0.0,
-                "engagement_metrics": {},
-                "style_consistency": 0.0,
-                "technical_quality": {},
+                "overall_score": 0.0,
+                "metrics": {
+                    "coherence": 0.0,
+                    "engagement": 0.0,
+                    "originality": 0.0,
+                    "technical": 0.0
+                },
+                "detailed_analysis": {},
                 "recommendations": []
             }
         }

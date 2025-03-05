@@ -1,0 +1,757 @@
+{
+  "summary": {
+    "total_agents": 39,
+    "total_tools": 152,
+    "scan_directory": "src"
+  },
+  "agents": [
+    {
+      "agent_name": "AgentFactory",
+      "file_path": "storybook\\agents\\factory.py",
+      "tools_verified": [
+        "FormattingStandardsExpert",
+        "WorldBuildingExpert",
+        "MarketAlignmentDirector",
+        "StructureArchitect",
+        "EmotionalArcDesigner",
+        "ProseEnhancementSpecialist",
+        "CulturalAuthenticityExpert",
+        "PositioningSpecialist",
+        "DomainKnowledgeSpecialist",
+        "HumanFeedbackManager",
+        "ChapterDrafters",
+        "DialogueCrafter",
+        "EditorialDirector",
+        "BaseAgent",
+        "FactVerificationSpecialist",
+        "StructuralEditor",
+        "SceneConstructionSpecialist",
+        "PlotDevelopmentSpecialist",
+        "ContinuityManager",
+        "SceneConstructionSpecialists",
+        "QualityAssessmentDirector",
+        "CreativeDirector",
+        "ExecutiveDirector",
+        "VoiceConsistencyMonitor",
+        "ChapterDrafter",
+        "DifferentiationStrategist",
+        "DialogueCrafters",
+        "ContentDevelopmentDirector"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 28,
+      "total_tools_verified": 28,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "Configuration",
+      "file_path": "storybook\\configuration.py",
+      "tools_verified": [],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 0,
+      "total_tools_verified": 0,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "CreativeDirector",
+      "file_path": "storybook\\agents\\development\\creative_director.py",
+      "tools_verified": [
+        "CreativeVisionTool",
+        "StoryElementsTool",
+        "ThematicAnalysisTool",
+        "BaseAgent",
+        "CreativeDirector"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "ExecutiveDirector",
+      "file_path": "storybook\\agents\\initialization\\executive_director.py",
+      "tools_verified": [
+        "QualityMetricsTool",
+        "TaskDelegationTool",
+        "ProjectManagementTool",
+        "BaseAgent",
+        "ExecutiveDirector"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "ChapterDrafter",
+      "file_path": "storybook\\agents\\creation\\chapter_drafter.py",
+      "tools_verified": [
+        "ChapterStructureTool",
+        "SceneSequenceTool",
+        "NarrativeFlowTool",
+        "BaseAgent",
+        "ChapterDrafter"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "ChapterDrafters",
+      "file_path": "storybook\\agents\\creation\\chapter_drafters.py",
+      "tools_verified": [
+        "ChapterStructureTool",
+        "SceneSequenceTool",
+        "NarrativeFlowTool",
+        "ChapterDrafters",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "ContentDevelopmentDirector",
+      "file_path": "storybook\\agents\\creation\\content_development_director.py",
+      "tools_verified": [
+        "ContentPlanningTool",
+        "ContentDevelopmentTool",
+        "ContentQualityTool",
+        "BaseAgent",
+        "ContentDevelopmentDirector"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "ContinuityManager",
+      "file_path": "storybook\\agents\\creation\\continuity_manager.py",
+      "tools_verified": [
+        "TimelineTool",
+        "PlotConsistencyTool",
+        "CharacterTrackingTool",
+        "BaseAgent",
+        "ContinuityManager"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "DialogueCrafter",
+      "file_path": "storybook\\agents\\creation\\dialogue_crafter.py",
+      "tools_verified": [
+        "DialogueGenerationTool",
+        "DialogueStyleTool",
+        "DialogueRevisionTool",
+        "CharacterVoiceTool",
+        "DialogueCrafter",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 6,
+      "total_tools_verified": 6,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "DialogueCrafters",
+      "file_path": "storybook\\agents\\creation\\dialogue_crafters.py",
+      "tools_verified": [
+        "DialogueCreationTool",
+        "DialogueFlowTool",
+        "CharacterVoiceTool",
+        "BaseAgent",
+        "DialogueCrafters"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "EmotionalArcDesigner",
+      "file_path": "storybook\\agents\\creation\\emotional_arc_designer.py",
+      "tools_verified": [
+        "EmotionalArcTool",
+        "EmotionalPacingTool",
+        "EmotionalIntensityTool",
+        "EmotionalArcDesigner",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "SceneConstructionSpecialist",
+      "file_path": "storybook\\agents\\creation\\scene_construction_specialist.py",
+      "tools_verified": [
+        "SceneStructureTool",
+        "SceneFlowTool",
+        "SceneRevisionTool",
+        "BaseAgent",
+        "SceneConstructionSpecialist"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "SceneConstructionSpecialists",
+      "file_path": "storybook\\agents\\creation\\scene_construction_specialists.py",
+      "tools_verified": [
+        "SceneConstructionTool",
+        "SceneFlowAnalysisTool",
+        "SceneTransitionTool",
+        "BaseAgent",
+        "SceneConstructionSpecialists"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "VoiceConsistencyMonitor",
+      "file_path": "storybook\\agents\\creation\\voice_consistency_monitor.py",
+      "tools_verified": [
+        "NarrativeVoiceTool",
+        "VoiceConsistencyTool",
+        "ToneManagementTool",
+        "BaseAgent",
+        "VoiceConsistencyMonitor"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "CharacterPsychologySpecialist",
+      "file_path": "storybook\\agents\\development\\character_psychology_specialist.py",
+      "tools_verified": [
+        "PsychologyProfileTool",
+        "MotivationAnalysisTool",
+        "ConflictResponseTool",
+        "CharacterPsychologySpecialist",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "CharacterRelationshipMapper",
+      "file_path": "storybook\\agents\\development\\character_relationship_mapper.py",
+      "tools_verified": [
+        "RelationshipGraphTool",
+        "DynamicsAnalysisTool",
+        "ConflictMapTool",
+        "BaseAgent",
+        "CharacterRelationshipMapper"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "CharacterVoiceDesigner",
+      "file_path": "storybook\\agents\\development\\character_voice_designer.py",
+      "tools_verified": [
+        "VoicePatternTool",
+        "DialogueStyleTool",
+        "ExpressionAnalysisTool",
+        "BaseAgent",
+        "CharacterVoiceDesigner"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "CulturalAuthenticityExpert",
+      "file_path": "storybook\\agents\\development\\cultural_authenticity_expert.py",
+      "tools_verified": [
+        "CulturalAuthenticityTool",
+        "RepresentationAnalysisTool",
+        "CulturalContextTool",
+        "CulturalAuthenticityExpert",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "DomainKnowledgeSpecialist",
+      "file_path": "storybook\\agents\\development\\domain_knowledge_specialist.py",
+      "tools_verified": [
+        "DomainResearchTool",
+        "FactVerificationTool",
+        "ExpertKnowledgeTool",
+        "DomainKnowledgeSpecialist",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "PlotDevelopmentSpecialist",
+      "file_path": "storybook\\agents\\development\\plot_development_specialist.py",
+      "tools_verified": [
+        "PlotStructureTool",
+        "ConflictDevelopmentTool",
+        "BaseAgent",
+        "PlotDevelopmentSpecialist"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 4,
+      "total_tools_verified": 4,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "StructureArchitect",
+      "file_path": "storybook\\agents\\development\\structure_architect.py",
+      "tools_verified": [
+        "StoryStructureTool",
+        "PacingAnalysisTool",
+        "ChapterOutlineTool",
+        "StructureArchitect",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "WorldBuildingExpert",
+      "file_path": "storybook\\agents\\development\\world_building_expert.py",
+      "tools_verified": [
+        "WorldDesignTool",
+        "SystemDesignTool",
+        "ConsistencyCheckerTool",
+        "WorldBuildingExpert",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "DifferentiationStrategist",
+      "file_path": "storybook\\agents\\finalization\\differentiation_strategist.py",
+      "tools_verified": [
+        "UniqueSellingPointTool",
+        "MarketDifferentiationTool",
+        "ValuePropositionTool",
+        "BaseAgent",
+        "DifferentiationStrategist"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "FormattingStandardsExpert",
+      "file_path": "storybook\\agents\\finalization\\formatting_standards_expert.py",
+      "tools_verified": [
+        "FormatValidationTool",
+        "StyleGuideComplianceTool",
+        "PublishingStandardsTool",
+        "FormattingStandardsExpert",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "MarketAlignmentDirector",
+      "file_path": "storybook\\agents\\finalization\\market_alignment_director.py",
+      "tools_verified": [
+        "MarketAnalysisTool",
+        "PositioningStrategyTool",
+        "CompetitorAnalysisTool",
+        "MarketAlignmentDirector",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "PositioningSpecialist",
+      "file_path": "storybook\\agents\\finalization\\positioning_specialist.py",
+      "tools_verified": [
+        "MarketAnalysisTool",
+        "PositioningStrategyTool",
+        "CompetitorAnalysisTool",
+        "PositioningSpecialist",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "TitleBlurbOptimizer",
+      "file_path": "storybook\\agents\\finalization\\title_blurb_optimizer.py",
+      "tools_verified": [
+        "TitleGenerationTool",
+        "BlurbOptimizationTool",
+        "KeywordAnalysisTool",
+        "TitleBlurbOptimizer",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "HumanFeedbackManager",
+      "file_path": "storybook\\agents\\initialization\\human_feedback_manager.py",
+      "tools_verified": [
+        "FeedbackProcessingTool",
+        "FeedbackIntegrationTool",
+        "HumanFeedbackManager",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 4,
+      "total_tools_verified": 4,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "ProjectTimelineManager",
+      "file_path": "storybook\\agents\\initialization\\project_timeline_manager.py",
+      "tools_verified": [
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 1,
+      "total_tools_verified": 1,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "QualityAssessmentDirector",
+      "file_path": "storybook\\agents\\initialization\\quality_assessment_director.py",
+      "tools_verified": [
+        "QualityMetricsTool",
+        "QualityGateTool",
+        "QualityVerificationTool",
+        "BaseAgent",
+        "QualityAssessmentDirector"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "CharacterArcEvaluator",
+      "file_path": "storybook\\agents\\refinement\\character_arc_evaluator.py",
+      "tools_verified": [
+        "ArcAnalysisTool",
+        "TransformationMapTool",
+        "ConsistencyCheckTool",
+        "CharacterArcEvaluator",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "DialogueRefinementExpert",
+      "file_path": "storybook\\agents\\refinement\\dialogue_refinement_expert.py",
+      "tools_verified": [
+        "ConversationFlowTool",
+        "DialoguePolishingTool",
+        "SubtextEnhancementTool",
+        "BaseAgent",
+        "DialogueRefinementExpert"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "EditorialDirector",
+      "file_path": "storybook\\agents\\refinement\\editorial_director.py",
+      "tools_verified": [
+        "EditorialPlanningTool",
+        "EditorialRevisionTool",
+        "EditorialDirector",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 4,
+      "total_tools_verified": 4,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "FactVerificationSpecialist",
+      "file_path": "storybook\\agents\\refinement\\fact_verification_specialist.py",
+      "tools_verified": [
+        "FactVerificationTool",
+        "BaseAgent",
+        "FactVerificationSpecialist"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 3,
+      "total_tools_verified": 3,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "GrammarConsistencyChecker",
+      "file_path": "storybook\\agents\\refinement\\grammar_consistency_checker.py",
+      "tools_verified": [
+        "GrammarCheckTool",
+        "StyleConsistencyTool",
+        "UsageVerificationTool",
+        "BaseAgent",
+        "GrammarConsistencyChecker"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "ProseEnhancementSpecialist",
+      "file_path": "storybook\\agents\\refinement\\prose_enhancement_specialist.py",
+      "tools_verified": [
+        "StyleRefinementTool",
+        "ImageryEnhancementTool",
+        "SentenceStructureTool",
+        "ProseEnhancementSpecialist",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "RhythmCadenceOptimizer",
+      "file_path": "storybook\\agents\\refinement\\rhythm_cadence_optimizer.py",
+      "tools_verified": [
+        "ProseCadenceTool",
+        "SentenceVariationTool",
+        "PacingOptimizationTool",
+        "RhythmCadenceOptimizer",
+        "BaseAgent"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "StructuralEditor",
+      "file_path": "storybook\\agents\\refinement\\structural_editor.py",
+      "tools_verified": [
+        "StoryFlowTool",
+        "PacingAnalysisTool",
+        "SceneBalanceTool",
+        "BaseAgent",
+        "StructuralEditor"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    },
+    {
+      "agent_name": "ThematicCoherenceAnalyst",
+      "file_path": "storybook\\agents\\refinement\\thematic_coherence_analyst.py",
+      "tools_verified": [
+        "ThemeIdentificationTool",
+        "MotifAnalysisTool",
+        "SymbolismTool",
+        "BaseAgent",
+        "ThematicCoherenceAnalyst"
+      ],
+      "tools_defined_but_missing": [],
+      "total_tools_referenced": 5,
+      "total_tools_verified": 5,
+      "total_tools_missing": 0
+    }
+  ],
+  "all_tools": [
+    "ConsistencyCheckerTool",
+    "ProseQualityTool",
+    "DialoguePolishingTool",
+    "ConflictDevelopmentTool",
+    "CreativeVisionTool",
+    "EmotionalPacingTool",
+    "SceneSequenceTool",
+    "FormattingStandardsExpert",
+    "QualityAssessmentTool",
+    "SymbolismTool",
+    "GrammarCheckTool",
+    "DifferentiationTool",
+    "TitleGenerationTool",
+    "StyleGuideComplianceTool",
+    "MarketAnalysisTool",
+    "CharacterVoiceTool",
+    "StyleRefinementTool",
+    "CulturalContextTool",
+    "ProjectManagementTool",
+    "RelationshipGraphTool",
+    "WorldBuildingExpert",
+    "SubtextEnhancementTool",
+    "PacingAnalysisTool",
+    "CharacterTrackingTool",
+    "WorldDesignTool",
+    "ChapterOutlineTool",
+    "QualityGateTool",
+    "CompetitorAnalysisTool",
+    "CharacterPsychologySpecialist",
+    "MarketAlignmentDirector",
+    "EditorialRevisionTool",
+    "FeedbackProcessingTool",
+    "CreativeAssessmentTool",
+    "StructureArchitect",
+    "RepresentationAnalysisTool",
+    "RhythmCadenceOptimizer",
+    "BlurbOptimizationTool",
+    "StoryStructureTool",
+    "EmotionalArcDesigner",
+    "ConflictResponseTool",
+    "ProseEnhancementSpecialist",
+    "ToneAnalysisTool",
+    "DialogueCreationTool",
+    "NarrativeFlowTool",
+    "ConflictMapTool",
+    "ContentDevelopmentTool",
+    "EditorialPlanningTool",
+    "CulturalResearchTool",
+    "CulturalAuthenticityExpert",
+    "ChapterStructureTool",
+    "PositioningSpecialist",
+    "EmotionalIntensityTool",
+    "DomainKnowledgeSpecialist",
+    "QualityVerificationTool",
+    "WorldbuildingTool",
+    "PlotConsistencyTool",
+    "ContentQualityTool",
+    "SceneConstructionTool",
+    "ConversationFlowTool",
+    "PositioningStrategyTool",
+    "HumanFeedbackManager",
+    "NovelWritingTool",
+    "LocationManagerTool",
+    "ChapterDrafters",
+    "DialogueCrafter",
+    "DomainResearchTool",
+    "SentenceVariationTool",
+    "TitleOptimizationTool",
+    "SceneFlowAnalysisTool",
+    "ImageryEnhancementTool",
+    "PsychologyProfileTool",
+    "EditorialDirector",
+    "StyleConsistencyTool",
+    "TitleBlurbOptimizer",
+    "CharacterArcEvaluator",
+    "BaseAgent",
+    "DialogueGenerationTool",
+    "CharacterVoiceDesigner",
+    "DialogueStyleTool",
+    "VoicePatternTool",
+    "SceneFlowTool",
+    "ContentPlanningTool",
+    "ProgressTrackingTool",
+    "ProseCadenceTool",
+    "PlotStructureTool",
+    "TransformationMapTool",
+    "ExpertKnowledgeTool",
+    "FactVerificationSpecialist",
+    "ToneManagementTool",
+    "StructuralEditor",
+    "TaskDelegationTool",
+    "KeywordAnalysisTool",
+    "PublishingStandardsTool",
+    "SceneConstructionSpecialist",
+    "UniqueSellingPointTool",
+    "QualityMetricsTool",
+    "PlotArcTool",
+    "ContentRevisionTool",
+    "PlotDevelopmentSpecialist",
+    "ContinuityManager",
+    "SceneConstructionSpecialists",
+    "TimelineTool",
+    "QualityAssessmentDirector",
+    "CreativeDirector",
+    "MarketDifferentiationTool",
+    "MotivationAnalysisTool",
+    "ArcAnalysisTool",
+    "EmotionalArcTool",
+    "FeedbackIntegrationTool",
+    "ExpressionAnalysisTool",
+    "StoryElementsTool",
+    "FormatValidationTool",
+    "StoryFlowTool",
+    "ExecutiveDirector",
+    "PacingOptimizationTool",
+    "SceneBalanceTool",
+    "SentenceStructureTool",
+    "DynamicsAnalysisTool",
+    "ConsistencyCheckTool",
+    "CharacterRelationshipMapper",
+    "VoiceConsistencyMonitor",
+    "RepresentationTool",
+    "PlotThreadTool",
+    "ChapterDrafter",
+    "ContentProgressTool",
+    "RevisionCoordinationTool",
+    "UsageVerificationTool",
+    "SystemDesignTool",
+    "DialogueRevisionTool",
+    "ValuePropositionTool",
+    "DialogueFlowTool",
+    "VoiceConsistencyTool",
+    "DialogueRefinementExpert",
+    "ThematicCoherenceAnalyst",
+    "MotifAnalysisTool",
+    "SceneRevisionTool",
+    "ThemeIdentificationTool",
+    "CulturalAuthenticityTool",
+    "EmotionalResonanceTool",
+    "DifferentiationStrategist",
+    "FactVerificationTool",
+    "SceneTransitionTool",
+    "GrammarConsistencyChecker",
+    "ReaderResponseTool",
+    "ThematicAnalysisTool",
+    "NarrativeVoiceTool",
+    "ConflictDesignTool",
+    "EmotionalMapTool",
+    "PlotCoherenceTool",
+    "DialogueCrafters",
+    "SceneStructureTool",
+    "ContentDevelopmentDirector"
+  ]
+}

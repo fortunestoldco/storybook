@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any
 from storybook.tools.base import NovelWritingTool
 
 class PacingAnalysisTool(NovelWritingTool):
@@ -13,13 +13,17 @@ class PacingAnalysisTool(NovelWritingTool):
         return {
             "pacing_analysis": {
                 "scope": scope,
-                "rhythm_map": [],
+                "pacing_curve": [],
                 "tension_points": [],
-                "pacing_curve": {},
-                "recommendations": {
-                    "acceleration_points": [],
-                    "deceleration_points": [],
-                    "climax_adjustments": []
+                "rhythm_analysis": {
+                    "patterns": [],
+                    "variations": {},
+                    "recommendations": []
+                },
+                "scene_flow": {
+                    "transitions": [],
+                    "momentum": 0.0,
+                    "balance": 0.0
                 }
             }
         }

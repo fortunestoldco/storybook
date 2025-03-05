@@ -1,14 +1,5 @@
 [
   {
-    "agent_name": "ExecutiveDirector",
-    "tools_verified": [
-      "QualityAssessmentTool"
-    ],
-    "tools_defined_but_missing": [
-      "TaskDelegationTool"
-    ]
-  },
-  {
     "agent_name": "ChapterDrafter",
     "tools_verified": [
       "ChapterStructureTool"
@@ -56,6 +47,15 @@
     "tools_defined_but_missing": [
       "PacingAnalysisTool",
       "ChapterOutlineTool"
+    ]
+  },
+  {
+    "agent_name": "ExecutiveDirector",
+    "tools_verified": [
+      "QualityAssessmentTool"
+    ],
+    "tools_defined_but_missing": [
+      "TaskDelegationTool"
     ]
   }
 ]

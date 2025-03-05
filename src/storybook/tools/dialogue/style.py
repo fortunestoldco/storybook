@@ -12,10 +12,10 @@ class DialogueStyleTool(NovelWritingTool):
     ) -> Dict[str, Any]:
         return {
             "dialogue_style": {
-                "tone": style_profile.get("tone", "neutral"),
-                "patterns": [],
-                "word_choice": {},
-                "rhythm": [],
-                "style_consistency": 0.0
+                "voice_patterns": {},
+                "tone_markers": [],
+                "dialect_features": [],
+                "style_consistency": 0.0,
+                "characterization": {}
             }
         }

@@ -1,4 +1,4 @@
-"""Story structure and organization tools."""
+"""Story structure tools."""
 from .base import StoryStructureTool
 from .pacing import PacingAnalysisTool
 from .outline import ChapterOutlineTool

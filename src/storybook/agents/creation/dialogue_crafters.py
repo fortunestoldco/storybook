@@ -11,7 +11,7 @@ from storybook.tools.dialogue import (
 from storybook.agents.base_agent import BaseAgent
 
 class DialogueCrafters(BaseAgent):
-    """Crafters responsible for creating engaging and character-appropriate dialogue."""
+    """Collaborative dialogue crafting specialists."""
     
     def __init__(self):
         super().__init__(
@@ -30,36 +30,32 @@ class DialogueCrafters(BaseAgent):
     ) -> Dict[str, Any]:
         """Process dialogue crafting tasks."""
         task = state.current_input.get("task", {})
-        scene_id = task.get("scene_id")
         
         if "flow" in task.get("type", "").lower():
-            flow = await self.tools[1].arun(
-                content=state.project.content,
-                scene_id=scene_id,
-                context=state.project.content.get("scene_context", {})
-            )
+            flow = await self.tools[1].invoke({
+                "content": state.project.content,
+                "scene_id": task.get("scene_id")
+            })
             return {
-                "messages": [AIMessage(content="Dialogue flow analyzed")],
+                "messages": [AIMessage(content="Dialogue flow optimization completed")],
                 "dialogue_updates": {"flow": flow}
             }
             
         if "voice" in task.get("type", "").lower():
-            voice = await self.tools[2].arun(
-                content=state.project.content,
-                scene_id=scene_id,
-                characters=task.get("characters", [])
-            )
+            voice = await self.tools[2].invoke({
+                "content": state.project.content,
+                "character_id": task.get("character_id")
+            })
             return {
-                "messages": [AIMessage(content="Character voice crafted")],
+                "messages": [AIMessage(content="Character voice application completed")],
                 "dialogue_updates": {"voice": voice}
             }
         
-        dialogue = await self.tools[0].arun(
-            content=state.project.content,
-            scene_id=scene_id,
-            parameters=task.get("parameters", {})
-        )
+        creation = await self.tools[0].invoke({
+            "content": state.project.content,
+            "scene_context": task.get("scene_context", {})
+        })
         return {
-            "messages": [AIMessage(content="Dialogue created")],
-            "dialogue_updates": {"dialogue": dialogue}
+            "messages": [AIMessage(content="Dialogue creation completed")],
+            "dialogue_updates": {"creation": creation}
         }

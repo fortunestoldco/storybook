@@ -6,19 +6,18 @@ class MarketAnalysisTool(NovelWritingTool):
     description = "Analyze market trends and opportunities"
     
     async def _arun(
-        self, 
-        genre: str,
-        target_audience: List[str],
-        market_data: Dict[str, Any]
+        self,
+        content: Dict[str, Any],
+        market_segment: str
     ) -> Dict[str, Any]:
-        """Analyze market conditions and trends."""
         return {
             "market_analysis": {
-                "genre_trends": {},
-                "audience_insights": {},
-                "market_size": 0,
-                "growth_potential": 0.0,
-                "recommendations": []
+                "segment": market_segment,
+                "trends": [],
+                "opportunities": {},
+                "reader_demographics": {},
+                "market_size": {},
+                "growth_potential": 0.0
             }
         }
 

@@ -1,6 +1,10 @@
-"""Quality assessment tools module."""
+"""Quality assessment tools."""
 from .metrics import QualityMetricsTool
-from .gate import QualityGateTool
 from .verification import QualityVerificationTool
+from .gates import QualityGateTool
 
-__all__ = ["QualityMetricsTool", "QualityGateTool", "QualityVerificationTool"]
+__all__ = [
+    "QualityMetricsTool",
+    "QualityVerificationTool",
+    "QualityGateTool"
+]

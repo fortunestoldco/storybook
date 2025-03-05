@@ -29,17 +29,18 @@ class VoiceConsistencyTool(NovelWritingTool):
     async def _arun(
         self,
         content: Dict[str, Any],
-        voice_profile: Dict[str, Any]
+        section_id: str = None
     ) -> Dict[str, Any]:
         return {
             "voice_consistency": {
-                "analysis": {
-                    "consistency_score": 0.0,
-                    "deviations": [],
-                    "patterns": []
+                "section_id": section_id,
+                "consistency_metrics": {
+                    "voice_stability": 0.0,
+                    "tone_coherence": 0.0,
+                    "style_adherence": 0.0
                 },
-                "recommendations": [],
-                "style_markers": {},
-                "voice_elements": []
+                "deviations": [],
+                "patterns": [],
+                "recommendations": []
             }
         }

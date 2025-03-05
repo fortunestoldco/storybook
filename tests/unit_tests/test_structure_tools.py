@@ -3,7 +3,8 @@ from typing import Dict, Any
 
 from storybook.tools.structure import (
     PacingAnalysisTool,
-    ChapterOutlineTool
+    ChapterOutlineTool,
+    StoryStructureTool
 )
 
 @pytest.mark.asyncio
@@ -39,4 +40,28 @@ async def test_chapter_outline_tool():
         "distribution",
         "structural_notes",
         "dependencies"
+    ])
+
+@pytest.mark.asyncio
+async def test_story_structure_tool():
+    """Test story structure functionality."""
+    tool = StoryStructureTool()
+    result = await tool.invoke({
+        "content": {},
+        "structure_type": "three_act"
+    })
+    
+    assert "story_structure" in result
+    assert all(k in result["story_structure"] for k in [
+        "structure_type",
+        "acts",
+        "key_points",
+        "pacing_markers",
+        "structural_analysis"
+    ])
+    assert all(k in result["story_structure"]["key_points"] for k in [
+        "setup",
+        "turning_points",
+        "climax",
+        "resolution"
     ])

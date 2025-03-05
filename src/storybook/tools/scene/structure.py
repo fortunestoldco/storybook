@@ -16,7 +16,6 @@ class SceneStructureTool(NovelWritingTool):
                 "beats": [],
                 "pacing": {},
                 "emotional_arc": [],
-                "conflict_points": [],
-                "resolution": {}
+                "conflict_points": []
             }
         }
