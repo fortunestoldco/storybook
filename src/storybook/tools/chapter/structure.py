@@ -3,9 +3,13 @@ from storybook.tools.base import NovelWritingTool
 
 class ChapterStructureTool(NovelWritingTool):
     name = "chapter_structure"
-    description = "Design and analyze chapter structure"
+    description = "Analyze and optimize chapter structure"
     
-    async def _arun(self, content: Dict[str, Any], chapter_id: str) -> Dict[str, Any]:
+    async def _arun(
+        self,
+        content: Dict[str, Any],
+        chapter_id: str
+    ) -> Dict[str, Any]:
         return {
             "structure": {
                 "scenes": [],
@@ -16,14 +20,18 @@ class ChapterStructureTool(NovelWritingTool):
 
 class SceneSequenceTool(NovelWritingTool):
     name = "scene_sequence"
-    description = "Optimize scene sequences within chapters"
+    description = "Optimize scene sequences"
     
-    async def _arun(self, content: Dict[str, Any], chapter_id: str) -> Dict[str, Any]:
+    async def _arun(
+        self,
+        content: Dict[str, Any],
+        chapter_id: str
+    ) -> Dict[str, Any]:
         return {
             "sequence": {
                 "ordered_scenes": [],
                 "flow_analysis": {},
-                "suggested_changes": []
+                "recommendations": []
             }
         }
 

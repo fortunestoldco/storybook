@@ -1,12 +1,12 @@
-"""Emotional arc tools module."""
+"""Emotional arc and pacing tools."""
 from .arc import (
     EmotionalArcTool,
-    EmotionalResonanceTool,
     EmotionalPacingTool
 )
+from .intensity import EmotionalIntensityTool
 
 __all__ = [
     "EmotionalArcTool",
-    "EmotionalResonanceTool",
-    "EmotionalPacingTool"
+    "EmotionalPacingTool",
+    "EmotionalIntensityTool"
 ]

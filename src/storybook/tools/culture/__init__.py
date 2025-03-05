@@ -1,12 +1,10 @@
-"""Cultural authenticity tools module."""
-from .authenticity import (
-    CulturalAuthenticityTool,
-    RepresentationTool,
-    CulturalContextTool
-)
+"""Cultural tools module."""
+from .authenticity import CulturalAuthenticityTool
+from .representation import RepresentationAnalysisTool
+from .context import CulturalContextTool
 
 __all__ = [
     "CulturalAuthenticityTool",
-    "RepresentationTool",
+    "RepresentationAnalysisTool",
     "CulturalContextTool"
 ]

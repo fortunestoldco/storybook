@@ -4,22 +4,22 @@ from langchain_core.runnables import RunnableConfig
 
 from storybook.state import NovelSystemState
 from storybook.tools.culture import (
-    CulturalAnalysisTool,
-    SensitivityCheckTool,
-    RepresentationTool
+    CulturalAuthenticityTool,
+    RepresentationAnalysisTool,
+    CulturalContextTool
 )
 from storybook.agents.base_agent import BaseAgent
 
 class CulturalAuthenticityExpert(BaseAgent):
-    """Expert ensuring cultural authenticity and sensitivity."""
+    """Expert responsible for cultural authenticity and representation."""
     
     def __init__(self):
         super().__init__(
             name="cultural_authenticity_expert",
             tools=[
-                CulturalAnalysisTool(),
-                SensitivityCheckTool(),
-                RepresentationTool()
+                CulturalAuthenticityTool(),
+                RepresentationAnalysisTool(),
+                CulturalContextTool()
             ]
         )
     
@@ -28,40 +28,35 @@ class CulturalAuthenticityExpert(BaseAgent):
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
-        """Ensure cultural authenticity and appropriate representation."""
-        task = state.current_input.get("task", "")
-        culture = task.get("culture", "")
+        """Process cultural authenticity tasks."""
+        task = state.current_input.get("task", {})
         
-        if "sensitivity" in task.lower():
-            check = await self.tools[1].arun(
-                content=state.project.content,
-                culture=culture,
-                context=task.get("context", {})
-            )
+        if "context" in task.get("type", "").lower():
+            context = await self.tools[2].invoke({
+                "content": state.project.content,
+                "culture": task.get("culture", "")
+            })
             return {
-                "messages": [AIMessage(content=f"Sensitivity check completed for: {culture}")],
-                "cultural_updates": {"sensitivity": check}
+                "messages": [AIMessage(content="Cultural context analysis completed")],
+                "cultural_updates": {"context": context}
             }
-        
-        if "representation" in task.lower():
-            analysis = await self.tools[2].arun(
-                content=state.project.content,
-                culture=culture,
-                characters=state.project.content.get("characters", {})
-            )
+            
+        if "representation" in task.get("type", "").lower():
+            analysis = await self.tools[1].invoke({
+                "content": state.project.content,
+                "context": task.get("context", {})
+            })
             return {
-                "messages": [AIMessage(content=f"Representation analysis for: {culture}")],
+                "messages": [AIMessage(content="Representation analysis completed")],
                 "cultural_updates": {"representation": analysis}
             }
         
-        # Default to cultural analysis
-        cultural_elements = await self.tools[0].arun(
-            content=state.project.content,
-            culture=culture,
-            elements=task.get("elements", [])
-        )
-        
+        authenticity = await self.tools[0].invoke({
+            "content": state.project.content,
+            "culture": task.get("culture", ""),
+            "context": task.get("context", {})
+        })
         return {
-            "messages": [AIMessage(content=f"Cultural analysis completed for: {culture}")],
-            "cultural_updates": {"analysis": cultural_elements}
+            "messages": [AIMessage(content="Cultural authenticity check completed")],
+            "cultural_updates": {"authenticity": authenticity}
         }

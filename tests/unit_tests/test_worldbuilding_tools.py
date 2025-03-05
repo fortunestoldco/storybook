@@ -1,26 +1,49 @@
 import pytest
 from typing import Dict, Any
 
-from storybook.tools.worldbuilding.core import (
-    WorldbuildingTool,
+from storybook.tools.worldbuilding import (
+    WorldDesignTool,
+    SystemDesignTool,
     ConsistencyCheckTool
 )
 
 @pytest.mark.asyncio
-async def test_worldbuilding_tool():
-    """Test world element creation."""
-    tool = WorldbuildingTool()
-    result = await tool._arun(
-        content={},
-        world_elements={"magic_system": {}}
-    )
+async def test_world_design_tool():
+    """Test world design tool functionality."""
+    tool = WorldDesignTool()
+    result = await tool.invoke({
+        "content": {},
+        "world_type": "fantasy"
+    })
     
-    assert "world" in result
-    assert all(k in result["world"] for k in [
-        "setting",
-        "rules",
+    assert "world_design" in result
+    assert all(k in result["world_design"] for k in [
+        "type",
+        "geography",
+        "cultures",
+        "history",
         "systems",
-        "cultures"
+        "rules",
+        "development_notes"
+    ])
+
+@pytest.mark.asyncio
+async def test_system_design_tool():
+    """Test system design tool functionality."""
+    tool = SystemDesignTool()
+    result = await tool.invoke({
+        "content": {},
+        "system_type": "magic"
+    })
+    
+    assert "system_design" in result
+    assert all(k in result["system_design"] for k in [
+        "type",
+        "rules",
+        "components",
+        "interactions",
+        "limitations",
+        "implications"
     ])
 
 @pytest.mark.asyncio

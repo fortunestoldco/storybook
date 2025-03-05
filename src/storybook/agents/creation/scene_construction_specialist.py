@@ -4,22 +4,22 @@ from langchain_core.runnables import RunnableConfig
 
 from storybook.state import NovelSystemState
 from storybook.tools.scene import (
-    SceneConstructionTool,
-    SceneFlowAnalysisTool,
-    SceneTransitionTool
+    SceneStructureTool,
+    SceneFlowTool,
+    SceneRevisionTool
 )
 from storybook.agents.base_agent import BaseAgent
 
 class SceneConstructionSpecialist(BaseAgent):
-    """Specialist responsible for scene construction and organization."""
+    """Specialist responsible for scene construction and refinement."""
     
     def __init__(self):
         super().__init__(
             name="scene_construction_specialist",
             tools=[
-                SceneConstructionTool(),
-                SceneFlowAnalysisTool(),
-                SceneTransitionTool()
+                SceneStructureTool(),
+                SceneFlowTool(),
+                SceneRevisionTool()
             ]
         )
     
@@ -30,36 +30,32 @@ class SceneConstructionSpecialist(BaseAgent):
     ) -> Dict[str, Any]:
         """Process scene construction tasks."""
         task = state.current_input.get("task", {})
-        scene_id = task.get("scene_id")
         
-        if "flow" in task.get("type", "").lower():
-            flow = await self.tools[1].arun(
-                content=state.project.content,
-                scene_id=scene_id,
-                context=state.project.content.get("scene_context", {})
-            )
+        if "revision" in task.get("type", "").lower():
+            revision = await self.tools[2].invoke({
+                "content": state.project.content,
+                "scene_id": task.get("scene_id")
+            })
             return {
-                "messages": [AIMessage(content="Scene flow analyzed")],
-                "scene_updates": {"flow": flow}
+                "messages": [AIMessage(content="Scene revision completed")],
+                "scene_updates": {"revision": revision}
             }
             
-        if "transition" in task.get("type", "").lower():
-            transition = await self.tools[2].arun(
-                content=state.project.content,
-                scene_id=scene_id,
-                next_scene=task.get("next_scene_id")
-            )
+        if "flow" in task.get("type", "").lower():
+            flow = await self.tools[1].invoke({
+                "content": state.project.content,
+                "scene_id": task.get("scene_id")
+            })
             return {
-                "messages": [AIMessage(content="Scene transition crafted")],
-                "scene_updates": {"transition": transition}
+                "messages": [AIMessage(content="Scene flow analysis completed")],
+                "scene_updates": {"flow": flow}
             }
         
-        scene = await self.tools[0].arun(
-            content=state.project.content,
-            scene_id=scene_id,
-            parameters=task.get("parameters", {})
-        )
+        structure = await self.tools[0].invoke({
+            "content": state.project.content,
+            "scene_id": task.get("scene_id")
+        })
         return {
-            "messages": [AIMessage(content="Scene constructed")],
-            "scene_updates": {"scene": scene}
+            "messages": [AIMessage(content="Scene structure analysis completed")],
+            "scene_updates": {"structure": structure}
         }

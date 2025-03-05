@@ -22,7 +22,7 @@ class CreativeDirector(BaseAgent):
                 ThematicAnalysisTool()
             ]
         )
-    
+
     async def process(
         self,
         state: NovelSystemState,
@@ -32,26 +32,29 @@ class CreativeDirector(BaseAgent):
         task = state.current_input.get("task", {})
         
         if "theme" in task.get("type", "").lower():
-            analysis = await self.tools[2].arun(
-                content=state.project.content
-            )
+            analysis = await self.tools[2].invoke({
+                "content": state.project.content,
+                "themes": task.get("themes", [])
+            })
             return {
                 "messages": [AIMessage(content="Thematic analysis completed")],
                 "creative_updates": {"themes": analysis}
             }
             
         if "elements" in task.get("type", "").lower():
-            elements = await self.tools[1].arun(
-                content=state.project.content
-            )
+            elements = await self.tools[1].invoke({
+                "content": state.project.content,
+                "elements": task.get("elements", {})
+            })
             return {
                 "messages": [AIMessage(content="Story elements updated")],
                 "creative_updates": {"elements": elements}
             }
         
-        vision = await self.tools[0].arun(
-            content=state.project.content
-        )
+        vision = await self.tools[0].invoke({
+            "content": state.project.content,
+            "style_preferences": task.get("style_preferences", {})
+        })
         return {
             "messages": [AIMessage(content="Creative vision updated")],
             "creative_updates": {"vision": vision}

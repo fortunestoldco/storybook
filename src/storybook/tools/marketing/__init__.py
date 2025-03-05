@@ -1,12 +1,16 @@
-"""Marketing tools module."""
+"""Marketing optimization tools."""
 from .optimization import (
     TitleOptimizationTool,
-    BlurbOptimizationTool,
-    DifferentiationTool
+    BlurbOptimizationTool
+)
+from .analysis import (
+    MarketAnalysisTool,
+    CompetitorAnalysisTool
 )
 
 __all__ = [
     "TitleOptimizationTool",
     "BlurbOptimizationTool",
-    "DifferentiationTool"
+    "MarketAnalysisTool",
+    "CompetitorAnalysisTool"
 ]

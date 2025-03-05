@@ -1,9 +1,7 @@
-"""Grammar and consistency tools module."""
-from .consistency import (
-    GrammarCheckTool,
-    StyleConsistencyTool,
-    ProofreadingTool
-)
+"""Grammar and style checking tools."""
+from .checker import GrammarCheckTool
+from .style import StyleConsistencyTool
+from .proofreading import ProofreadingTool
 
 __all__ = [
     "GrammarCheckTool",

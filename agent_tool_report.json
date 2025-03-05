@@ -1,0 +1,61 @@
+[
+  {
+    "agent_name": "ExecutiveDirector",
+    "tools_verified": [
+      "QualityAssessmentTool"
+    ],
+    "tools_defined_but_missing": [
+      "TaskDelegationTool"
+    ]
+  },
+  {
+    "agent_name": "ChapterDrafter",
+    "tools_verified": [
+      "ChapterStructureTool"
+    ],
+    "tools_defined_but_missing": [
+      "SceneSequenceTool",
+      "NarrativeFlowTool"
+    ]
+  },
+  {
+    "agent_name": "ChapterDrafters",
+    "tools_verified": [
+      "ChapterStructureTool"
+    ],
+    "tools_defined_but_missing": [
+      "SceneSequenceTool",
+      "NarrativeFlowTool"
+    ]
+  },
+  {
+    "agent_name": "DialogueCrafter",
+    "tools_verified": [],
+    "tools_defined_but_missing": [
+      "DialogueGenerationTool",
+      "DialogueStyleTool",
+      "DialogueRevisionTool",
+      "CharacterVoiceTool"
+    ]
+  },
+  {
+    "agent_name": "VoiceConsistencyMonitor",
+    "tools_verified": [
+      "NarrativeVoiceTool"
+    ],
+    "tools_defined_but_missing": [
+      "VoiceConsistencyTool",
+      "ToneManagementTool"
+    ]
+  },
+  {
+    "agent_name": "StructureArchitect",
+    "tools_verified": [
+      "StoryStructureTool"
+    ],
+    "tools_defined_but_missing": [
+      "PacingAnalysisTool",
+      "ChapterOutlineTool"
+    ]
+  }
+]

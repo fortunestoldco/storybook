@@ -5,21 +5,21 @@ from langchain_core.runnables import RunnableConfig
 from storybook.state import NovelSystemState
 from storybook.tools.worldbuilding import (
     WorldDesignTool,
-    ConsistencyCheckerTool,
-    LocationManagerTool
+    SystemDesignTool,
+    ConsistencyCheckerTool
 )
 from storybook.agents.base_agent import BaseAgent
 
 class WorldBuildingExpert(BaseAgent):
-    """Expert responsible for creating and maintaining the story world."""
+    """Expert responsible for world building and consistency."""
     
     def __init__(self):
         super().__init__(
             name="world_building_expert",
             tools=[
                 WorldDesignTool(),
-                ConsistencyCheckerTool(),
-                LocationManagerTool()
+                SystemDesignTool(),
+                ConsistencyCheckerTool()
             ]
         )
     
@@ -28,37 +28,34 @@ class WorldBuildingExpert(BaseAgent):
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
-        """Develop and maintain world-building elements."""
-        task = state.current_input.get("task", "")
+        """Process world building tasks."""
+        task = state.current_input.get("task", {})
         
-        if "consistency" in task.lower():
-            check_result = await self.tools[1].arun(
-                content=state.project.content,
-                world_elements=state.project.content.get("world", {})
-            )
+        if "consistency" in task.get("type", "").lower():
+            check = await self.tools[2].invoke({
+                "content": state.project.content,
+                "check_type": task.get("check_type", "all")
+            })
             return {
-                "messages": [AIMessage(content="World consistency verified")],
-                "world_updates": {"consistency": check_result}
+                "messages": [AIMessage(content="Consistency check completed")],
+                "world_updates": {"consistency": check}
+            }
+            
+        if "system" in task.get("type", "").lower():
+            system = await self.tools[1].invoke({
+                "content": state.project.content,
+                "system_type": task.get("system_type", "magic")
+            })
+            return {
+                "messages": [AIMessage(content="System design completed")],
+                "world_updates": {"system": system}
             }
         
-        if "location" in task.lower():
-            location_data = await self.tools[2].arun(
-                content=state.project.content,
-                location_name=task.get("location_name", "")
-            )
-            return {
-                "messages": [AIMessage(content="Location details updated")],
-                "world_updates": {"locations": location_data}
-            }
-        
-        # Default to world design
-        world_elements = await self.tools[0].arun(
-            content=state.project.content,
-            genre=state.project.genre,
-            style_preferences=state.project.style_preferences
-        )
-        
+        world = await self.tools[0].invoke({
+            "content": state.project.content,
+            "world_type": task.get("world_type", "fantasy")
+        })
         return {
-            "messages": [AIMessage(content="World elements updated")],
-            "world_updates": {"elements": world_elements}
+            "messages": [AIMessage(content="World design updated")],
+            "world_updates": {"world": world}
         }

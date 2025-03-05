@@ -1,12 +1,10 @@
-"""Structure tools for managing novel organization."""
-from .organization import (
-    StoryStructureTool,
-    PacingAnalysisTool,
-    ChapterOutlineTool
-)
+"""Story structure and organization tools."""
+from .base import StoryStructureTool
+from .pacing import PacingAnalysisTool
+from .outline import ChapterOutlineTool
 
 __all__ = [
     "StoryStructureTool",
-    "PacingAnalysisTool", 
+    "PacingAnalysisTool",
     "ChapterOutlineTool"
 ]

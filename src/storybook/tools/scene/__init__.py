@@ -1,12 +1,6 @@
-"""Scene construction tools."""
-from .construction import (
-    SceneConstructionTool,
-    SceneFlowAnalysisTool,
-    SceneTransitionTool
-)
+"""Scene construction and management tools."""
+from .structure import SceneStructureTool
+from .flow import SceneFlowTool
+from .revision import SceneRevisionTool
 
-__all__ = [
-    "SceneConstructionTool",
-    "SceneFlowAnalysisTool",
-    "SceneTransitionTool"
-]
+__all__ = ["SceneStructureTool", "SceneFlowTool", "SceneRevisionTool"]

@@ -5,49 +5,57 @@ from langchain_core.runnables import RunnableConfig
 from storybook.state import NovelSystemState
 from storybook.tools.emotion import (
     EmotionalArcTool,
-    EmotionalResonanceTool,
-    EmotionalPacingTool
+    EmotionalPacingTool,
+    EmotionalIntensityTool
 )
 from storybook.agents.base_agent import BaseAgent
 
 class EmotionalArcDesigner(BaseAgent):
-    """Designer responsible for emotional arcs and resonance."""
+    """Designer responsible for emotional arcs and pacing."""
     
     def __init__(self):
         super().__init__(
             name="emotional_arc_designer",
             tools=[
                 EmotionalArcTool(),
-                EmotionalResonanceTool(),
-                EmotionalPacingTool()
+                EmotionalPacingTool(),
+                EmotionalIntensityTool()
             ]
         )
-    
+
     async def process(
         self,
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
+        """Process emotional arc design tasks."""
         task = state.current_input.get("task", {})
-        character_id = task.get("character_id")
         
-        if not character_id:
+        if "intensity" in task.get("type", "").lower():
+            intensity = await self.tools[2].invoke({
+                "content": state.project.content,
+                "intensity_target": task.get("intensity_target", 0.5)
+            })
             return {
-                "messages": [AIMessage(content="No character ID provided")],
-                "emotion_updates": {}
+                "messages": [AIMessage(content="Emotional intensity updated")],
+                "emotional_updates": {"intensity": intensity}
+            }
+            
+        if "pacing" in task.get("type", "").lower():
+            pacing = await self.tools[1].invoke({
+                "content": state.project.content,
+                "section_id": task.get("section_id")
+            })
+            return {
+                "messages": [AIMessage(content="Emotional pacing updated")],
+                "emotional_updates": {"pacing": pacing}
             }
         
-        try:
-            arc = await self.tools[0].arun(
-                content=state.project.content,
-                character_id=character_id
-            )
-            return {
-                "messages": [AIMessage(content="Emotional arc designed")],
-                "emotion_updates": {"arc": arc}
-            }
-        except Exception as e:
-            return {
-                "messages": [AIMessage(content=f"Error: {str(e)}")],
-                "error": str(e)
-            }
+        arc = await self.tools[0].invoke({
+            "content": state.project.content,
+            "arc_type": task.get("arc_type", "rising")
+        })
+        return {
+            "messages": [AIMessage(content="Emotional arc updated")],
+            "emotional_updates": {"arc": arc}
+        }

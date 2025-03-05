@@ -21,3 +21,25 @@ class ToneAnalysisTool(NovelWritingTool):
     
     async def _arun(self, content: str, target_tone: Dict[str, Any]) -> Dict[str, Any]:
         return {"tone_analysis": {}}
+
+class VoiceConsistencyTool(NovelWritingTool):
+    name = "voice_consistency"
+    description = "Monitor and maintain voice consistency"
+    
+    async def _arun(
+        self,
+        content: Dict[str, Any],
+        voice_profile: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        return {
+            "voice_consistency": {
+                "analysis": {
+                    "consistency_score": 0.0,
+                    "deviations": [],
+                    "patterns": []
+                },
+                "recommendations": [],
+                "style_markers": {},
+                "voice_elements": []
+            }
+        }

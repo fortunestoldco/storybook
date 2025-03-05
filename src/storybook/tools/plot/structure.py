@@ -24,3 +24,22 @@ class PlotCoherenceTool(NovelWritingTool):
     async def _arun(self, content: Dict[str, Any], plot_threads: List[Dict]) -> Dict[str, Any]:
         """Check plot coherence."""
         return {"coherence": {}}
+
+class PlotStructureTool(NovelWritingTool):
+    name = "plot_structure"
+    description = "Analyze and develop plot structure"
+    
+    async def _arun(
+        self,
+        content: Dict[str, Any],
+        structure_type: str = "three_act"
+    ) -> Dict[str, Any]:
+        return {
+            "plot_structure": {
+                "type": structure_type,
+                "acts": [],
+                "plot_points": [],
+                "turning_points": [],
+                "recommendations": []
+            }
+        }

@@ -3,20 +3,21 @@ from storybook.tools.base import NovelWritingTool
 
 class EmotionalArcTool(NovelWritingTool):
     name = "emotional_arc"
-    description = "Design character emotional arcs"
+    description = "Design and manage emotional story arcs"
     
     async def _arun(
         self,
-        character_id: str,
         content: Dict[str, Any],
-        arc_parameters: Dict[str, Any]
+        arc_type: str = "rising"
     ) -> Dict[str, Any]:
         return {
             "emotional_arc": {
-                "character_id": character_id,
-                "major_beats": [],
-                "progression": {},
-                "resolution": {}
+                "type": arc_type,
+                "progression": [],
+                "key_points": [],
+                "intensity_curve": [],
+                "resolution_path": {},
+                "impact_assessment": {}
             }
         }
 
@@ -34,5 +35,29 @@ class EmotionalResonanceTool(NovelWritingTool):
                 "intensity": 0.0,
                 "authenticity": 0.0,
                 "recommendations": []
+            }
+        }
+
+class EmotionalPacingTool(NovelWritingTool):
+    name = "emotional_pacing"
+    description = "Manage emotional pacing and intensity"
+    
+    async def _arun(
+        self,
+        content: Dict[str, Any],
+        section_id: str
+    ) -> Dict[str, Any]:
+        return {
+            "emotional_pacing": {
+                "section_id": section_id,
+                "pacing_curve": [],
+                "intensity_markers": {},
+                "transitions": [],
+                "balance_metrics": {
+                    "variation": 0.0,
+                    "sustainability": 0.0,
+                    "coherence": 0.0
+                },
+                "adjustments": []
             }
         }

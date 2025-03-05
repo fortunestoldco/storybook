@@ -5,62 +5,45 @@ from langchain_core.runnables import RunnableConfig
 from storybook.state import NovelSystemState
 from storybook.tools.editorial import (
     EditorialPlanningTool,
-    QualityAssessmentTool,
-    RevisionCoordinationTool
+    EditorialRevisionTool
 )
 from storybook.agents.base_agent import BaseAgent
 
 class EditorialDirector(BaseAgent):
-    """Director responsible for managing the editorial process."""
+    """Director responsible for editorial process."""
     
     def __init__(self):
         super().__init__(
             name="editorial_director",
             tools=[
                 EditorialPlanningTool(),
-                QualityAssessmentTool(),
-                RevisionCoordinationTool()
+                EditorialRevisionTool()
             ]
         )
-    
+
     async def process(
         self,
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
-        """Manage editorial process and coordinate revisions."""
-        task = state.current_input.get("task", "")
+        """Process editorial tasks."""
+        task = state.current_input.get("task", {})
         
-        if "quality" in task.lower():
-            assessment = await self.tools[1].arun(
-                content=state.project.content,
-                quality_standards=state.project.quality_assessment,
-                editorial_goals=state.project.content.get("editorial_goals", {})
-            )
+        if "revision" in task.get("type", "").lower():
+            revision = await self.tools[1].invoke({
+                "content": state.project.content,
+                "revision_type": task.get("revision_type", "comprehensive")
+            })
             return {
-                "messages": [AIMessage(content="Quality assessment complete")],
-                "editorial_updates": {"quality_assessment": assessment}
+                "messages": [AIMessage(content="Editorial revision completed")],
+                "editorial_updates": {"revision": revision}
             }
         
-        if "revision" in task.lower():
-            coordination = await self.tools[2].arun(
-                content=state.project.content,
-                revision_notes=task.get("revision_notes", []),
-                agents=state.project.content.get("active_agents", [])
-            )
-            return {
-                "messages": [AIMessage(content="Revision tasks coordinated")],
-                "editorial_updates": {"revision_plan": coordination}
-            }
-        
-        # Default to editorial planning
-        plan = await self.tools[0].arun(
-            content=state.project.content,
-            current_phase=state.phase,
-            quality_metrics=state.project.quality_assessment
-        )
-        
+        plan = await self.tools[0].invoke({
+            "content": state.project.content,
+            "editorial_phase": task.get("phase", "initial")
+        })
         return {
-            "messages": [AIMessage(content="Editorial plan updated")],
+            "messages": [AIMessage(content="Editorial planning completed")],
             "editorial_updates": {"plan": plan}
         }

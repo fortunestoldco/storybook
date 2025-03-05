@@ -5,21 +5,21 @@ from langchain_core.runnables import RunnableConfig
 from storybook.state import NovelSystemState
 from storybook.tools.voice import (
     NarrativeVoiceTool,
-    StyleConsistencyTool,
-    ToneAnalysisTool
+    VoiceConsistencyTool,
+    ToneManagementTool
 )
 from storybook.agents.base_agent import BaseAgent
 
 class VoiceConsistencyMonitor(BaseAgent):
-    """Monitor responsible for maintaining consistent narrative voice."""
+    """Agent responsible for monitoring voice consistency."""
     
     def __init__(self):
         super().__init__(
             name="voice_consistency_monitor",
             tools=[
                 NarrativeVoiceTool(),
-                StyleConsistencyTool(),
-                ToneAnalysisTool()
+                VoiceConsistencyTool(),
+                ToneManagementTool()
             ]
         )
     
@@ -28,42 +28,34 @@ class VoiceConsistencyMonitor(BaseAgent):
         state: NovelSystemState,
         config: RunnableConfig
     ) -> Dict[str, Any]:
-        """Monitor and maintain narrative voice consistency."""
+        """Process voice consistency tasks."""
         task = state.current_input.get("task", {})
-        section_id = task.get("section_id", "")
         
-        # Handle style consistency checks
-        if "style" in task.get("type", "").lower():
-            style_check = await self.tools[1].arun(
-                content=state.project.content,
-                section_id=section_id,
-                style_guide=state.project.content.get("style_guide", {})
-            )
-            return {
-                "messages": [AIMessage(content="Style consistency verified")],
-                "voice_updates": {"style_check": style_check}
-            }
-        
-        # Handle tone analysis
         if "tone" in task.get("type", "").lower():
-            tone_analysis = await self.tools[2].arun(
-                content=state.project.content,
-                section_id=section_id,
-                target_tone=state.project.content.get("tone_preferences", {})
-            )
+            tone = await self.tools[2].invoke({
+                "content": state.project.content,
+                "tone_profile": task.get("tone_profile", {})
+            })
             return {
-                "messages": [AIMessage(content="Tone analysis completed")],
-                "voice_updates": {"tone_analysis": tone_analysis}
+                "messages": [AIMessage(content="Tone management completed")],
+                "voice_updates": {"tone": tone}
             }
         
-        # Default to narrative voice check
-        voice_check = await self.tools[0].arun(
-            content=state.project.content,
-            section_id=section_id,
-            voice_guide=state.project.content.get("narrative_voice", {})
-        )
+        if "consistency" in task.get("type", "").lower():
+            consistency = await self.tools[1].invoke({
+                "content": state.project.content,
+                "section_id": task.get("section_id")
+            })
+            return {
+                "messages": [AIMessage(content="Voice consistency check completed")],
+                "voice_updates": {"consistency": consistency}
+            }
         
+        voice = await self.tools[0].invoke({
+            "content": state.project.content,
+            "style_profile": task.get("style_profile", {})
+        })
         return {
-            "messages": [AIMessage(content="Narrative voice consistency verified")],
-            "voice_updates": {"voice_check": voice_check}
+            "messages": [AIMessage(content="Narrative voice updated")],
+            "voice_updates": {"voice": voice}
         }

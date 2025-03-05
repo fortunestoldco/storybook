@@ -7,7 +7,7 @@ from storybook.tools.plot import PlotStructureTool, ConflictDevelopmentTool
 from storybook.agents.base_agent import BaseAgent
 
 class PlotDevelopmentSpecialist(BaseAgent):
-    """Specialist responsible for plot development."""
+    """Specialist responsible for plot development and structure."""
     
     def __init__(self):
         super().__init__(
@@ -24,21 +24,22 @@ class PlotDevelopmentSpecialist(BaseAgent):
         config: RunnableConfig
     ) -> Dict[str, Any]:
         """Process plot development tasks."""
-        task = state.current_input.get("task", "")
+        task = state.current_input.get("task", {})
         
-        if "conflict" in task.lower():
-            result = await self.tools[1].arun(
-                content=state.project.content
-            )
+        if "conflict" in task.get("type", "").lower():
+            conflict = await self.tools[1].invoke({
+                "content": state.project.content,
+                "conflict_type": task.get("conflict_type", "external")
+            })
             return {
-                "messages": [AIMessage(content="Conflict development updated")],
-                "plot_updates": {"conflicts": result}
+                "messages": [AIMessage(content="Conflict development completed")],
+                "plot_updates": {"conflict": conflict}
             }
-        
-        # Default to plot structure
-        structure = await self.tools[0].arun(
-            content=state.project.content
-        )
+            
+        structure = await self.tools[0].invoke({
+            "content": state.project.content,
+            "structure_type": task.get("structure_type", "three_act")
+        })
         return {
             "messages": [AIMessage(content="Plot structure updated")],
             "plot_updates": {"structure": structure}
