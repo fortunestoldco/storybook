@@ -5,8 +5,12 @@ from uuid import uuid4
 class ResearchState(BaseModel):
     """Base state for research operations"""
     id: str = Field(default_factory=lambda: str(uuid4()))
+    project_id: str
     status: str = "initialized"
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    query_context: str = ""
+    iterations: int = 0
+    queries: List[Dict[str, Any]] = Field(default_factory=list)
 
 class Section(BaseModel):
     """Research section details"""
@@ -29,25 +33,49 @@ class ResearchResult(BaseModel):
     content: str
     relevance_score: float
 
-class ReportState(ResearchState):
-    """State tracking for research reports"""
-    sections: List[Section] = Field(default_factory=list)
-    findings: Dict[str, Any] = Field(default_factory=dict)
+class ResearchIteration(BaseModel):
+    """Record of a research iteration"""
+    iteration_id: str = Field(default_factory=lambda: str(uuid4()))
+    report_id: str
     queries: List[ResearchQuery] = Field(default_factory=list)
-    results: List[ResearchResult] = Field(default_factory=list)
+    raw_results: List[Dict[str, Any]] = Field(default_factory=list)
+    processed_findings: Dict[str, Any] = Field(default_factory=dict)
+    quality_score: float = 0.0
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
 
 class ResearchReport(BaseModel):
     """A compiled research report."""
+    report_id: str = Field(default_factory=lambda: str(uuid4()))
+    project_id: str
+    agent_name: str
     topic: str
-    findings: List[str]
-    sources: List[str]
-    confidence: float
-    gaps: Optional[List[str]]
+    query_context: str
+    findings: List[str] = Field(default_factory=list)
+    sources: List[str] = Field(default_factory=list)
+    confidence_score: float = 0.0
+    identified_gaps: List[str] = Field(default_factory=list)
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert model to dictionary for MongoDB storage."""
+        return {k: v for k, v in self.dict().items()}
 
-class DomainResearchState(ReportState):
+class DomainResearchState(ResearchState):
     """State for domain knowledge research."""
     domain_context: Dict[str, Any] = Field(default_factory=dict)
 
-class CulturalResearchState(ReportState):
+class CulturalResearchState(ResearchState):
     """State for cultural research."""
     cultural_context: Dict[str, Any] = Field(default_factory=dict)
+
+class MarketResearchState(ResearchState):
+    """State for market research."""
+    market_context: Dict[str, Any] = Field(default_factory=dict)
+    target_audience: List[str] = Field(default_factory=list)
+    competitors: List[Dict[str, Any]] = Field(default_factory=list)
+
+class FactVerificationState(ResearchState):
+    """State for fact verification research."""
+    claims: List[Dict[str, Any]] = Field(default_factory=list)
+    verification_results: Dict[str, Any] = Field(default_factory=dict)
+    accuracy_score: float = 0.0

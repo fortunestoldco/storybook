@@ -19,15 +19,27 @@ from .states import (
     ResearchQuery
 )
 from .config import validate_api_configuration, get_api_key
+from .graphs import create_research_subgraph
 
 class ResearchAgent(BaseAgent):
     """Base class for research-focused agents."""
     
-    def __init__(self, name: str, tools: List[BaseTool], config: Dict[str, Any]):
-        super().__init__(name, tools)
+    def __init__(self, name: str, research_graph: StateGraph, state_class: Type[ResearchState], config: Dict[str, Any]):
+        """Initialize a research agent.
+        
+        Args:
+            name: Agent name
+            research_graph: Research subgraph for this agent
+            state_class: State class for research operations
+            config: Configuration for research operations
+        """
+        super().__init__(name, [], "", "")
+        
         if not validate_api_configuration(config):
             raise ValueError(f"Invalid API configuration for {name}")
             
+        self.research_graph = research_graph
+        self.state_class = state_class
         self.research_config = config
         self.research_config["api_key"] = get_api_key(config["search_api"])
         self.storage = ResearchStorage()
@@ -42,96 +54,203 @@ class ResearchAgent(BaseAgent):
         self.cache_results = config.get("cache_results",
             os.getenv("ENABLE_RESEARCH_CACHE", "true").lower() == "true")
     
-    async def execute_research_cycle(self, state: ResearchState) -> Dict[str, Any]:
-        """Execute a full research cycle with storage."""
-        report = ResearchReport(
+    async def process(self, state: NovelSystemState, config: RunnableConfig) -> Dict[str, Any]:
+        """Process the current task through research.
+        
+        Args:
+            state: Current system state
+            config: Runtime configuration
+            
+        Returns:
+            Updated state with research results
+        """
+        # Initialize research state
+        research_state = self.state_class(
             project_id=state.project_id,
-            agent_name=self.name,
-            topic=state.current_input["task"],
+            topic=state.current_input.get("task"),
             query_context=state.project.synopsis,
-            findings=[],
-            sources=[],
-            confidence_score=0.0
+            queries=[
+                ResearchQuery(
+                    query=state.current_input.get("task", ""),
+                    context=state.project.synopsis,
+                    topic=state.current_input.get("task", ""),
+                    depth="standard"
+                )
+            ],
+            iterations=0,
+            max_iterations=self.max_iterations,
+            quality_threshold=self.quality_threshold
         )
         
-        while state["iterations"] < self.max_iterations:
-            # Create iteration record
-            iteration = ResearchIteration(
-                report_id=report.report_id,
-                queries=state["queries"],
-                raw_results=[],
-                processed_findings={},
-                quality_score=0.0
-            )
-            
-            # Execute research
-            results = await execute_research(state["queries"], self.research_config)
-            iteration.raw_results = results
-            
-            # Process findings
-            findings = self.process_results(results)
-            iteration.processed_findings = findings
-            report.findings.extend(findings)
-            
-            # Store iteration
-            await self.storage.store_iteration(iteration)
-            
-            # Update report
-            quality = analyze_research_quality(report)
-            report.confidence_score = quality["score"]
-            
-            if quality["score"] >= self.quality_threshold:
-                await self.storage.store_report(report)
-                return {
-                    "report": report,
-                    "quality_score": quality["score"]
-                }
-            
-            # Continue research if needed
-            gaps = identify_knowledge_gaps(report)
-            report.identified_gaps = gaps
-            new_queries = generate_followup_queries(gaps, state["context"])
-            
-            state["queries"] = new_queries
-            state["iterations"] += 1
+        # Execute research graph
+        result = await self.research_graph.ainvoke(research_state, config)
         
-        # Store final report even if quality threshold not met
-        await self.storage.store_report(report)
+        # Extract report from results
+        report = result.get("final_report")
+        if not report:
+            return {
+                "messages": [
+                    AIMessage(content=f"Unable to complete research on {state.current_input.get('task')}. Please try again with a more specific query.")
+                ]
+            }
+        
+        # Format research findings as a response
+        findings = "\n\n".join(report.findings)
+        source_list = "\n".join([f"- {source}" for source in report.sources])
+        
+        response = f"""# Research Findings: {report.topic}
+
+{findings}
+
+## Sources
+{source_list}
+
+*Confidence Score: {report.confidence_score:.2f}*
+"""
+        
+        # Return response
         return {
-            "report": report,
-            "quality_score": quality["score"]
+            "messages": [
+                AIMessage(content=response)
+            ],
+            "agent_outputs": {
+                **state.agent_outputs,
+                self.name: state.agent_outputs.get(self.name, []) + [{
+                    "timestamp": datetime.now().isoformat(),
+                    "task": state.current_input.get("task", ""),
+                    "response": response,
+                    "report_id": report.report_id
+                }]
+            }
         }
 
 class DomainKnowledgeSpecialist(ResearchAgent):
     """Specializes in technical and domain-specific research."""
     
     async def __call__(self, state: NovelSystemState, config: RunnableConfig) -> Dict[str, Any]:
-        topic = state.current_input["task"]
+        """Execute domain knowledge research.
         
-        research_state = ResearchState(
-            queries=[ResearchQuery(
-                query=f"technical analysis {topic}",
-                context=state.project.synopsis,
-                topic=topic
-            )],
-            iterations=0
-        )
+        Args:
+            state: Current system state
+            config: Runtime configuration
+            
+        Returns:
+            Updated state with research results
+        """
+        result = await self.process(state, config)
         
-        result = await self.execute_research_cycle(research_state)
-        return {
-            "messages": [
-                AIMessage(content=result["report"].findings)
-            ]
-        }
+        # Enhance domain-specific results with additional context
+        if result.get("messages"):
+            content = result["messages"][0].content
+            enhanced_content = f"""# Domain Knowledge Research
+
+{content}
+
+## Domain-Specific Applications
+- Consider how this knowledge affects your characters' behaviors and dialogue
+- Integrate domain-specific terminology naturally through expert characters
+- Use these concepts to create authentic challenges and plot developments
+
+"""
+            result["messages"][0] = AIMessage(content=enhanced_content)
+            
+        return result
 
 class CulturalAuthenticityExpert(ResearchAgent):
     """Specializes in cultural and sociological research."""
-    # Similar implementation
+    
+    async def __call__(self, state: NovelSystemState, config: RunnableConfig) -> Dict[str, Any]:
+        """Execute cultural research.
+        
+        Args:
+            state: Current system state
+            config: Runtime configuration
+            
+        Returns:
+            Updated state with research results
+        """
+        result = await self.process(state, config)
+        
+        # Enhance cultural research with additional context
+        if result.get("messages"):
+            content = result["messages"][0].content
+            enhanced_content = f"""# Cultural Research
+
+{content}
+
+## Cultural Authenticity Guidelines
+- Avoid stereotyping or generalizing cultural practices
+- Consider diverse perspectives within the culture
+- Be mindful of cultural contexts and historical factors
+- Consult sensitivity readers for final validation
+
+"""
+            result["messages"][0] = AIMessage(content=enhanced_content)
+            
+        return result
 
 class MarketAlignmentDirector(ResearchAgent):
     """Specializes in market research and trend analysis."""
-    # Similar implementation
+    
+    async def __call__(self, state: NovelSystemState, config: RunnableConfig) -> Dict[str, Any]:
+        """Execute market research.
+        
+        Args:
+            state: Current system state
+            config: Runtime configuration
+            
+        Returns:
+            Updated state with research results
+        """
+        result = await self.process(state, config)
+        
+        # Enhance market research with additional context
+        if result.get("messages"):
+            content = result["messages"][0].content
+            enhanced_content = f"""# Market Research
+
+{content}
+
+## Market Positioning Recommendations
+- Consider how your novel fits within current market trends
+- Identify unique selling points to differentiate your work
+- Target specific reader demographics based on content and themes
+- Develop promotional strategies aligned with market expectations
+
+"""
+            result["messages"][0] = AIMessage(content=enhanced_content)
+            
+        return result
 
 class FactVerificationSpecialist(ResearchAgent):
     """Specializes in fact checking and verification."""
-    # Similar implementation
+    
+    async def __call__(self, state: NovelSystemState, config: RunnableConfig) -> Dict[str, Any]:
+        """Execute fact verification research.
+        
+        Args:
+            state: Current system state
+            config: Runtime configuration
+            
+        Returns:
+            Updated state with research results
+        """
+        result = await self.process(state, config)
+        
+        # Enhance fact verification with additional context
+        if result.get("messages"):
+            content = result["messages"][0].content
+            enhanced_content = f"""# Fact Verification
+
+{content}
+
+## Accuracy Guidelines
+- When uncertain, either research further or avoid definitive statements
+- Consider including an author's note for creative liberties taken
+- Balance factual accuracy with narrative requirements
+- Document sources for future reference and verification
+
+"""
+            result["messages"][0] = AIMessage(content=enhanced_content)
+            
+        return result
