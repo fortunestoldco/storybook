@@ -79,14 +79,14 @@ class Configuration:
     )
 
     huggingface_api_key: str = field(
-        default(os.getenv("HUGGINGFACE_API_KEY", "")),  # Fixed default syntax
+        default=os.getenv("HUGGINGFACE_API_KEY", ""),  # Fix: Remove default() call
         metadata={
             "description": "API key for Hugging Face models."
         },
     )
 
     replicate_api_key: str = field(
-        default(os.getenv("REPLICATE_API_KEY", "")),  # Fixed default syntax
+        default=os.getenv("REPLICATE_API_KEY", ""),  # Fixed: removed default() call
         metadata={
             "description": "API key for Replicate models."
         },
