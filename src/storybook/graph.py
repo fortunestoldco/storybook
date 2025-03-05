@@ -6,7 +6,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.checkpoint.mongodb import MongoDBCheckpointHandler
+from langgraph.checkpoint.mongodb import MongoDBSaver
 
 # Add research imports
 from storybook.research.graphs import create_research_subgraph
@@ -437,26 +437,10 @@ def create_phase_graph(phase: str, project_id: str, config: Configuration) -> St
 
     # Set up MongoDB checkpointing if configured
     if config.mongodb_connection_string and config.mongodb_database_name:
-        checkpointer = MongoDBCheckpointHandler.from_connection_string(
+        checkpointer = MongoDBSaver(
             connection_string=config.mongodb_connection_string,
             database_name=config.mongodb_database_name,
-            collection_name=f"checkpoint_{phase}_{project_id}",
-            collection_config={
-                "research_reports": {
-                    "name": f"research_reports_{project_id}",
-                    "indexes": [
-                        {"keys": [("project_id", 1)]},
-                        {"keys": [("type", 1), ("created_at", -1)]}
-                    ]
-                },
-                "research_iterations": {
-                    "name": f"research_iterations_{project_id}",
-                    "indexes": [
-                        {"keys": [("project_id", 1)]},
-                        {"keys": [("iteration", 1)]}
-                    ]
-                }
-            }
+            collection_name=f"checkpoint_{phase}_{project_id}"
         )
         graph = builder.compile(checkpointer=checkpointer)
     else:
@@ -534,10 +518,10 @@ def create_supervisor_graph(config: Configuration) -> StateGraph:
 
     # Set up checkpointing in create_supervisor_graph
     if config.mongodb_connection_string and config.mongodb_database_name:
-        checkpointer = MongoDBCheckpointHandler.from_connection_string(
+        checkpointer = MongoDBSaver(
             connection_string=config.mongodb_connection_string,
             database_name=config.mongodb_database_name,
-            collection_name="checkpoint_supervisor"
+            collection_name=f"checkpoint_supervisor"
         )
         graph = builder.compile(checkpointer=checkpointer)
     else:
@@ -604,7 +588,7 @@ def create_storybook_graph(runnable_config: RunnableConfig) -> StateGraph:
     
     # Set up checkpointing in create_storybook_graph
     if config.mongodb_connection_string:
-        checkpointer = MongoDBCheckpointHandler.from_connection_string(
+        checkpointer = MongoDBSaver(
             connection_string=config.mongodb_connection_string,
             database_name=config.mongodb_database_name,
             collection_name="storybook_projects",

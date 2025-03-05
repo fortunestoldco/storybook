@@ -11,6 +11,7 @@ from .tools import *
 from .configuration import Configuration
 from .search import select_and_execute_search
 from ..utils import load_chat_model
+from langgraph.checkpoint.mongodb import MongoDBSaver
 
 def create_research_subgraph(research_type: str, state_class: Type[ResearchState], config: Configuration) -> StateGraph:
     """Create a research subgraph for a specific type of research.
@@ -267,15 +268,10 @@ def create_research_subgraph(research_type: str, state_class: Type[ResearchState
     
     # Set up MongoDB checkpointing if configured
     if config.mongodb_connection_string and config.mongodb_database_name:
-        from langgraph.checkpoint.mongodb import MongoDBCheckpointHandler
-        checkpointer = MongoDBCheckpointHandler(
+        checkpointer = MongoDBSaver(
             connection_string=config.mongodb_connection_string,
             database_name=config.mongodb_database_name,
-            collection_name=f"checkpoint_{research_type}_{state.project_id}",
-            collections={
-                "research_reports": f"research_reports_{state.project_id}",
-                "research_iterations": f"research_iterations_{state.project_id}"
-            }
+            collection_name=f"checkpoint_{research_type}_{state.project_id}"
         )
         graph = builder.compile(checkpointer=checkpointer)
     else:
