@@ -50,17 +50,38 @@ class BaseResearchState:
     reports: List[ResearchReport] = field(default_factory=list)
 
 @dataclass
-class DomainResearchState(BaseResearchState):
-    domain: str  # Required field must come before optional fields
+class DomainResearchState:
+    project_id: str
+    messages: List[BaseMessage]
+    config: Dict[str, Any]
+    domain: str
+    iteration_count: int = 0
+    queries: List[ResearchQuery] = field(default_factory=list)
+    results: List[ResearchResult] = field(default_factory=list)
+    reports: List[ResearchReport] = field(default_factory=list)
     domain_specific_data: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
-class MarketResearchState(BaseResearchState):
-    market_segment: str  # Required field must come before optional fields
+class MarketResearchState:
+    project_id: str
+    messages: List[BaseMessage]
+    config: Dict[str, Any]
+    market_segment: str
+    iteration_count: int = 0
+    queries: List[ResearchQuery] = field(default_factory=list)
+    results: List[ResearchResult] = field(default_factory=list)
+    reports: List[ResearchReport] = field(default_factory.list)
     market_data: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
-class FactVerificationState(BaseResearchState):
-    claims: List[str]  # Required field must come before optional fields
-    verified_claims: List[str] = field(default_factory=list)
-    verification_sources: Dict[str, List[str]] = field(default_factory=dict)
+class FactVerificationState:
+    project_id: str
+    messages: List[BaseMessage]
+    config: Dict[str, Any]
+    claims: List[str]
+    iteration_count: int = 0
+    queries: List[ResearchQuery] = field(default_factory=list)
+    results: List[ResearchResult] = field(default_factory=list)
+    reports: List[ResearchReport] = field(default_factory=list)
+    verified_claims: List[str] = field(default_factory.list)
+    verification_sources: Dict[str, List[str]] = field(default_factory.dict)
