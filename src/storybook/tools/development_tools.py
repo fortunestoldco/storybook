@@ -3,10 +3,10 @@ from langchain_core.tools import BaseTool, tool
 import uuid
 from datetime import datetime
 
-from db_config import get_collection, COLLECTIONS
-from models.story_structure import StoryStructure, PlotElement
-from models.character import Character
-from models.world_building import WorldBuildingEntry
+from ..db_config import get_collection, COLLECTIONS
+from ..models.story_structure import StoryStructure, PlotElement
+from ..models.character import Character
+from ..models.world_building import WorldBuildingEntry
 
 @tool
 def story_structure_template(structure_type: str, project_id: str) -> Dict[str, Any]:

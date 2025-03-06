@@ -3,10 +3,10 @@ from langchain_core.tools import BaseTool, tool
 from datetime import datetime
 import uuid
 
-from db_config import get_collection, COLLECTIONS
-from models.chapter import Chapter
-from models.scene import Scene
-from models.dialogue import Dialogue
+from ..db_config import get_collection, COLLECTIONS
+from ..models.chapter import Chapter
+from ..models.scene import Scene
+from ..models.dialogue import Dialogue
 
 @tool
 def chapter_structure_template(chapter_type: str, project_id: str) -> Dict[str, Any]:
