@@ -272,6 +272,18 @@ class Configuration:
         except Exception as e:
             raise ValueError(f"Failed to create configuration from runnable config: {str(e)}")
 
+    def validate_config(self) -> None:
+        """Validate configuration parameters."""
+        required_fields = [
+            "model",
+            "agent_roles",
+            "search_api"
+        ]
+        
+        missing = [field for field in required_fields if not getattr(self, field, None)]
+        if missing:
+            raise ConfigurationError(f"Missing required configuration fields: {', '.join(missing)}")
+
 class AgentModelConfig(TypedDict, total=False):
     """Configuration for an individual agent's model."""
     provider: ModelProvider

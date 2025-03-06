@@ -2,11 +2,11 @@ from typing import Dict, Any, List, Optional, Type
 from pydantic import BaseModel, Field
 from uuid import uuid4
 from datetime import datetime
+from dataclasses import dataclass, field
+from ..state import NovelSystemState
 
 class ResearchState(BaseModel):
     """Base state for research operations"""
-    id: str = Field(default_factory=lambda: str(uuid4()))
-    project_id: str
     status: str = "initialized"
     metadata: Dict[str, Any] = Field(default_factory=dict)
     query_context: str = ""
@@ -63,22 +63,31 @@ class ResearchReport(BaseModel):
         """Convert model to dictionary for MongoDB storage."""
         return {k: v for k, v in self.dict().items()}
 
-class DomainResearchState(ResearchState):
+@dataclass
+class BaseResearchState:
+    """Base class for research states."""
+    project_id: str
+    base_state: NovelSystemState
+    config: Dict[str, Any]
+    queries: List[str] = field(default_factory=list)
+    results: List[Dict[str, Any]] = field(default_factory=list)
+    
+@dataclass
+class DomainResearchState(BaseResearchState):
     """State for domain knowledge research."""
-    domain_context: Dict[str, Any] = Field(default_factory=dict)
+    domain_specific_data: Dict[str, Any] = field(default_factory=dict)
 
-class CulturalResearchState(ResearchState):
-    """State for cultural research."""
-    cultural_context: Dict[str, Any] = Field(default_factory=dict)
+@dataclass
+class CulturalResearchState(BaseResearchState):
+    """State for cultural authenticity research."""
+    cultural_context: Dict[str, Any] = field(default_factory=dict)
 
-class MarketResearchState(ResearchState):
-    """State for market research."""
-    market_context: Dict[str, Any] = Field(default_factory=dict)
-    target_audience: List[str] = Field(default_factory=list)
-    competitors: List[Dict[str, Any]] = Field(default_factory=list)
+@dataclass
+class MarketResearchState(BaseResearchState):
+    """State for market analysis research."""
+    market_data: Dict[str, Any] = field(default_factory=dict)
 
-class FactVerificationState(ResearchState):
-    """State for fact verification research."""
-    claims: List[Dict[str, Any]] = Field(default_factory=list)
-    verification_results: Dict[str, Any] = Field(default_factory=dict)
-    accuracy_score: float = 0.0
+@dataclass
+class FactVerificationState(BaseResearchState):
+    """State for fact verification."""
+    verified_facts: Dict[str, bool] = field(default_factory=dict)

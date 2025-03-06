@@ -51,15 +51,29 @@ from storybook.research.agents import (
     MarketAlignmentDirector,
     FactVerificationSpecialist
 )
-from .research.graphs import create_research_subgraph
-from ..research.agents import ResearchAgent
+from storybook.research.graphs import create_research_subgraph
 from ..research.states import (
     DomainResearchState,
     CulturalResearchState, 
     MarketResearchState,
     FactVerificationState
 )
-from ..research import graphs
+from langchain.agents import AgentExecutor
+from langchain_core.agents import AgentAction, AgentFinish
+from langchain.agents.agent import Agent  # Use this instead of BaseSingleActionAgent
+
+
+class AgentFactoryError(Exception):
+    """Base exception for agent factory errors."""
+    pass
+
+class UnknownAgentError(AgentFactoryError):
+    """Raised when trying to create an unknown agent."""
+    pass
+
+class ConfigurationError(AgentFactoryError):
+    """Raised when configuration is invalid."""
+    pass
 
 
 class AgentFactory:

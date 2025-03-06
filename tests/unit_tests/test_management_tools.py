@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch
-from storybook.tools.management_tools import *
+from storybook.tools.management_tools import project_management_tool, timeline_management_tool
 from storybook.configuration import Configuration
 
 @pytest.fixture
