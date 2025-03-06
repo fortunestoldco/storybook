@@ -207,9 +207,28 @@ def resource_allocation_tool(project_id: str, resource: str, allocation: Dict[st
     
     return f"Resource '{resource}' allocated successfully for project {project_id}"
 
+from ..db_config import get_collection, COLLECTIONS
+from ..configuration import Configuration
+
+@tool
+def project_management_tool(action: str, project_id: str, project_data: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Manage project metadata and configuration."""
+    collection = get_collection(COLLECTIONS["projects"])
+    
+    if action == "create":
+        project_data["created_at"] = datetime.utcnow()
+        project_data["updated_at"] = datetime.utcnow()
+        result = collection.insert_one(project_data)
+        return {"status": "success", "project_id": str(result.inserted_id)}
+        
+    elif action == "update":
+        if not project_data:
+            return {"status": "error", "message": "No update data provided"}
+
 # Register tools with the registry
 from storybook.tools import tool_registry
 tool_registry.register_tool(project_timeline_tracker, "executive_director")
 tool_registry.register_tool(team_communication_hub, "executive_director")
 tool_registry.register_tool(progress_dashboard, "executive_director")
 tool_registry.register_tool(resource_allocation_tool, "executive_director")
+tool_registry.register_tool(project_management_tool, "executive_director")

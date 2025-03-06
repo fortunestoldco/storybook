@@ -2,41 +2,28 @@
 
 from typing import Dict, List
 from langchain_core.tools import BaseTool
+from ..configuration import Configuration
+from ..db_config import initialize_config
 
 class ToolRegistry:
     """Registry for managing tools across different agents."""
     
-    def __init__(self):
+    def __init__(self, config: Configuration = None):
         self._tools: Dict[str, List[BaseTool]] = {}
+        if config:
+            initialize_config(config)
     
-    def register_tool(self, tool: BaseTool, agent_type: str):
-        """Register a tool for a specific agent type."""
-        if agent_type not in self._tools:
-            self._tools[agent_type] = []
-        self._tools[agent_type].append(tool)
+    def register_tool(self, tool: BaseTool, category: str):
+        """Register a tool under a category."""
+        if category not in self._tools:
+            self._tools[category] = {}
+        self._tools[category][tool.name] = tool
     
-    def get_tools_for_agent(self, agent_type: str) -> List[BaseTool]:
-        """Get all tools registered for an agent type."""
-        return self._tools.get(agent_type, [])
+    def get_tools(self, category: str = None) -> Dict[str, BaseTool]:
+        """Get all tools for a category or all tools if no category specified."""
+        if category:
+            return self._tools.get(category, {})
+        return {name: tool for cat in self._tools.values() 
+                for name, tool in cat.items()}
 
-# Create singleton tool registry
 tool_registry = ToolRegistry()
-
-# Import tool modules
-from . import management_tools
-from . import creative_tools
-from . import development_tools
-from . import creation_tools
-from . import refinement_tools
-from . import finalization_tools
-
-# Import additional tool modules
-from . import plot_tools
-from . import character_tools
-from . import research_tools
-from . import editorial_tools
-from . import timeline_tools
-from . import market_tools
-from . import formatting_tools
-
-__all__ = ["tool_registry"]

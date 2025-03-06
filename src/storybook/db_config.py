@@ -13,35 +13,37 @@ load_dotenv()
 _client: Optional[MongoClient] = None
 _config: Optional[Configuration] = None
 
-def initialize_config(config: Configuration):
+def initialize_config(config: Configuration) -> None:
     """Initialize database configuration."""
     global _config
     _config = config
 
 def get_client() -> MongoClient:
-    """Get or create MongoDB client singleton."""
+    """Get MongoDB client singleton."""
     global _client, _config
-    if (_client is None) and (_config is not None):
+    if not _client and _config:
+        if not _config.mongodb_connection_string:
+            raise ValueError("MongoDB connection string not configured")
         _client = MongoClient(_config.mongodb_connection_string)
     return _client
 
 def get_database() -> Database:
-    """Get the storybook database."""
+    """Get database instance."""
     global _config
-    if _config is None:
-        raise ValueError("Database configuration not initialized. Call initialize_config first.")
-    client = get_client()
-    return client[_config.mongodb_database_name]
+    if not _config:
+        raise ValueError("Database not initialized. Call initialize_config first.")
+    if not _config.mongodb_database_name:
+        raise ValueError("MongoDB database name not configured")
+    return get_client()[_config.mongodb_database_name]
 
 def get_collection(collection_name: str) -> Collection:
-    """Get a specific collection from the database."""
-    db = get_database()
-    return db[collection_name]
+    """Get collection from database."""
+    return get_database()[collection_name]
 
-def close_connection():
-    """Close the MongoDB connection."""
+def close_connection() -> None:
+    """Close MongoDB connection."""
     global _client
-    if _client is not None:
+    if _client:
         _client.close()
         _client = None
 
@@ -66,6 +68,9 @@ COLLECTIONS = {
     "continuity_facts": "continuity_facts",
     "research_reports": "research_reports",
     "research_iterations": "research_iterations",
+    "dialogue": "dialogue",
+    "research": "research",
+    "cache": "cache"
 }
 
 # Vector Search Collections
