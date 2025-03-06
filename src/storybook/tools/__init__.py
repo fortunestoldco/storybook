@@ -4,6 +4,9 @@ from typing import Dict, List
 from langchain_core.tools import BaseTool
 from ..configuration import Configuration
 from ..db_config import initialize_config
+from .creative_tools import creative_vision_board, style_guide_creator
+from .character_tools import voice_pattern_template, relationship_matrix_generator
+from .content_tools import content_blueprint_generator, component_integration_tracker
 
 class ToolRegistry:
     """Registry for managing tools across different agents."""
@@ -27,3 +30,12 @@ class ToolRegistry:
                 for name, tool in cat.items()}
 
 tool_registry = ToolRegistry()
+
+__all__ = [
+    "creative_vision_board",
+    "style_guide_creator",
+    "voice_pattern_template",
+    "relationship_matrix_generator",
+    "content_blueprint_generator",
+    "component_integration_tracker"
+]
