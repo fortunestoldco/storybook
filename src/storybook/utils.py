@@ -5,8 +5,8 @@ from langchain_core.messages import BaseMessage
 from datetime import datetime
 import os
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
-from langchain_community.llms import Replicate, Ollama
-from langchain.chat_models import ChatOllama
+from langchain_community.llms import Replicate
+from langchain_community.chat_models import ChatOllama
 import multiprocessing
 from langchain_community.chat_models import ChatLlamaCpp
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
