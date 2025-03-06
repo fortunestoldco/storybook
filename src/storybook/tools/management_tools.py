@@ -1,5 +1,5 @@
 from typing import Dict, Any, List
-from langchain_core.tools import BaseTool, tool
+from langchain_core.tools import BaseTool
 from datetime import datetime
 import uuid
 
