@@ -2,7 +2,7 @@ import os
 from typing import Dict, Any, List, Optional, Type
 from datetime import datetime
 from langchain_core.tools import BaseTool
-from langchain_core.messages import AIMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 from langchain.agents import AgentExecutor  # Change: Updated import
@@ -17,40 +17,40 @@ from .tools import (
     identify_knowledge_gaps,
     generate_followup_queries
 )
-from .states import (
-    ResearchState,
-    ResearchReport,
-    ResearchIteration,
-    ResearchQuery
-)
+from .states import ResearchState
 from .config import validate_api_configuration, get_api_key
 from .graphs import create_research_subgraph
 
 class ResearchAgent:
-    """Research-focused agent that uses a specialized research subgraph."""
+    """Base class for research-focused agents using LangGraph."""
     
     def __init__(
-        self, 
+        self,
         name: str,
         research_graph: StateGraph,
-        state_class: type,
+        state_class: Type[ResearchState],
         config: Dict[str, Any]
     ):
         self.name = name
-        self.research_graph = research_graph
+        self.research_graph = research_graph 
         self.state_class = state_class
         self.config = config
 
-    async def process(self, state: NovelSystemState, config: Dict[str, Any]) -> Dict[str, Any]:
+    async def process(self, state: NovelSystemState) -> Dict[str, Any]:
         """Process the current state using research graph."""
-        # Create research-specific state
+        messages = [
+            SystemMessage(content=self.config.get("system_prompt", "")),
+            HumanMessage(content=state.current_input)
+        ]
+        
+        # Create research state
         research_state = self.state_class(
             project_id=state.project_id,
-            base_state=state,
+            messages=messages,
             config=self.config
         )
         
-        # Run research graph
+        # Execute research graph
         result = await self.research_graph.ainvoke(research_state)
         return result
 

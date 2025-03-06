@@ -49,7 +49,8 @@ from storybook.research.agents import (
     DomainKnowledgeSpecialist,
     CulturalAuthenticityExpert, 
     MarketAlignmentDirector,
-    FactVerificationSpecialist
+    FactVerificationSpecialist,
+    ResearchAgent
 )
 from storybook.research.graphs import create_research_subgraph
 from ..research.states import (
@@ -248,3 +249,23 @@ class AgentFactory:
         
         # Merge configs, with agent-specific overriding defaults
         return {**default_config, **research_config}
+
+    def create_research_agent(
+        self,
+        agent_type: str,
+        research_config: Dict[str, Any]
+    ) -> ResearchAgent:
+        """Create a research agent with appropriate graph."""
+        
+        research_graph = create_research_subgraph(
+            research_type=research_config["research_type"],
+            state_class=research_config["state_class"],
+            config=research_config
+        )
+        
+        return ResearchAgent(
+            name=agent_type,
+            research_graph=research_graph,
+            state_class=research_config["state_class"],
+            config=research_config
+        )

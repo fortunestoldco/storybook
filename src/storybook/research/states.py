@@ -1,67 +1,107 @@
-from typing import Dict, Any, List, Optional, Type
+from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
-from uuid import uuid4
-from datetime import datetime
 from dataclasses import dataclass, field
-from ..state import NovelSystemState
+from datetime import datetime
+from langchain_core.messages import BaseMessage
+from ..models.system import NovelSystemState
+from unittest.mock import Mock, patch
+from storybook.tools.management_tools import project_management_tool, timeline_management_tool
+from storybook.configuration import Configuration
+from storybook.db_config import COLLECTIONS
+
+@pytest.fixture
+def mock_db():
+    """Mock database collection."""
+    with patch('storybook.db_config.get_collection') as mock:
+        collection = Mock()
+        collection.find_one.return_value = {"_id": "test_id", "name": "test"}
+        collection.insert_one.return_value.inserted_id = "new_id"
+        mock.return_value = collection
+        yield mock
+
+@pytest.fixture
+def config():
+    return Configuration()
+
+def test_project_management_tool(mock_db, config):
+    """Test project management functionality."""
+    result = project_management_tool(
+        action="create",
+        project_id="test_project",
+        project_data={"name": "Test Project"}
+    )
+    assert result["status"] == "success"
+    mock_db.assert_called_once_with(COLLECTIONS["projects"])
+
+def test_timeline_management_tool(mock_db):
+    result = timeline_management_tool(
+        action="create",
+        project_id="test_project",
+        timeline_data={"name": "Test Timeline"}
+    )
+    assert result["status"] == "success"
+    mock_db.assert_called_once_with(COLLECTIONS["timelines"])
 
 class ResearchState(BaseModel):
-    """Base state for research operations"""
-    status: str = "initialized"
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    query_context: str = ""
+    """Base state model for research operations."""
+    project_id: str
+    messages: List[BaseMessage]
+    config: Dict[str, Any]
     iterations: int = 0
-    queries: List[Dict[str, Any]] = Field(default_factory=list)
-    max_iterations: int = 3
-    quality_threshold: float = 0.8
+    quality_score: float = 0.0
+    research_results: List[Dict[str, Any]] = Field(default_factory=list)
 
-class Section(BaseModel):
-    """Research section details"""
-    name: str
-    description: str
-    research: bool = True
-    content: Optional[str] = None
+    class Config:
+        arbitrary_types_allowed = True
 
 class ResearchQuery(BaseModel):
-    """Research query with context"""
-    query: str
-    context: str 
-    topic: str
-    depth: str = "standard"
+    """Research query definition."""
+    query_text: str
+    priority: int = 1
+    category: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    status: str = "pending"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+    class Config:
+        arbitrary_types_allowed = True
 
 class ResearchResult(BaseModel):
-    """Individual research result"""
-    source_title: str
-    source_url: str
+    """Individual research result."""
+    source: str
     content: str
     relevance_score: float
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
-class ResearchIteration(BaseModel):
-    """Record of a research iteration"""
-    iteration_id: str = Field(default_factory=lambda: str(uuid4()))
-    report_id: str
-    queries: List[ResearchQuery] = Field(default_factory=list)
-    raw_results: List[Dict[str, Any]] = Field(default_factory=list)
-    processed_findings: Dict[str, Any] = Field(default_factory=dict)
-    quality_score: float = 0.0
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    class Config:
+        arbitrary_types_allowed = True
 
 class ResearchReport(BaseModel):
-    """A compiled research report."""
-    report_id: str = Field(default_factory=lambda: str(uuid4()))
-    project_id: str
-    agent_name: str
-    topic: str
-    query_context: str
-    findings: List[str] = Field(default_factory=list)
+    """Collection of research findings and analysis."""
+    query: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
     sources: List[str] = Field(default_factory=list)
-    confidence_score: float = 0.0
-    identified_gaps: List[str] = Field(default_factory=list)
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert model to dictionary for MongoDB storage."""
-        return {k: v for k, v in self.dict().items()}
+    results: List<ResearchResult] = Field(default_factory=list)
+    findings: List[Dict[str, Any]] = Field(default_factory(list))
+    quality_metrics: Dict[str, float] = Field(default_factory(dict))
+    identified_gaps: List[str] = Field(default_factory(list))
+    recommendations: List[str] = Field(default_factory(list))
+
+    class Config:
+        arbitrary_types_allowed = True
+
+class ResearchIteration(BaseModel):
+    """Tracking model for research iterations."""
+    iteration_number: int
+    start_time: datetime = Field(default_factory=datetime.utcnow)
+    end_time: Optional[datetime] = None
+    query: str
+    results: List[ResearchReport] = Field(default_factory(list))
+    status: str = "in_progress"
+
+    class Config:
+        arbitrary_types_allowed = True
 
 @dataclass
 class BaseResearchState:
@@ -69,25 +109,25 @@ class BaseResearchState:
     project_id: str
     base_state: NovelSystemState
     config: Dict[str, Any]
-    queries: List[str] = field(default_factory=list)
-    results: List[Dict[str, Any]] = field(default_factory=list)
-    
+    queries: List[str] = field(default_factory(list))
+    results: List[Dict[str, Any]] = field(default_factory(list))
+
 @dataclass
 class DomainResearchState(BaseResearchState):
     """State for domain knowledge research."""
-    domain_specific_data: Dict[str, Any] = field(default_factory=dict)
+    domain_specific_data: Dict[str, Any] = field(default_factory(dict))
 
 @dataclass
 class CulturalResearchState(BaseResearchState):
     """State for cultural authenticity research."""
-    cultural_context: Dict[str, Any] = field(default_factory=dict)
+    cultural_context: Dict[str, Any] = field(default_factory(dict))
 
 @dataclass
 class MarketResearchState(BaseResearchState):
     """State for market analysis research."""
-    market_data: Dict[str, Any] = field(default_factory=dict)
+    market_data: Dict[str, Any] = field(default_factory(dict))
 
 @dataclass
 class FactVerificationState(BaseResearchState):
     """State for fact verification."""
-    verified_facts: Dict[str, bool] = field(default_factory=dict)
+    verified_facts: Dict[str, bool] = field(default_factory(dict))

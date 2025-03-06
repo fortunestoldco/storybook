@@ -58,6 +58,10 @@ class SearchAPI(str, Enum):
     GOOGLE = "google"
     BING = "bing"
 
+class ConfigurationError(Exception):
+    """Base exception for configuration errors."""
+    pass
+
 @dataclass(kw_only=True)
 class Configuration:
     """The configuration for the storybook system."""
