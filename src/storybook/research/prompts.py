@@ -28,8 +28,8 @@ followup_query_instructions = """Generate targeted search queries to fill knowle
         {
             "query": str,  # The search query
             "topic": str,  # Specific topic being researched
-            "depth": str = "standard"  # Research depth (standard/deep)
+    "depth": str = "standard"  # Research depth (standard/deep)
         }
     ]
 }
-</Format>
+</Format>"""
