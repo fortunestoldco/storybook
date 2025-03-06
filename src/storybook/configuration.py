@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field, fields
-from typing import Annotated, Dict, Optional, Any, TypedDict, List, Union
+from typing import Annotated, Dict, Optional, Any, TypedDict, List, Union, Type
 from enum import Enum
 from uuid import uuid4
 
@@ -232,7 +232,7 @@ class Configuration:
     )
 
     @classmethod
-    def from_runnable_config(cls, config: Optional[RunnableConfig] = None) -> 'Configuration':
+    def from_runnable_config(cls: Type['Configuration'], config: Optional[RunnableConfig] = None) -> 'Configuration':
         """Create configuration from runtime config."""
         if not config:
             return cls()

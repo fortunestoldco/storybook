@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional, Union
 from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage
-from ..utils import load_chat_model
+from ..utils.chat_model import load_chat_model
 
 from .states import ResearchQuery, ResearchResult, ResearchReport
 from .search import select_and_execute_search
