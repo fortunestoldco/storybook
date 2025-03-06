@@ -3,6 +3,12 @@ from storybook.graph import get_storybook_supervisor, get_storybook_initializati
 import os
 from dotenv import load_dotenv
 from langsmith import Client
+from storybook.agents.research import (
+    DomainKnowledgeSpecialist,
+    MarketAlignmentDirector,
+    FactVerificationSpecialist,
+    CulturalAuthenticityExpert
+)
 
 __all__ = [
     "Configuration", 

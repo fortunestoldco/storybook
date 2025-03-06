@@ -9,7 +9,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.checkpoint.mongodb import MongoDBSaver
 
 # Add research imports
-from storybook.research.graphs import create_research_subgraph
+from storybook.tools.research.graphs import create_research_subgraph
 from storybook.research.states import (
     DomainResearchState,
     CulturalResearchState,
