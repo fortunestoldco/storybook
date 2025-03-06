@@ -50,38 +50,17 @@ class BaseResearchState:
     reports: List[ResearchReport] = field(default_factory=list)
 
 @dataclass
-class DomainResearchState:
-    project_id: str
-    messages: List[BaseMessage]
-    config: Dict[str, Any]
+class DomainResearchState(BaseResearchState):
     domain: str
-    iteration_count: int = 0
-    queries: List[ResearchQuery] = field(default_factory=list)
-    results: List[ResearchResult] = field(default_factory=list)
-    reports: List[ResearchReport] = field(default_factory=list)
     domain_specific_data: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
-class MarketResearchState:
-    project_id: str
-    messages: List[BaseMessage]
-    config: Dict[str, Any]
+class MarketResearchState(BaseResearchState):
     market_segment: str
-    iteration_count: int = 0
-    queries: List[ResearchQuery] = field(default_factory=list)
-    results: List[ResearchResult] = field(default_factory=list)
-    reports: List[ResearchReport] = field(default_factory.list)
     market_data: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
-class FactVerificationState:
-    project_id: str
-    messages: List[BaseMessage]
-    config: Dict[str, Any]
+class FactVerificationState(BaseResearchState):
     claims: List[str]
-    iteration_count: int = 0
-    queries: List[ResearchQuery] = field(default_factory=list)
-    results: List[ResearchResult] = field(default_factory=list)
-    reports: List[ResearchReport] = field(default_factory=list)
-    verified_claims: List[str] = field(default_factory.list)
-    verification_sources: Dict[str, List[str]] = field(default_factory.dict)
+    verified_claims: List[str] = field(default_factory=list)
+    verification_sources: Dict[str, List[str]] = field(default_factory=dict)
