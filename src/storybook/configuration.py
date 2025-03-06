@@ -372,3 +372,20 @@ class InputState(BaseModel):
 
     class Config:
         use_enum_values = True
+
+import os
+from typing import Optional
+from dotenv import load_dotenv
+
+class Configuration:
+    def __init__(self):
+        # Load environment variables from .env file if present
+        load_dotenv()
+        
+        # Get API key with explicit error handling
+        self.openai_api_key = os.getenv("OPENAI_API_KEY")
+        if not self.openai_api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is not set")
+            
+        # Set API key for OpenAI explicitly
+        os.environ["OPENAI_API_KEY"] = self.openai_api_key

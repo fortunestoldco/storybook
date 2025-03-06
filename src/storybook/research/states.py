@@ -14,17 +14,23 @@ def mock_db():
     """Mock database collection."""
     with patch('storybook.db_config.get_collection') as mock:
         collection = Mock()
+        mock.return_value = collection
         collection.find_one.return_value = {"_id": "test_id", "name": "test"}
         collection.insert_one.return_value.inserted_id = "new_id"
-        mock.return_value = collection
-        yield mock
+        return collection
 
 @pytest.fixture
-def config():
-    return Configuration()
+def novel_state():
+    return NovelSystemState(
+        project_id="test_project",
+        phase="research"
+    )
+
+@pytest.fixture
+def base_config():
+    return {"test_key": "test_value"}
 
 def test_project_management_tool(mock_db, config):
-    """Test project management functionality."""
     result = project_management_tool(
         action="create",
         project_id="test_project",
@@ -81,8 +87,8 @@ class ResearchReport(BaseModel):
     """Collection of research findings and analysis."""
     query: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    sources: List[str] = Field(default_factory=list)
-    results: List<ResearchResult] = Field(default_factory=list)
+    sources: List[str] = Field(default_factory(list))
+    results: List[ResearchResult] = Field(default_factory(list))
     findings: List[Dict[str, Any]] = Field(default_factory(list))
     quality_metrics: Dict[str, float] = Field(default_factory(dict))
     identified_gaps: List[str] = Field(default_factory(list))
@@ -94,7 +100,7 @@ class ResearchReport(BaseModel):
 class ResearchIteration(BaseModel):
     """Tracking model for research iterations."""
     iteration_number: int
-    start_time: datetime = Field(default_factory=datetime.utcnow)
+    start_time: datetime = Field(default_factory(datetime.utcnow)
     end_time: Optional[datetime] = None
     query: str
     results: List[ResearchReport] = Field(default_factory(list))
@@ -130,4 +136,4 @@ class MarketResearchState(BaseResearchState):
 @dataclass
 class FactVerificationState(BaseResearchState):
     """State for fact verification."""
-    verified_facts: Dict[str, bool] = field(default_factory(dict))
+    verified_facts: Dict[str, bool] = field(default_factory(dict)))
