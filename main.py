@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-import os
 import sys
 sys.path.append("../utils")
 import utils
@@ -13,7 +12,7 @@ import warnings
 warnings.filterwarnings("ignore", message=".*TqdmWarning.*")
 
 from langgraph.graph import StateGraph, END
-from typing import TypedDict, Annotated, List, Dict, Any, Optional, Literal, cast
+from typing import TypedDict, Annotated, Dict, Any, Optional, Literal, cast
 import operator
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langchain_core.messages import (
@@ -25,24 +24,18 @@ from langchain_core.messages import (
 )
 
 import boto3
-from langchain_openai import ChatOpenAI
 from langchain_aws import ChatBedrockConverse
 from langchain_core.pydantic_v1 import BaseModel
 from tavily import TavilyClient
-import os
 import sqlite3
 from datetime import datetime
 from uuid import uuid4
 from langchain_core.runnables import RunnableConfig
 
-
 # for the output parser
-from typing import List
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
-import json
-
+from langchain_core.pydantic_v1 import Field
 
 # Define the project types and input states
 class ProjectType:
@@ -860,7 +853,7 @@ class writer_gui:
         self.thread = {"configurable": {"thread_id": str(self.thread_id)}}
         # self.sdisps = {} #global
         self.demo = self.create_interface()
-
+    
     def run_agent(self, start, topic, stop_after):
         # global partial_message, thread_id,thread
         # global response, max_iterations, iterations, threads
