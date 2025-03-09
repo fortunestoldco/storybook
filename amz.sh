@@ -10,13 +10,10 @@ BLUE='\033[0;34m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
-# Configuration - update this to your GitHub repository
-GITHUB_REPO="https://raw.githubusercontent.com/your-username/storybook-editor/main"
+# Load configuration from config.sh
+source config.sh
 
 # Global variables
-REGION="us-east-1" # Default region - modify if needed
-STACK_NAME="storybook"
-MODEL_ID="anthropic.claude-3-sonnet-20240229-v1:0" # Default model
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
 # Resource names
@@ -32,8 +29,8 @@ declare -A AGENT_IDS
 declare -A AGENT_ALIAS_IDS
 
 # Debug function to print AWS CLI commands before execution
-debug_aws_command() {
-    echo -e "${YELLOW}AWS CLI Command: $@${NC}"
+log() {
+    echo -e "${YELLOW}LOG: $@${NC}"
 }
 
 # Function to download a file from GitHub
@@ -41,79 +38,124 @@ download_from_github() {
     local path=$1
     local output=$2
 
-    echo -e "${BLUE}Downloading $path from GitHub...${NC}"
+    log "Downloading $path from GitHub..."
     curl -s -o "$output" "${GITHUB_REPO}/$path"
 
     if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to download $path from GitHub${NC}"
+        log "Failed to download $path from GitHub"
         return 1
     fi
 
-    echo -e "${GREEN}Downloaded $path successfully${NC}"
+    log "Downloaded $path successfully"
     return 0
 }
 
 # Check dependencies
 check_dependencies() {
-    echo -e "${BLUE}Checking dependencies...${NC}"
+    log "Checking dependencies..."
 
     if ! command -v aws &> /dev/null; then
-        echo -e "${RED}AWS CLI is not installed. Please install it and try again.${NC}"
+        log "AWS CLI is not installed. Please install it and try again."
         exit 1
     fi
 
     AWS_VERSION=$(aws --version | cut -d' ' -f1 | cut -d'/' -f2)
     if [[ $(echo -e "$AWS_VERSION\n2.24" | sort -V | head -n1) != "2.24" ]]; then
-        echo -e "${RED}AWS CLI version is $AWS_VERSION, but 2.24 or higher is required.${NC}"
+        log "AWS CLI version is $AWS_VERSION, but 2.24 or higher is required."
         exit 1
     fi
 
     if ! command -v jq &> /dev/null; then
-        echo -e "${RED}jq is not installed. Please install it and try again.${NC}"
+        log "jq is not installed. Please install it and try again."
         exit 1
     fi
 
     if ! command -v curl &> /dev/null; then
-        echo -e "${RED}curl is not installed. Please install it and try again.${NC}"
+        log "curl is not installed. Please install it and try again."
         exit 1
     fi
 
-    echo -e "${GREEN}All dependencies found.${NC}"
+    log "All dependencies found."
+}
+
+# Check if the script is run with necessary permissions
+check_permissions() {
+    if [ "$EUID" -ne 0 ]; then
+        log "Please run as root or with sudo."
+        exit 1
+    fi
+}
+
+# Check if AWS CLI is configured with the correct profile
+check_aws_profile() {
+    if ! aws sts get-caller-identity &> /dev/null; then
+        log "AWS CLI is not configured correctly. Please configure it and try again."
+        exit 1
+    fi
+}
+
+# Cleanup function to remove temporary files
+cleanup() {
+    log "Cleaning up temporary files..."
+    rm -f trust-policy.json editor-policy-template.json prompt-list.txt
+    rm -rf prompts
+    rm -f agent-definitions.json collaborations.json knowledge_base_info.txt
+    rm -f lambda/research_function.zip lambda/workflow_function.zip
+    log "Cleanup completed."
+}
+
+# Retry mechanism for AWS CLI commands
+retry_aws_command() {
+    local retries=3
+    local count=0
+    local delay=5
+
+    until [ $count -ge $retries ]; do
+        "$@" && break
+        count=$((count + 1))
+        log "Retrying in $delay seconds..."
+        sleep $delay
+    done
+
+    if [ $count -ge $retries ]; then
+        log "Command failed after $retries attempts."
+        return 1
+    fi
 }
 
 # Delete IAM role if it exists
 delete_iam_role_if_exists() {
     local role_name=$1
-    echo -e "${BLUE}Checking if IAM role $role_name exists...${NC}"
+    log "Checking if IAM role $role_name exists..."
 
     if aws iam get-role --role-name $role_name &>/dev/null; then
-        echo -e "${YELLOW}Role $role_name exists. Deleting...${NC}"
+        log "Role $role_name exists. Deleting..."
 
         # Get all attached policies
         local policies=$(aws iam list-attached-role-policies --role-name $role_name --query 'AttachedPolicies[*].PolicyArn' --output text)
 
         # Detach all policies
         for policy in $policies; do
-            echo -e "${YELLOW}Detaching policy $policy from role $role_name...${NC}"
-            aws iam detach-role-policy --role-name $role_name --policy-arn $policy 2>/dev/null || true
+            log "Detaching policy $policy from role $role_name..."
+            retry_aws_command aws iam detach-role-policy --role-name $role_name --policy-arn $policy 2>/dev/null || true
         done
 
         # Try to delete the custom policy if it exists
-        aws iam delete-policy --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ManuscriptEditorPolicy 2>/dev/null || true
+        retry_aws_command aws iam delete-policy --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ManuscriptEditorPolicy 2>/dev/null || true
 
         # Delete the role
-        aws iam delete-role --role-name $role_name 2>/dev/null || true
+        retry_aws_command aws iam delete-role --role-name $role_name 2>/dev/null || true
 
-        echo -e "${GREEN}Role $role_name deleted.${NC}"
+        log "Role $role_name deleted."
         sleep 10
     else
-        echo -e "${GREEN}Role $role_name does not exist. Proceeding with creation.${NC}"
+        log "Role $role_name does not exist. Proceeding with creation."
     fi
 }
 
 # Create IAM role for the system
 create_iam_role() {
-    echo -e "${BLUE}Creating IAM role for the Manuscript Editing System...${NC}"
+    log "Creating IAM role for the Manuscript Editing System..."
     delete_iam_role_if_exists $ROLE_NAME
 
     # Download policies from GitHub
@@ -124,15 +166,15 @@ create_iam_role() {
     sed -i "s/FLOW_BUCKET_NAME/${FLOW_BUCKET_NAME}/g; s/REGION/${REGION}/g; s/ACCOUNT_ID/${ACCOUNT_ID}/g; s/DYNAMODB_TABLE/${DYNAMODB_TABLE}/g; s/LAMBDA_RESEARCH_NAME/${LAMBDA_RESEARCH_NAME}/g; s/LAMBDA_WORKFLOW_NAME/${LAMBDA_WORKFLOW_NAME}/g" editor-policy-template.json
 
     # Create the role
-    aws iam create-role --role-name $ROLE_NAME --assume-role-policy-document file://trust-policy.json
+    retry_aws_command aws iam create-role --role-name $ROLE_NAME --assume-role-policy-document file://trust-policy.json
 
     # Create and attach policy
-    aws iam create-policy --policy-name ManuscriptEditorPolicy --policy-document file://editor-policy-template.json 2>/dev/null || true
-    aws iam attach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ManuscriptEditorPolicy
+    retry_aws_command aws iam create-policy --policy-name ManuscriptEditorPolicy --policy-document file://editor-policy-template.json 2>/dev/null || true
+    retry_aws_command aws iam attach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ManuscriptEditorPolicy
 
-    echo -e "${YELLOW}Waiting for role to propagate...${NC}"
+    log "Waiting for role to propagate..."
     sleep 10
-    echo -e "${GREEN}IAM role created successfully.${NC}"
+    log "IAM role created successfully."
 
     rm -f trust-policy.json editor-policy-template.json
 }
@@ -141,39 +183,39 @@ create_iam_role() {
 delete_s3_bucket_if_exists() {
     local bucket_name=$1
     if aws s3api head-bucket --bucket $bucket_name 2>/dev/null; then
-        echo -e "${YELLOW}S3 bucket $bucket_name exists. Deleting...${NC}"
-        aws s3 rm s3://${bucket_name} --recursive --region $REGION 2>/dev/null || true
-        aws s3api delete-bucket --bucket ${bucket_name} --region $REGION 2>/dev/null || true
+        log "S3 bucket $bucket_name exists. Deleting..."
+        retry_aws_command aws s3 rm s3://${bucket_name} --recursive --region $REGION 2>/dev/null || true
+        retry_aws_command aws s3api delete-bucket --bucket ${bucket_name} --region $REGION 2>/dev/null || true
         sleep 5
     fi
 }
 
 create_s3_bucket() {
-    echo -e "${BLUE}Creating S3 bucket for system resources...${NC}"
+    log "Creating S3 bucket for system resources..."
     delete_s3_bucket_if_exists $FLOW_BUCKET_NAME
-    aws s3 mb s3://${FLOW_BUCKET_NAME} --region $REGION
-    aws s3api put-bucket-versioning --bucket ${FLOW_BUCKET_NAME} --versioning-configuration Status=Enabled
+    retry_aws_command aws s3 mb s3://${FLOW_BUCKET_NAME} --region $REGION
+    retry_aws_command aws s3api put-bucket-versioning --bucket ${FLOW_BUCKET_NAME} --versioning-configuration Status=Enabled
 }
 
 delete_dynamodb_table_if_exists() {
     if aws dynamodb describe-table --table-name ${DYNAMODB_TABLE} --region ${REGION} &>/dev/null; then
-        echo -e "${YELLOW}DynamoDB table ${DYNAMODB_TABLE} exists. Deleting...${NC}"
-        aws dynamodb delete-table --table-name ${DYNAMODB_TABLE} --region ${REGION}
-        aws dynamodb wait table-not-exists --table-name ${DYNAMODB_TABLE} --region ${REGION}
+        log "DynamoDB table ${DYNAMODB_TABLE} exists. Deleting..."
+        retry_aws_command aws dynamodb delete-table --table-name ${DYNAMODB_TABLE} --region ${REGION}
+        retry_aws_command aws dynamodb wait table-not-exists --table-name ${DYNAMODB_TABLE} --region ${REGION}
     fi
 }
 
 create_dynamodb_table() {
-    echo -e "${BLUE}Creating DynamoDB table for workflow state...${NC}"
+    log "Creating DynamoDB table for workflow state..."
     delete_dynamodb_table_if_exists
-    aws dynamodb create-table --table-name ${DYNAMODB_TABLE} --attribute-definitions AttributeName=ManuscriptId,AttributeType=S --key-schema AttributeName=ManuscriptId,KeyType=HASH --billing-mode PAY_PER_REQUEST --region ${REGION}
-    echo -e "${YELLOW}Waiting for DynamoDB table creation to complete...${NC}"
-    aws dynamodb wait table-exists --table-name ${DYNAMODB_TABLE} --region ${REGION}
+    retry_aws_command aws dynamodb create-table --table-name ${DYNAMODB_TABLE} --attribute-definitions AttributeName=ManuscriptId,AttributeType=S --key-schema AttributeName=ManuscriptId,KeyType=HASH --billing-mode PAY_PER_REQUEST --region ${REGION}
+    log "Waiting for DynamoDB table creation to complete..."
+    retry_aws_command aws dynamodb wait table-exists --table-name ${DYNAMODB_TABLE} --region ${REGION}
 }
 
 # Upload agent prompts to S3 (pulled from GitHub)
 upload_prompts() {
-    echo -e "${BLUE}Downloading agent prompts from GitHub and uploading to S3...${NC}"
+    log "Downloading agent prompts from GitHub and uploading to S3..."
     mkdir -p prompts
 
     # Download prompt list file
@@ -187,8 +229,8 @@ upload_prompts() {
     done < prompt-list.txt
 
     # Upload all prompts to S3
-    aws s3 sync prompts/ s3://${FLOW_BUCKET_NAME}/prompts/ --region $REGION
-    echo -e "${GREEN}Agent prompts uploaded successfully.${NC}"
+    retry_aws_command aws s3 sync prompts/ s3://${FLOW_BUCKET_NAME}/prompts/ --region $REGION
+    log "Agent prompts uploaded successfully."
 
     rm -f prompt-list.txt
     rm -rf prompts
@@ -196,13 +238,13 @@ upload_prompts() {
 
 # Create the knowledge base
 create_knowledge_base() {
-    echo -e "${BLUE}Creating knowledge base for manuscript context...${NC}"
+    log "Creating knowledge base for manuscript context..."
 
     # Check if knowledge base exists and delete if necessary
     KB_EXISTS=$(aws bedrock list-knowledge-bases --region $REGION | jq -r ".knowledgeBaseSummaries[] | select(.name == \"$KNOWLEDGE_BASE_NAME\") | .knowledgeBaseId" 2>/dev/null)
     if [ ! -z "$KB_EXISTS" ]; then
-        echo -e "${YELLOW}Knowledge base $KNOWLEDGE_BASE_NAME already exists. Deleting...${NC}"
-        aws bedrock delete-knowledge-base --knowledge-base-id $KB_EXISTS --region $REGION
+        log "Knowledge base $KNOWLEDGE_BASE_NAME already exists. Deleting..."
+        retry_aws_command aws bedrock delete-knowledge-base --knowledge-base-id $KB_EXISTS --region $REGION
         sleep 30
     fi
 
@@ -215,25 +257,25 @@ create_knowledge_base() {
     sed -i "s/ACCOUNT_ID/${ACCOUNT_ID}/g; s/ROLE_NAME/${ROLE_NAME}/g" access-policy-template.json
 
     # Create OpenSearch collection
-    echo -e "${BLUE}Creating OpenSearch Serverless collection...${NC}"
-    aws opensearchserverless create-collection --name storybook --type VECTORSEARCH --region $REGION
-    echo -e "${YELLOW}Waiting for OpenSearch collection to be created...${NC}"
-    aws opensearchserverless wait collection-active --name storybook --region $REGION
+    log "Creating OpenSearch Serverless collection..."
+    retry_aws_command aws opensearchserverless create-collection --name storybook --type VECTORSEARCH --region $REGION
+    log "Waiting for OpenSearch collection to be created..."
+    retry_aws_command aws opensearchserverless wait collection-active --name storybook --region $REGION
 
     # Create access policy
-    aws opensearchserverless create-access-policy --cli-input-json file://access-policy-template.json --region $REGION
+    retry_aws_command aws opensearchserverless create-access-policy --cli-input-json file://access-policy-template.json --region $REGION
 
     # Create knowledge base
-    KB_RESPONSE=$(aws bedrock create-knowledge-base --cli-input-json file://kb-config-template.json --region $REGION)
+    KB_RESPONSE=$(retry_aws_command aws bedrock create-knowledge-base --cli-input-json file://kb-config-template.json --region $REGION)
     KB_ID=$(echo $KB_RESPONSE | jq -r '.knowledgeBase.knowledgeBaseId')
-    echo -e "${GREEN}Knowledge base created with ID: $KB_ID${NC}"
+    log "Knowledge base created with ID: $KB_ID"
 
     # Wait for knowledge base to be ready
-    echo -e "${YELLOW}Waiting for knowledge base to be active...${NC}"
+    log "Waiting for knowledge base to be active..."
     while true; do
         KB_STATUS=$(aws bedrock get-knowledge-base --knowledge-base-id $KB_ID --region $REGION | jq -r '.knowledgeBase.status')
         if [ "$KB_STATUS" == "ACTIVE" ]; then break; fi
-        echo -e "${YELLOW}Knowledge base status: $KB_STATUS. Waiting...${NC}"
+        log "Knowledge base status: $KB_STATUS. Waiting..."
         sleep 10
     done
 
@@ -246,7 +288,7 @@ create_knowledge_base() {
 
 # Create Lambda functions
 create_lambda_functions() {
-    echo -e "${BLUE}Creating Lambda functions...${NC}"
+    log "Creating Lambda functions..."
     mkdir -p lambda
 
     # Download Lambda code from GitHub
@@ -261,17 +303,17 @@ create_lambda_functions() {
 
     # Delete existing functions if they exist
     if aws lambda get-function --function-name $LAMBDA_RESEARCH_NAME --region $REGION &>/dev/null; then
-        aws lambda delete-function --function-name $LAMBDA_RESEARCH_NAME --region $REGION
+        retry_aws_command aws lambda delete-function --function-name $LAMBDA_RESEARCH_NAME --region $REGION
     fi
 
     if aws lambda get-function --function-name $LAMBDA_WORKFLOW_NAME --region $REGION &>/dev/null; then
-        aws lambda delete-function --function-name $LAMBDA_WORKFLOW_NAME --region $REGION
+        retry_aws_command aws lambda delete-function --function-name $LAMBDA_WORKFLOW_NAME --region $REGION
     fi
 
     # Create the Lambda functions
-    aws lambda create-function --function-name $LAMBDA_RESEARCH_NAME --runtime python3.9 --handler research_function.lambda_handler --role arn:aws:iam::${ACCOUNT_ID}:role/${ROLE_NAME} --zip-file fileb://lambda/research_function.zip --timeout 120 --environment "Variables={STATE_TABLE=$DYNAMODB_TABLE}" --region $REGION
+    retry_aws_command aws lambda create-function --function-name $LAMBDA_RESEARCH_NAME --runtime python3.9 --handler research_function.lambda_handler --role arn:aws:iam::${ACCOUNT_ID}:role/${ROLE_NAME} --zip-file fileb://lambda/research_function.zip --timeout 120 --environment "Variables={STATE_TABLE=$DYNAMODB_TABLE}" --region $REGION
 
-    aws lambda create-function --function-name $LAMBDA_WORKFLOW_NAME --runtime python3.9 --handler workflow_function.lambda_handler --role arn:aws:iam::${ACCOUNT_ID}:role/${ROLE_NAME} --zip-file fileb://lambda/workflow_function.zip --timeout 120 --environment "Variables={STATE_TABLE=$DYNAMODB_TABLE}" --region $REGION
+    retry_aws_command aws lambda create-function --function-name $LAMBDA_WORKFLOW_NAME --runtime python3.9 --handler workflow_function.lambda_handler --role arn:aws:iam::${ACCOUNT_ID}:role/${ROLE_NAME} --zip-file fileb://lambda/workflow_function.zip --timeout 120 --environment "Variables={STATE_TABLE=$DYNAMODB_TABLE}" --region $REGION
 
     rm -rf lambda
 }
@@ -283,42 +325,42 @@ delete_agent_if_exists() {
     local action=""
     local new_name=""
 
-    echo -e "${BLUE}Checking if agent '$agent_name' already exists...${NC}"
+    log "Checking if agent '$agent_name' already exists..."
     LIST_RESPONSE=$(aws bedrock-agent list-agents --region $REGION 2>/dev/null)
 
     if [ $? -eq 0 ]; then
         existing_id=$(echo $LIST_RESPONSE | jq -r ".agents[] | select(.displayName == \"$agent_name\") | .agentId" 2>/dev/null)
 
         if [ ! -z "$existing_id" ] && [ "$existing_id" != "null" ]; then
-            echo -e "${YELLOW}Found existing agent '$agent_name' with ID: $existing_id.${NC}"
-            echo -e "1. Delete existing agent and create a new one with the same name"
-            echo -e "2. Use a different name for the new agent"
-            echo -e "3. Cancel operation"
+            log "Found existing agent '$agent_name' with ID: $existing_id."
+            log "1. Delete existing agent and create a new one with the same name"
+            log "2. Use a different name for the new agent"
+            log "3. Cancel operation"
             read -p "Choose an option (1/2/3): " choice
 
             case $choice in
                 1)
                     action="delete"
-                    echo -e "${YELLOW}Deleting existing agent '$agent_name'...${NC}"
+                    log "Deleting existing agent '$agent_name'..."
                     ALIAS_RESPONSE=$(aws bedrock-agent list-agent-aliases --agent-id $existing_id --region $REGION 2>/dev/null)
 
                     if [ $? -eq 0 ]; then
                         alias_ids=$(echo $ALIAS_RESPONSE | jq -r '.agentAliases[].agentAliasId' 2>/dev/null)
                         for alias_id in $alias_ids; do
-                            aws bedrock-agent delete-agent-alias --agent-id $existing_id --agent-alias-id $alias_id --region $REGION 2>/dev/null || true
+                            retry_aws_command aws bedrock-agent delete-agent-alias --agent-id $existing_id --agent-alias-id $alias_id --region $REGION 2>/dev/null || true
                         done
                     fi
-                    aws bedrock-agent delete-agent --agent-id $existing_id --skip-resource-in-use-check --region $REGION 2>/dev/null || true
+                    retry_aws_command aws bedrock-agent delete-agent --agent-id $existing_id --skip-resource-in-use-check --region $REGION 2>/dev/null || true
                     sleep 5
                     ;;
                 2)
                     action="rename"
                     read -p "Enter a new name for the agent: " new_name
-                    echo -e "${GREEN}Will create agent with new name: '$new_name'${NC}"
+                    log "Will create agent with new name: '$new_name'"
                     ;;
                 *)
                     action="cancel"
-                    echo -e "${RED}Operation cancelled.${NC}"
+                    log "Operation cancelled."
                     ;;
             esac
 
@@ -340,16 +382,16 @@ wait_for_agent_creatable() {
     local attempt=0
 
     if [ -z "$agent_id" ] || [ "$agent_id" == "null" ]; then
-        echo -e "${RED}Invalid agent ID provided.${NC}"
+        log "Invalid agent ID provided."
         return 1
     fi
 
-    echo -e "${YELLOW}Waiting for agent to be in a valid state...${NC}"
+    log "Waiting for agent to be in a valid state..."
 
     while ((attempt < max_attempts)); do
         GET_RESPONSE=$(aws bedrock-agent get-agent --agent-id $agent_id --region $REGION 2>/dev/null)
         if [ $? -ne 0 ]; then
-            echo -e "${YELLOW}Error getting agent status. Waiting $delay seconds before retry (attempt $((attempt+1))/$max_attempts)${NC}"
+            log "Error getting agent status. Waiting $delay seconds before retry (attempt $((attempt+1))/$max_attempts)"
             sleep $delay
             attempt=$((attempt+1))
             continue
@@ -357,23 +399,23 @@ wait_for_agent_creatable() {
 
         agent_status=$(echo $GET_RESPONSE | jq -r '.agent.agentStatus' 2>/dev/null)
         if [ -z "$agent_status" ] || [ "$agent_status" == "null" ]; then
-            echo -e "${YELLOW}Could not extract agent status. Waiting $delay seconds before retry (attempt $((attempt+1))/$max_attempts)${NC}"
+            log "Could not extract agent status. Waiting $delay seconds before retry (attempt $((attempt+1))/$max_attempts)"
             sleep $delay
             attempt=$((attempt+1))
             continue
         fi
 
         if [[ "$agent_status" != "CREATING" ]]; then
-            echo -e "${GREEN}Agent is now in a valid state: $agent_status${NC}"
+            log "Agent is now in a valid state: $agent_status"
             return 0
         fi
 
-        echo -e "${YELLOW}Agent status: $agent_status. Waiting $delay seconds before retry (attempt $((attempt+1))/$max_attempts)${NC}"
+        log "Agent status: $agent_status. Waiting $delay seconds before retry (attempt $((attempt+1))/$max_attempts)"
         sleep $delay
         attempt=$((attempt+1))
     done
 
-    echo -e "${RED}Timed out waiting for agent to be in a valid state.${NC}"
+    log "Timed out waiting for agent to be in a valid state."
     return 1
 }
 
@@ -384,16 +426,16 @@ wait_for_agent() {
     local attempt=0
 
     if [ -z "$agent_id" ] || [ "$agent_id" == "null" ]; then
-        echo -e "${RED}Invalid agent ID provided.${NC}"
+        log "Invalid agent ID provided."
         return 1
     fi
 
-    echo -e "${YELLOW}Waiting for agent to be ready...${NC}"
+    log "Waiting for agent to be ready..."
 
     while ((attempt < max_attempts)); do
         GET_RESPONSE=$(aws bedrock-agent get-agent --agent-id $agent_id --region $REGION 2>/dev/null)
         if [ $? -ne 0 ]; then
-            echo -e "${YELLOW}Error getting agent status. Waiting $delay seconds before retry (attempt $((attempt+1))/$max_attempts)${NC}"
+            log "Error getting agent status. Waiting $delay seconds before retry (attempt $((attempt+1))/$max_attempts)"
             sleep $delay
             attempt=$((attempt+1))
             continue
@@ -401,16 +443,16 @@ wait_for_agent() {
 
         agent_status=$(echo $GET_RESPONSE | jq -r '.agent.agentStatus' 2>/dev/null)
         if [[ "$agent_status" == "PREPARED" || "$agent_status" == "AVAILABLE" ]]; then
-            echo -e "${GREEN}Agent is now available with status: $agent_status${NC}"
+            log "Agent is now available with status: $agent_status"
             return 0
         fi
 
-        echo -e "${YELLOW}Agent status: $agent_status. Waiting $delay seconds before retry (attempt $((attempt+1))/$max_attempts)${NC}"
+        log "Agent status: $agent_status. Waiting $delay seconds before retry (attempt $((attempt+1))/$max_attempts)"
         sleep $delay
         attempt=$((attempt+1))
     done
 
-    echo -e "${RED}Timed out waiting for agent to be ready. Last status: $agent_status${NC}"
+    log "Timed out waiting for agent to be ready. Last status: $agent_status"
     return 1
 }
 
@@ -423,38 +465,38 @@ create_agent() {
     local max_retries=3
     local original_name=$agent_name
 
-    echo -e "${BLUE}Creating agent: $agent_name...${NC}"
+    log "Creating agent: $agent_name..."
 
     while [ $retry_count -lt $max_retries ]; do
         delete_agent_if_exists "$agent_name"
         local delete_result=$?
 
         if [ $delete_result -eq 1 ]; then
-            echo -e "${RED}Agent creation cancelled by user.${NC}"
+            log "Agent creation cancelled by user."
             return 1
         elif [ $delete_result -eq 2 ]; then
             if [ -f /tmp/agent_action.txt ]; then
                 source /tmp/agent_action.txt
                 if [ ! -z "$new_name" ]; then
                     agent_name="$new_name"
-                    echo -e "${BLUE}Using new name: $agent_name${NC}"
+                    log "Using new name: $agent_name"
                 fi
                 rm -f /tmp/agent_action.txt
             fi
         fi
 
         # Get prompt from S3
-        aws s3 cp s3://${FLOW_BUCKET_NAME}/${prompt_s3_path} prompt_content.md --region $REGION
+        retry_aws_command aws s3 cp s3://${FLOW_BUCKET_NAME}/${prompt_s3_path} prompt_content.md --region $REGION
 
         if [ ! -f prompt_content.md ]; then
-            echo -e "${RED}Failed to download prompt file from S3.${NC}"
+            log "Failed to download prompt file from S3."
             return 1
         fi
 
         prompt_content=$(cat prompt_content.md)
 
         # Create agent with Claude 3 Sonnet and collaboration mode enabled
-        RESPONSE=$(aws bedrock-agent create-agent \
+        RESPONSE=$(retry_aws_command aws bedrock-agent create-agent \
             --agent-name "$agent_name" \
             --agent-resource-role-arn "arn:aws:iam::${ACCOUNT_ID}:role/${ROLE_NAME}" \
             --instruction "$prompt_content" \
@@ -465,10 +507,10 @@ create_agent() {
             --region $REGION)
 
         if [ $? -ne 0 ]; then
-            echo -e "${RED}Failed to create agent $agent_name.${NC}"
+            log "Failed to create agent $agent_name."
             retry_count=$((retry_count + 1))
             if [ $retry_count -ge $max_retries ]; then
-                echo -e "${RED}Maximum retries reached. Could not create agent.${NC}"
+                log "Maximum retries reached. Could not create agent."
                 rm -f prompt_content.md
                 return 1
             fi
@@ -480,10 +522,10 @@ create_agent() {
         AGENT_ID=$(echo $RESPONSE | jq -r '.agent.agentId')
 
         if [ -z "$AGENT_ID" ] || [ "$AGENT_ID" == "null" ]; then
-            echo -e "${RED}Failed to extract agent ID for $agent_name.${NC}"
+            log "Failed to extract agent ID for $agent_name."
             retry_count=$((retry_count + 1))
             if [ $retry_count -ge $max_retries ]; then
-                echo -e "${RED}Maximum retries reached. Could not extract agent ID.${NC}"
+                log "Maximum retries reached. Could not extract agent ID."
                 rm -f prompt_content.md
                 return 1
             fi
@@ -492,12 +534,12 @@ create_agent() {
         fi
 
         AGENT_IDS["$original_name"]=$AGENT_ID
-        echo -e "${GREEN}Created agent: $agent_name with ID: $AGENT_ID${NC}"
+        log "Created agent: $agent_name with ID: $AGENT_ID"
 
         # Wait for agent to be in a valid state for preparation
         wait_for_agent_creatable $AGENT_ID
         if [ $? -ne 0 ]; then
-            echo -e "${RED}Agent $agent_name is not in a valid state for preparation.${NC}"
+            log "Agent $agent_name is not in a valid state for preparation."
             retry_count=$((retry_count + 1))
             continue
         fi
@@ -509,19 +551,19 @@ create_agent() {
         local prepare_success=false
 
         while ((prepare_attempt < prepare_attempts)) && [[ "$prepare_success" == "false" ]]; do
-            echo -e "${YELLOW}Attempting to prepare agent (attempt $((prepare_attempt+1))/$prepare_attempts)...${NC}"
-            if aws bedrock-agent prepare-agent --agent-id $AGENT_ID --region $REGION 2>/dev/null; then
+            log "Attempting to prepare agent (attempt $((prepare_attempt+1))/$prepare_attempts)..."
+            if retry_aws_command aws bedrock-agent prepare-agent --agent-id $AGENT_ID --region $REGION 2>/dev/null; then
                 prepare_success=true
-                echo -e "${GREEN}Successfully prepared agent.${NC}"
+                log "Successfully prepared agent."
             else
-                echo -e "${YELLOW}Failed to prepare agent. Waiting $prepare_delay seconds before retry...${NC}"
+                log "Failed to prepare agent. Waiting $prepare_delay seconds before retry..."
                 sleep $prepare_delay
                 prepare_attempt=$((prepare_attempt+1))
             fi
         done
 
         if [[ "$prepare_success" == "false" ]]; then
-            echo -e "${YELLOW}Failed to prepare agent after $prepare_attempts attempts.${NC}"
+            log "Failed to prepare agent after $prepare_attempts attempts."
             retry_count=$((retry_count + 1))
             continue
         fi
@@ -529,35 +571,35 @@ create_agent() {
         # Wait for agent to be ready
         wait_for_agent $AGENT_ID
         if [ $? -ne 0 ]; then
-            echo -e "${RED}Agent $agent_name did not become ready.${NC}"
+            log "Agent $agent_name did not become ready."
             retry_count=$((retry_count + 1))
             continue
         fi
 
         # Create agent alias with the created version
-        ALIAS_RESPONSE=$(aws bedrock-agent create-agent-alias \
+        ALIAS_RESPONSE=$(retry_aws_command aws bedrock-agent create-agent-alias \
             --agent-id $AGENT_ID \
             --agent-alias-name "Production" \
             --region $REGION)
 
         if [ $? -ne 0 ]; then
-            echo -e "${RED}Failed to create alias for agent $agent_name.${NC}"
+            log "Failed to create alias for agent $agent_name."
             retry_count=$((retry_count + 1))
             continue
-        }
+        fi
 
         # Extract alias ID
         ALIAS_ID=$(echo $ALIAS_RESPONSE | jq -r '.agentAlias.agentAliasId')
         if [ -z "$ALIAS_ID" ] || [ "$ALIAS_ID" == "null" ]; then
-            echo -e "${RED}Failed to extract alias ID for $agent_name.${NC}"
+            log "Failed to extract alias ID for $agent_name."
             retry_count=$((retry_count + 1))
             continue
         fi
 
         # Store the alias ID
         AGENT_ALIAS_IDS["$original_name"]=$ALIAS_ID
-        echo -e "${GREEN}Created alias for $agent_name with ID: $ALIAS_ID${NC}"
-        echo -e "${GREEN}Agent $agent_name is ready${NC}"
+        log "Created alias for $agent_name with ID: $ALIAS_ID"
+        log "Agent $agent_name is ready"
 
         # Clean up
         rm -f prompt_content.md
@@ -565,7 +607,7 @@ create_agent() {
     done
 
     if [ $retry_count -ge $max_retries ]; then
-        echo -e "${RED}Maximum retries reached for agent $original_name.${NC}"
+        log "Maximum retries reached for agent $original_name."
         return 1
     fi
     return 0
@@ -583,13 +625,13 @@ setup_collaboration() {
     local target_alias_id=${AGENT_ALIAS_IDS["$target_agent"]}
 
     if [ -z "$source_id" ] || [ -z "$source_alias_id" ] || [ -z "$target_id" ] || [ -z "$target_alias_id" ]; then
-        echo -e "${YELLOW}Cannot set up collaboration between $source_agent and $target_agent. Missing agent IDs.${NC}"
+        log "Cannot set up collaboration between $source_agent and $target_agent. Missing agent IDs."
         return 1
     fi
 
-    echo -e "${BLUE}Setting up collaboration: $source_agent -> $target_agent${NC}"
+    log "Setting up collaboration: $source_agent -> $target_agent"
 
-    aws bedrock-agent associate-agent-collaborator \
+    retry_aws_command aws bedrock-agent associate-agent-collaborator \
         --agent-id $source_id \
         --agent-version "DRAFT" \
         --collaborator-name "$target_agent" \
@@ -601,7 +643,7 @@ setup_collaboration() {
 
 # Create all agents using definitions from GitHub
 create_agents() {
-    echo -e "${BLUE}Creating all agents for the manuscript editing system...${NC}"
+    log "Creating all agents for the manuscript editing system..."
 
     # Download agent definitions from GitHub
     download_from_github "config/agent-definitions.json" "agent-definitions.json"
@@ -616,7 +658,7 @@ create_agents() {
         create_agent "$NAME" "$DESC" "$PROMPT"
     done
 
-    echo -e "${GREEN}All agents created successfully.${NC}"
+    log "All agents created successfully."
     declare -p AGENT_IDS > agent_ids.txt
     declare -p AGENT_ALIAS_IDS > agent_alias_ids.txt
     rm -f agent-definitions.json
@@ -624,7 +666,7 @@ create_agents() {
 
 # Set up collaborations
 setup_agent_collaborations() {
-    echo -e "${BLUE}Setting up collaborations between agents...${NC}"
+    log "Setting up collaborations between agents..."
 
     # Download collaboration configuration from GitHub
     download_from_github "config/collaborations.json" "collaborations.json"
@@ -644,8 +686,8 @@ setup_agent_collaborations() {
         source knowledge_base_info.txt
         if [ ! -z "$KB_ID" ]; then
             executive_director_id=${AGENT_IDS["ExecutiveDirector"]}
-            echo -e "${BLUE}Associating Knowledge Base with Executive Director agent...${NC}"
-            aws bedrock-agent associate-agent-knowledge-base \
+            log "Associating Knowledge Base with Executive Director agent..."
+            retry_aws_command aws bedrock-agent associate-agent-knowledge-base \
                 --agent-id $executive_director_id \
                 --agent-version "DRAFT" \
                 --knowledge-base-id $KB_ID \
@@ -656,25 +698,25 @@ setup_agent_collaborations() {
     fi
 
     # Prepare the updated Executive Director agent with the collaborations
-    echo -e "${BLUE}Preparing updated Executive Director agent with collaborations...${NC}"
+    log "Preparing updated Executive Director agent with collaborations..."
     executive_director_id=${AGENT_IDS["ExecutiveDirector"]}
     executive_director_alias_id=${AGENT_ALIAS_IDS["ExecutiveDirector"]}
 
-    aws bedrock-agent prepare-agent --agent-id $executive_director_id --region $REGION
+    retry_aws_command aws bedrock-agent prepare-agent --agent-id $executive_director_id --region $REGION
     wait_for_agent $executive_director_id
 
     # Create a new version and update the alias
-    VERSION_RESPONSE=$(aws bedrock-agent create-agent-version --agent-id $executive_director_id --region $REGION)
+    VERSION_RESPONSE=$(retry_aws_command aws bedrock-agent create-agent-version --agent-id $executive_director_id --region $REGION)
     VERSION=$(echo $VERSION_RESPONSE | jq -r '.agentVersion')
 
-    aws bedrock-agent update-agent-alias \
+    retry_aws_command aws bedrock-agent update-agent-alias \
         --agent-id $executive_director_id \
         --agent-alias-id $executive_director_alias_id \
         --routing-configuration "[{\"agentVersion\":\"$VERSION\"}]" \
         --region $REGION
 
     # Update Lambda function environment variables with agent IDs
-    aws lambda update-function-configuration \
+    retry_aws_command aws lambda update-function-configuration \
         --function-name $LAMBDA_WORKFLOW_NAME \
         --environment "Variables={STATE_TABLE=$DYNAMODB_TABLE,EXECUTIVE_DIRECTOR_ID=$executive_director_id,EXECUTIVE_DIRECTOR_ALIAS_ID=$executive_director_alias_id}" \
         --region $REGION
@@ -684,7 +726,9 @@ setup_agent_collaborations() {
 
 # Main functions for resource creation/deletion
 create_resources() {
+    check_permissions
     check_dependencies
+    check_aws_profile
     create_iam_role
     create_s3_bucket
     create_dynamodb_table
@@ -693,16 +737,17 @@ create_resources() {
     create_lambda_functions
     create_agents
     setup_agent_collaborations
+    cleanup
 
-    echo -e "${GREEN}All resources created successfully.${NC}"
-    echo -e "${BLUE}Your Manuscript Editing system is ready to use.${NC}"
+    log "All resources created successfully."
+    log "Your Manuscript Editing system is ready to use."
 }
 
 delete_resources() {
-    echo -e "${RED}WARNING: This will delete all resources created for the Manuscript Editing system.${NC}"
+    log "WARNING: This will delete all resources created for the Manuscript Editing system."
     read -p "Are you sure you want to proceed? (y/n): " confirm
     if [[ $confirm != "y" && $confirm != "Y" ]]; then
-        echo -e "${BLUE}Deletion cancelled.${NC}"
+        log "Deletion cancelled."
         return
     fi
 
@@ -714,86 +759,86 @@ delete_resources() {
     # Delete agents
     for agent_name in "${!AGENT_IDS[@]}"; do
         agent_id=${AGENT_IDS[$agent_name]}
-        echo -e "Deleting agent: $agent_name ($agent_id)"
+        log "Deleting agent: $agent_name ($agent_id)"
         if [ ! -z "${AGENT_ALIAS_IDS[$agent_name]}" ]; then
             alias_id=${AGENT_ALIAS_IDS[$agent_name]}
-            aws bedrock-agent delete-agent-alias --agent-id $agent_id --agent-alias-id $alias_id --region $REGION 2>/dev/null || true
+            retry_aws_command aws bedrock-agent delete-agent-alias --agent-id $agent_id --agent-alias-id $alias_id --region $REGION 2>/dev/null || true
         fi
-        aws bedrock-agent delete-agent --agent-id $agent_id --skip-resource-in-use-check --region $REGION 2>/dev/null || true
+        retry_aws_command aws bedrock-agent delete-agent --agent-id $agent_id --skip-resource-in-use-check --region $REGION 2>/dev/null || true
     done
 
     # Delete knowledge base
     if [ ! -z "$KB_ID" ]; then
-        aws bedrock delete-knowledge-base --knowledge-base-id $KB_ID --region $REGION 2>/dev/null || true
+        retry_aws_command aws bedrock delete-knowledge-base --knowledge-base-id $KB_ID --region $REGION 2>/dev/null || true
     fi
 
     # Delete Lambda functions
-    aws lambda delete-function --function-name $LAMBDA_RESEARCH_NAME --region $REGION 2>/dev/null || true
-    aws lambda delete-function --function-name $LAMBDA_WORKFLOW_NAME --region $REGION 2>/dev/null || true
+    retry_aws_command aws lambda delete-function --function-name $LAMBDA_RESEARCH_NAME --region $REGION 2>/dev/null || true
+    retry_aws_command aws lambda delete-function --function-name $LAMBDA_WORKFLOW_NAME --region $REGION 2>/dev/null || true
 
     # Delete DynamoDB table
-    aws dynamodb delete-table --table-name $DYNAMODB_TABLE --region $REGION 2>/dev/null || true
+    retry_aws_command aws dynamodb delete-table --table-name $DYNAMODB_TABLE --region $REGION 2>/dev/null || true
 
     # Delete S3 bucket
-    aws s3 rm s3://${FLOW_BUCKET_NAME} --recursive --region $REGION 2>/dev/null || true
-    aws s3api delete-bucket --bucket ${FLOW_BUCKET_NAME} --region $REGION 2>/dev/null || true
+    retry_aws_command aws s3 rm s3://${FLOW_BUCKET_NAME} --recursive --region $REGION 2>/dev/null || true
+    retry_aws_command aws s3api delete-bucket --bucket ${FLOW_BUCKET_NAME} --region $REGION 2>/dev/null || true
 
     # Delete OpenSearch Serverless collection
-    aws opensearchserverless delete-collection --name storybook --region $REGION 2>/dev/null || true
-    aws opensearchserverless delete-access-policy --name storybook-policy --type data --region $REGION 2>/dev/null || true
+    retry_aws_command aws opensearchserverless delete-collection --name storybook --region $REGION 2>/dev/null || true
+    retry_aws_command aws opensearchserverless delete-access-policy --name storybook-policy --type data --region $REGION 2>/dev/null || true
 
     # Delete IAM role
-    aws iam detach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ManuscriptEditorPolicy 2>/dev/null || true
-    aws iam delete-policy --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ManuscriptEditorPolicy 2>/dev/null || true
-    aws iam delete-role --role-name $ROLE_NAME 2>/dev/null || true
+    retry_aws_command aws iam detach-role-policy --role-name $ROLE_NAME --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ManuscriptEditorPolicy 2>/dev/null || true
+    retry_aws_command aws iam delete-policy --policy-arn arn:aws:iam::${ACCOUNT_ID}:policy/ManuscriptEditorPolicy 2>/dev/null || true
+    retry_aws_command aws iam delete-role --role-name $ROLE_NAME 2>/dev/null || true
 
     # Remove info files
     rm -f agent_ids.txt agent_alias_ids.txt knowledge_base_info.txt
 
-    echo -e "${GREEN}All resources deleted successfully.${NC}"
+    log "All resources deleted successfully."
 }
 
 # Show info and test functions
 show_info() {
-    echo -e "${BLUE}Retrieving information about deployed resources...${NC}"
+    log "Retrieving information about deployed resources..."
 
     # Display agent information
     if [ -f agent_ids.txt ]; then
         source agent_ids.txt
-        echo -e "${GREEN}Agent Information:${NC}"
+        log "Agent Information:"
         for agent_name in "${!AGENT_IDS[@]}"; do
-            echo -e "$agent_name: ${AGENT_IDS[$agent_name]}"
+            log "$agent_name: ${AGENT_IDS[$agent_name]}"
         done
     fi
 
     # Display other resource information
     if [ -f knowledge_base_info.txt ]; then
         source knowledge_base_info.txt
-        echo -e "${GREEN}Knowledge Base ID: $KB_ID${NC}"
+        log "Knowledge Base ID: $KB_ID"
     fi
 
     # Check resource existence
     if aws dynamodb describe-table --table-name $DYNAMODB_TABLE --region $REGION &>/dev/null; then
-        echo -e "${GREEN}DynamoDB Table: $DYNAMODB_TABLE exists${NC}"
+        log "DynamoDB Table: $DYNAMODB_TABLE exists"
     fi
 
     if aws lambda get-function --function-name $LAMBDA_RESEARCH_NAME --region $REGION &>/dev/null; then
-        echo -e "${GREEN}Lambda Function: $LAMBDA_RESEARCH_NAME exists${NC}"
+        log "Lambda Function: $LAMBDA_RESEARCH_NAME exists"
     fi
 
     if aws lambda get-function --function-name $LAMBDA_WORKFLOW_NAME --region $REGION &>/dev/null; then
-        echo -e "${GREEN}Lambda Function: $LAMBDA_WORKFLOW_NAME exists${NC}"
+        log "Lambda Function: $LAMBDA_WORKFLOW_NAME exists"
     fi
 
-    echo -e "${GREEN}S3 Bucket: $FLOW_BUCKET_NAME${NC}"
+    log "S3 Bucket: $FLOW_BUCKET_NAME"
 }
 
 test_system() {
-    echo -e "${BLUE}Testing the Manuscript Editing system...${NC}"
+    log "Testing the Manuscript Editing system..."
 
     # Check if workflow Lambda exists
     if ! aws lambda get-function --function-name $LAMBDA_WORKFLOW_NAME --region $REGION &>/dev/null; then
-        echo -e "${RED}Workflow Lambda function not found. Please deploy the system first.${NC}"
+        log "Workflow Lambda function not found. Please deploy the system first."
         return 1
     fi
 
@@ -801,11 +846,11 @@ test_system() {
     download_from_github "config/test_manuscript.json" "test_manuscript.json"
 
     # Invoke Lambda with the test manuscript
-    echo -e "${BLUE}Invoking workflow Lambda with test manuscript...${NC}"
-    aws lambda invoke --function-name $LAMBDA_WORKFLOW_NAME --payload file://test_manuscript.json --region $REGION output.json
+    log "Invoking workflow Lambda with test manuscript..."
+    retry_aws_command aws lambda invoke --function-name $LAMBDA_WORKFLOW_NAME --payload file://test_manuscript.json --region $REGION output.json
 
     # Display the output
-    echo -e "${GREEN}Workflow Lambda invoked successfully. Output:${NC}"
+    log "Workflow Lambda invoked successfully. Output:"
     cat output.json
 
     # Extract manuscript ID for status check
@@ -819,11 +864,22 @@ test_system() {
 }
 EOF
 
-    echo -e "\n${BLUE}To check the status of the editing process, use:${NC}"
-    echo -e "${YELLOW}$(cat check_status.json)${NC}"
+    log "To check the status of the editing process, use:"
+    log "$(cat check_status.json)"
 
     # Clean up
     rm -f test_manuscript.json
+}
+
+# Usage function to display help information
+usage() {
+    echo -e "${BLUE}Usage: $0 [option]${NC}"
+    echo -e "Options:"
+    echo -e "  create   Create Manuscript Editing system"
+    echo -e "  delete   Delete all resources"
+    echo -e "  info     Show information about deployed resources"
+    echo -e "  test     Test system with sample manuscript"
+    echo -e "  help     Display this help message"
 }
 
 # Main menu
@@ -843,13 +899,13 @@ main_menu() {
             2) delete_resources ;;
             3) show_info ;;
             4) test_system ;;
-            5) echo -e "${GREEN}Exiting. Goodbye!${NC}"; exit 0 ;;
-            *) echo -e "${RED}Invalid option. Please try again.${NC}" ;;
+            5) log "Exiting. Goodbye!"; exit 0 ;;
+            *) log "Invalid option. Please try again." ;;
         esac
     done
 }
 
 # Start script
-echo -e "${BLUE}AWS Bedrock Hierarchical Multi-Agent Manuscript Editing System${NC}"
-echo -e "${BLUE}This script will deploy a complete system for editing manuscripts using AI agents${NC}"
+log "AWS Bedrock Hierarchical Multi-Agent Manuscript Editing System"
+log "This script will deploy a complete system for editing manuscripts using AI agents"
 main_menu
