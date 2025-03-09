@@ -1,0 +1,23 @@
+{
+  "name": "KNOWLEDGE_BASE_NAME",
+  "description": "Knowledge base for manuscript research and context",
+  "roleArn": "arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME",
+  "knowledgeBaseConfiguration": {
+    "type": "VECTOR",
+    "vectorKnowledgeBaseConfiguration": {
+      "embeddingModelArn": "arn:aws:bedrock:REGION::foundation-models/amazon.titan-embed-text-v1"
+    }
+  },
+  "storageConfiguration": {
+    "type": "OPENSEARCH_SERVERLESS",
+    "opensearchServerlessConfiguration": {
+      "collectionArn": "arn:aws:aoss:REGION:ACCOUNT_ID:collection/storybook",
+      "vectorIndexName": "storybook-index",
+      "fieldMapping": {
+        "vectorField": "embedding",
+        "textField": "content",
+        "metadataField": "metadata"
+      }
+    }
+  }
+}

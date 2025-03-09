@@ -1,0 +1,6 @@
+{
+  "name": "storybook-policy",
+  "type": "data",
+  "description": "Access policy for storybook collection",
+  "policy": "[{\"Rules\":[{\"ResourceType\":\"collection\",\"Resource\":[\"collection/storybook\"]}],\"Principal\":[\"arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME\"],\"Action\":[\"aoss:*\"],\"Effect\":\"Allow\"}]"
+}

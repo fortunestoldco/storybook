@@ -1,0 +1,6 @@
+ExecutiveDirector:prompts/executive_director.md
+ContentExpert:prompts/content_expert.md
+StoryEditor:prompts/story_editor.md
+CopyEditor:prompts/copy_editor.md
+StructureEditor:prompts/structure_editor.md
+FeedbackCoordinator:prompts/feedback_coordinator.md

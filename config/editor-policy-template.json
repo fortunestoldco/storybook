@@ -1,0 +1,74 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3Access",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::FLOW_BUCKET_NAME",
+        "arn:aws:s3:::FLOW_BUCKET_NAME/*"
+      ]
+    },
+    {
+      "Sid": "DynamoDBAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+      ],
+      "Resource": "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/DYNAMODB_TABLE"
+    },
+    {
+      "Sid": "BedrockAgentAccess",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeAgent",
+        "bedrock:Retrieve",
+        "bedrock:RetrieveAndGenerate"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LambdaExecutionPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": [
+        "arn:aws:logs:REGION:ACCOUNT_ID:log-group:/aws/lambda/LAMBDA_RESEARCH_NAME:*",
+        "arn:aws:logs:REGION:ACCOUNT_ID:log-group:/aws/lambda/LAMBDA_WORKFLOW_NAME:*"
+      ]
+    },
+    {
+      "Sid": "LambdaInvokePermissions",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:InvokeFunction"
+      ],
+      "Resource": [
+        "arn:aws:lambda:REGION:ACCOUNT_ID:function:LAMBDA_RESEARCH_NAME",
+        "arn:aws:lambda:REGION:ACCOUNT_ID:function:LAMBDA_WORKFLOW_NAME"
+      ]
+    },
+    {
+      "Sid": "OpenSearchPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "aoss:APIAccessAll"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "agents": [
+    {
+      "name": "ExecutiveDirector",
+      "description": "Leads the manuscript editing process, coordinates other agents, and makes final decisions",
+      "prompt_path": "prompts/executive_director.md"
+    },
+    {
+      "name": "ContentExpert",
+      "description": "Reviews manuscript content for accuracy, relevance, and depth",
+      "prompt_path": "prompts/content_expert.md"
+    },
+    {
+      "name": "StoryEditor",
+      "description": "Focuses on narrative flow, character development, and story arcs",
+      "prompt_path": "prompts/story_editor.md"
+    },
+    {
+      "name": "CopyEditor",
+      "description": "Fixes grammar, syntax, spelling, and writing style issues",
+      "prompt_path": "prompts/copy_editor.md"
+    },
+    {
+      "name": "StructureEditor",
+      "description": "Ensures logical organization, appropriate pacing, and coherent structure",
+      "prompt_path": "prompts/structure_editor.md"
+    },
+    {
+      "name": "FeedbackCoordinator",
+      "description": "Synthesizes feedback and improvement suggestions from all editors",
+      "prompt_path": "prompts/feedback_coordinator.md"
+    }
+  ]
+}

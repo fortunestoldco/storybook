@@ -1,0 +1,30 @@
+{
+  "collaborations": [
+    {
+      "source": "ExecutiveDirector",
+      "target": "ContentExpert",
+      "instruction": "Evaluate the manuscript for factual accuracy, depth of research, and provide suggestions for enriching content."
+    },
+    {
+      "source": "ExecutiveDirector", 
+      "target": "StoryEditor",
+      "instruction": "Analyze narrative flow, character development, plot structure, and provide guidance on storytelling techniques."
+    },
+    {
+      "source": "ExecutiveDirector",
+      "target": "CopyEditor",
+      "instruction": "Identify and fix issues with grammar, spelling, punctuation, and ensure consistent writing style."
+    },
+    {
+      "source": "ExecutiveDirector",
+      "target": "StructureEditor",
+      "instruction": "Evaluate the manuscript's organization, pacing, transitions, and structural coherence."
+    },
+    {
+      "source": "ExecutiveDirector",
+      "target": "FeedbackCoordinator",
+      "instruction": "Synthesize feedback from all editors and prepare a comprehensive improvement plan."
+    }
+  ]
+}
+
