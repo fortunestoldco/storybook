@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 import sys
-sys.path.append('../utils')
+sys.path.append("../utils")
 import utils
 
 # Load environment variables from .env file or Secret Manager
@@ -125,7 +125,7 @@ class Configuration(BaseModel):
     quality_gates: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
     
     @classmethod
-    def from_runnable_config(cls, config: RunnableConfig) -> 'Configuration':
+    def from_runnable_config(cls, config: RunnableConfig) -> "Configuration":
         """Extract configuration from a runnable config."""
         configurable = config.get("configurable", {})
         return cls(
@@ -993,7 +993,7 @@ class writer_gui:
         if "content" in current_values.values:
             content = current_values.values["content"]
             lnode, nnode, thread_id, rev, astep = self.get_disp_state()
-            new_label = f"last_node: {lnode}, thread_id: {self.thread_id}, rev: {rev}, step: {astep}"
+            new_label = f"last_node: {lnode}, thread_id: {thread_id}, rev: {rev}, step: {astep}"
             return gr.update(
                 label=new_label, value="\n\n".join(item for item in content) + "\n\n"
             )
