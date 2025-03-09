@@ -882,6 +882,18 @@ usage() {
     echo -e "  help     Display this help message"
 }
 
+# Function to configure GitHub repository
+configure_github_repo() {
+    read -p "Enter GitHub repository URL: " repo_url
+    read -p "Enter GitHub personal access token: " token
+
+    # Save the configuration to config.sh
+    echo "GITHUB_REPO=\"$repo_url\"" >> config.sh
+    echo "GITHUB_TOKEN=\"$token\"" >> config.sh
+
+    log "GitHub repository configured successfully."
+}
+
 # Main menu
 main_menu() {
     while true; do
@@ -890,7 +902,8 @@ main_menu() {
         echo -e "2. Delete all resources"
         echo -e "3. Show information about deployed resources"
         echo -e "4. Test system with sample manuscript"
-        echo -e "5. Exit"
+        echo -e "5. Configure GitHub repository"
+        echo -e "6. Exit"
 
         read -p "Choose an option: " option
 
@@ -899,7 +912,8 @@ main_menu() {
             2) delete_resources ;;
             3) show_info ;;
             4) test_system ;;
-            5) log "Exiting. Goodbye!"; exit 0 ;;
+            5) configure_github_repo ;;
+            6) log "Exiting. Goodbye!"; exit 0 ;;
             *) log "Invalid option. Please try again." ;;
         esac
     done
