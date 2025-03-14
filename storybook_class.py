@@ -337,15 +337,15 @@ class AgentFactory:
                 print(f"No chat template found for model {model_id}, adding a default template")
 
                 # Set a default ChatML-style template which works for many models
-                default_template = """{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{% for message in messages %}{% if message['role'] == 'system' %}<|im_start|>system
+                default_template = """{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{% for message in messages %}{% if message['role'] == 'system' %}<|im_end|>system
 {{ message['content'] }}<|im_end|>
-{% elif message['role'] == 'user' %}<|im_start|>user
+{% elif message['role'] == 'user' %}<|im_end|>user
 {{ message['content'] }}<|im_end|>
-{% elif message['role'] == 'assistant' %}<|im_start|>assistant
+{% elif message['role'] == 'assistant' %}<|im_end|>assistant
 {{ message['content'] }}<|im_end|>
-{% else %}<|im_start|>{{ message['role'] }}
+{% else %}<|im_end|>{{ message['role'] }}
 {{ message['content'] }}<|im_end|>
-{% endif %}{% endfor %}{% if add_generation_prompt %}<|im_start|>assistant
+{% endif %}{% endfor %}{% if add_generation_prompt %}<|im_end|>assistant
 {% endif %}"""
 
                 tokenizer.chat_template = default_template
@@ -957,3 +957,68 @@ class SafeFallbackModel(BaseChatModel):
     async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
         """Async version of generate - returns same response."""
         return self._generate(messages, stop, run_manager, **kwargs)
+
+class Storybook:
+    def __init__(self, title: str, author: str, synopsis: str, manuscript: str):
+        self.title = title
+        self.author = author
+        self.synopsis = synopsis
+        self.manuscript = manuscript
+        self.manuscript_chunks = self.split_manuscript(manuscript)
+
+    def split_manuscript(self, manuscript: str, chunk_size: int = 1000, chunk_overlap: int = 0) -> List[Dict[str, Any]]:
+        """Split a manuscript into manageable chunks."""
+        if not manuscript:
+            return []
+
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            separators=["\n\n", "\n", ". ", " ", ""]
+        )
+
+        texts = text_splitter.split_text(manuscript)
+        chunks = []
+        for i, text in enumerate(texts):
+            chunks.append({
+                "chunk_id": i,
+                "content": text,
+                "start_char": manuscript.find(text),
+                "end_char": manuscript.find(text) + len(text),
+            })
+
+        return chunks
+
+    def reassemble_manuscript(self) -> str:
+        """Reassemble the full manuscript from chunks."""
+        sorted_chunks = sorted(self.manuscript_chunks, key=lambda x: x.get("chunk_id", 0))
+        full_manuscript = ""
+        for chunk in sorted_chunks:
+            content = chunk.get("content", "")
+            if full_manuscript and not (full_manuscript.endswith("\n") or content.startswith("\n")):
+                full_manuscript += "\n\n"
+            full_manuscript += content
+        return full_manuscript
+
+    def update_chunk(self, chunk_id: int, new_content: str):
+        """Update a specific chunk with new content."""
+        for chunk in self.manuscript_chunks:
+            if chunk["chunk_id"] == chunk_id:
+                chunk["content"] = new_content
+                break
+        self.manuscript = self.reassemble_manuscript()
+
+    def get_chunk(self, chunk_id: int) -> Optional[Dict[str, Any]]:
+        """Get a specific chunk by its ID."""
+        for chunk in self.manuscript_chunks:
+            if chunk["chunk_id"] == chunk_id:
+                return chunk
+        return None
+
+    def get_all_chunks(self) -> List[Dict[str, Any]]:
+        """Get all manuscript chunks."""
+        return self.manuscript_chunks
+
+    def get_summary(self) -> str:
+        """Get a summary of the storybook."""
+        return f"Title: {self.title}\nAuthor: {self.author}\nSynopsis: {self.synopsis}\nTotal Chunks: {len(self.manuscript_chunks)}"
