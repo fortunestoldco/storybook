@@ -19,7 +19,7 @@ from state import AgentState
 from config import MODEL_CHOICES, DEFAULT_MODEL_CONFIG, AGENT_TEAMS, ALL_AGENTS, MONGODB_URI, create_agent_model_configs
 from agent import AgentFactory
 from graph import create_phase_graph, create_main_graph, create_storybook_graph
-from storybook_class import storybook
+from storybook_class import Storybook
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -1940,7 +1940,7 @@ def main():
         }
 
         # Create the main storybook instance with agent-specific model configs
-        sb_instance = storybook(default_model_config)
+        sb_instance = Storybook(default_model_config)
         logger.info("Storybook instance created successfully")
 
         # Create the GUI
