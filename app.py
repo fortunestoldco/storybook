@@ -954,7 +954,7 @@ class writer_gui:
                     # Handle state with error attribute
                     if state and hasattr(state, 'get') and state.get("error"):
                         stream_buffer.append(f"[{datetime.now().strftime('%H:%M:%S')}] Error occurred: {state['error']}")
-                        self.partial_message = "\n".join(stream_buffer)
+                        self.partial_message = "\n.join(stream_buffer)
                         yield self.partial_message, "error", current_phase, self.project_id, "", stream_buffer
                         break
 
@@ -1934,13 +1934,18 @@ def main():
             "task": "text-generation",
             "temperature": 0.1,
             "max_new_tokens": 512,
-            "do_sample": True,  # Changed from False to True
+            "do_sample": True,
             "repetition_penalty": 1.03,
             "agent_configs": create_agent_model_configs()  # Add agent-specific configs
         }
 
-        # Create the main storybook instance with agent-specific model configs
-        sb_instance = Storybook(default_model_config)
+        # Initialize Storybook with placeholder values
+        sb_instance = Storybook(
+            author="Default Author",  # Placeholder author
+            synopsis="",  # Empty synopsis
+            manuscript="",  # Empty manuscript
+            model_config=default_model_config  # Model configuration
+        )
         logger.info("Storybook instance created successfully")
 
         # Create the GUI
