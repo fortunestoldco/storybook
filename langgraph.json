@@ -1,0 +1,149 @@
+{
+  "name": "storybook",
+  "description": "AI-powered story development and writing system with multi-agent workflow",
+  "python_path": "storybook",
+  "entry_point": {
+    "module": "app",
+    "class_name": "storybook",
+    "function_name": "run_storybook"
+  },
+  "states": {
+    "AgentState": {
+      "project": "ProjectData",
+      "phase": "str",
+      "phase_history": "Dict[str, List[Dict[str, Any]]]",
+      "current_input": "Dict[str, Any]",
+      "messages": "List[Dict[str, Any]]",
+      "count": "int",
+      "lnode": "str"
+    }
+  },
+  "config": {
+    "model_config": {
+      "model_id": "HuggingFaceH4/zephyr-7b-beta",
+      "task": "text-generation",
+      "temperature": 0.1,
+      "max_new_tokens": 512,
+      "do_sample": false,
+      "repetition_penalty": 1.03
+    },
+    "quality_gates": {
+      "initialization_to_development": {
+        "planning_quality": 0.7,
+        "market_alignment": 0.6
+      },
+      "development_to_creation": {
+        "structure_quality": 0.7,
+        "character_depth": 0.7,
+        "world_building": 0.7
+      },
+      "creation_to_refinement": {
+        "content_quality": 0.7,
+        "narrative_flow": 0.7,
+        "dialogue_quality": 0.7
+      },
+      "refinement_to_finalization": {
+        "editing_quality": 0.8,
+        "prose_quality": 0.8,
+        "thematic_coherence": 0.7
+      },
+      "finalization_to_complete": {
+        "market_readiness": 0.8,
+        "overall_quality": 0.8
+      }
+    }
+  },
+  "phases": [
+    "initialization",
+    "development",
+    "creation",
+    "refinement",
+    "finalization"
+  ],
+  "agents": {
+    "directors": [
+      "executive_director",
+      "creative_director",
+      "editorial_director",
+      "content_development_director",
+      "market_alignment_director"
+    ],
+    "creative_team": [
+      "structure_architect",
+      "plot_development_specialist",
+      "world_building_expert",
+      "character_psychology_specialist",
+      "character_voice_designer",
+      "character_relationship_mapper"
+    ],
+    "content_team": [
+      "chapter_drafters",
+      "scene_construction_specialists",
+      "dialogue_crafters",
+      "continuity_manager",
+      "voice_consistency_monitor",
+      "emotional_arc_designer"
+    ],
+    "editorial_team": [
+      "structural_editor",
+      "character_arc_evaluator",
+      "thematic_coherence_analyst",
+      "prose_enhancement_specialist",
+      "dialogue_refinement_expert",
+      "rhythm_cadence_optimizer",
+      "grammar_consistency_checker",
+      "fact_verification_specialist"
+    ],
+    "research_team": [
+      "domain_knowledge_specialist",
+      "cultural_authenticity_expert"
+    ],
+    "marketing_team": [
+      "positioning_specialist",
+      "title_blurb_optimizer",
+      "differentiation_strategist",
+      "formatting_standards_expert"
+    ]
+  },
+  "research_nodes": [
+    "domain_research",
+    "cultural_research",
+    "market_research"
+  ],
+  "env": {
+    "HUGGINGFACE_API_TOKEN": "${HUGGINGFACE_API_TOKEN}",
+    "TAVILY_API_KEY": "${TAVILY_API_KEY}"
+  },
+  "dependencies": {
+    "python": [
+      "langgraph",
+      "langchain-huggingface",
+      "transformers",
+      "torch",
+      "tavily-python",
+      "python-dotenv",
+      "pydantic",
+      "gradio",
+      "networkx",
+      "matplotlib",
+      "huggingface-hub",
+      "langchain-core",
+      "langchain-text-splitters"
+    ]
+  },
+  "compute": {
+    "accelerator": "cpu",
+    "precision": "bfloat16",
+    "max_tokens": 2048,
+    "max_iterations": 10
+  },
+  "api": {
+    "port": 8000,
+    "host": "0.0.0.0",
+    "endpoints": {
+      "run_storybook": "/api/run",
+      "run_phase": "/api/run_phase",
+      "visualize_graph": "/api/visualize"
+    }
+  }
+}
