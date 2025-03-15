@@ -883,6 +883,13 @@ class AgentFactory:
 
         return agent_function
 
+    def update_model_config(self, new_config: Dict[str, Any]):
+        """Update the model configuration for the AgentFactory."""
+        if "default_model_config" in new_config:
+            self.default_model_config.update(new_config["default_model_config"])
+        if "agent_model_configs" in new_config:
+            self.agent_model_configs.update(new_config["agent_model_configs"])
+
 class StreamingTokenCallback(StreamingStdOutCallbackHandler):
     def __init__(self, queue):
         super().__init__()
@@ -1023,3 +1030,10 @@ class Storybook:
     def get_summary(self) -> str:
         """Get a summary of the storybook."""
         return f"Title: {self.title}\nAuthor: {self.author}\nSynopsis: {self.synopsis}\nTotal Chunks: {len(self.manuscript_chunks)}"
+
+    def update_model_config(self, new_config: Dict[str, Any]):
+        """Update the model configuration for the AgentFactory."""
+        if "default_model_config" in new_config:
+            self.default_model_config.update(new_config["default_model_config"])
+        if "agent_model_configs" in new_config:
+            self.agent_model_configs.update(new_config["agent_model_configs"])
