@@ -1080,3 +1080,30 @@ class Storybook:
             self.default_model_config.update(new_config["default_model_config"])
         if "agent_model_configs" in new_config:
             self.agent_model_configs.update(new_config["agent_model_configs"])
+
+    def get_available_checkpoints(self) -> List[str]:
+        """Retrieve available checkpoints from MongoDB."""
+        if not self.mongo_client:
+            raise ValueError("MongoDB client not initialized. Check your MongoDB connection.")
+
+        try:
+            db = self.mongo_client["storybook"]
+            checkpoints_collection = db["checkpoints"]
+
+            # Retrieve all checkpoint names
+            checkpoints = checkpoints_collection.distinct("checkpoint_name")
+            return checkpoints
+        except Exception as e:
+            raise RuntimeError(f"Error retrieving checkpoints from MongoDB: {str(e)}")
+
+    def get_manuscript_statistics(self) -> Dict[str, Any]:
+        """Calculate and return manuscript statistics."""
+        total_chunks = len(self.manuscript_chunks)
+        total_words = sum(len(chunk["content"].split()) for chunk in self.manuscript_chunks)
+        total_characters = sum(len(chunk["content"]) for chunk in self.manuscript_chunks)
+
+        return {
+            "total_chunks": total_chunks,
+            "total_words": total_words,
+            "total_characters": total_characters
+        }
