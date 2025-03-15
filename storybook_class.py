@@ -973,6 +973,49 @@ class Storybook:
         self.synopsis = synopsis
         self.manuscript = manuscript
         self.manuscript_chunks = self.split_manuscript(manuscript)
+        self.mongo_client = None
+        self.initialize_mongo_client()
+
+    def initialize_mongo_client(self):
+        """Initialize the MongoDB client using the MONGODB_URI environment variable."""
+        mongo_uri = MONGODB_URI
+        if mongo_uri:
+            try:
+                self.mongo_client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+                self.mongo_client.admin.command('ping')  # Test connection
+                print("MongoDB connection for Storybook successful")
+            except Exception as e:
+                print(f"Warning: Could not connect to MongoDB: {str(e)}. MongoDB features will be disabled.")
+
+    def initialize_storybook_project(self, title: str, synopsis: str, manuscript: str, notes: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Initialize a new Storybook project with the given parameters."""
+        project_id = str(datetime.now().timestamp())
+        project_data = {
+            "id": project_id,
+            "title": title,
+            "synopsis": synopsis,
+            "manuscript": manuscript,
+            "manuscript_chunks": self.split_manuscript(manuscript),
+            "notes": notes or {},
+            "type": "new",
+            "quality_assessment": {},
+            "created_at": datetime.now().isoformat()
+        }
+        return {
+            "project": project_data,
+            "phase": "initialization",
+            "current_input": {
+                "task": "Initialize the Storybook project",
+                "referenced_chunks": [],
+                "research_results": ""
+            },
+            "messages": [
+                {"role": "system", "content": "Initializing new Storybook project"},
+                {"role": "user", "content": f"Title: {title}\nSynopsis: {synopsis}\nManuscript: {manuscript[:500]}..."}
+            ],
+            "count": 0,
+            "lnode": "initialization"
+        }
 
     def split_manuscript(self, manuscript: str, chunk_size: int = 1000, chunk_overlap: int = 0) -> List[Dict[str, Any]]:
         """Split a manuscript into manageable chunks."""

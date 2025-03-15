@@ -1831,7 +1831,7 @@ class writer_gui:
 
     def launch(self):
         # Use queue() for better streaming support
-        self.demo.queue().launch(share=False)  # Set share to False to avoid sharing issues
+        self.demo.queue().launch(share=True)  # Set share to True to enable public link
 
 def compare_sections(original_text, improved_text):
     """Compare original and improved text sections."""
