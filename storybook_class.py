@@ -18,6 +18,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.callbacks.manager import CallbackManager
 from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.callbacks.tracers import LangChainTracer
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 from tools import ResearchTools
 from utils import retry_with_exponential_backoff, cleanup_memory, extract_chunk_references

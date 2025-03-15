@@ -9,7 +9,7 @@ import re
 from typing import List, Dict, Any, Optional
 import traceback
 import logging
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Configure logging
 logger = logging.getLogger(__name__)
