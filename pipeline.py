@@ -13,23 +13,16 @@ import json
 import logging
 from io import BytesIO
 from typing import List, Union, Generator, Iterator
+
 import boto3
+
 from pydantic import BaseModel
+
 import os
 import requests
+
 from utils.pipelines.main import pop_system_message
 
-# Constants for reasoning budget tokens
-REASONING_EFFORT_BUDGET_TOKEN_MAP = {
-    "none": None,
-    "low": 1024,
-    "medium": 4096,
-    "high": 16384,
-    "max": 32768,
-}
-
-# Maximum combined token limit for Claude 3.7
-MAX_COMBINED_TOKENS = 64000
 
 class Pipeline:
     class Valves(BaseModel):
@@ -45,6 +38,7 @@ class Pipeline:
         # The identifier must be an alphanumeric string that can include underscores or hyphens. It cannot contain spaces, special characters, slashes, or backslashes.
         # self.id = "openai_pipeline"
         self.name = "Bedrock: "
+
         self.valves = self.Valves(
             **{
                 "AWS_ACCESS_KEY": os.getenv("AWS_ACCESS_KEY", "your-aws-access-key-here"),
@@ -52,6 +46,7 @@ class Pipeline:
                 "AWS_REGION_NAME": os.getenv("AWS_REGION_NAME", "your-aws-region-name-here"),
             }
         )
+
         self.bedrock = boto3.client(aws_access_key_id=self.valves.AWS_ACCESS_KEY,
                                     aws_secret_access_key=self.valves.AWS_SECRET_KEY,
                                     service_name="bedrock",
@@ -60,7 +55,9 @@ class Pipeline:
                                             aws_secret_access_key=self.valves.AWS_SECRET_KEY,
                                             service_name="bedrock-runtime",
                                             region_name=self.valves.AWS_REGION_NAME)
+
         self.pipelines = self.get_models()
+
 
     async def on_startup(self):
         # This function is called when the server is started.
@@ -115,171 +112,60 @@ class Pipeline:
     ) -> Union[str, Generator, Iterator]:
         # This is where you can add your custom pipelines like RAG.
         print(f"pipe:{__name__}")
-        system_message, messages = pop_system_message(messages)
-        logging.info(f"pop_system_message: {json.dumps(messages)}")
-        try:
-            # Check if model is Claude 3.7 Sonnet or other newer Claude model
-            is_claude_3_7 = "claude-3-7" in model_id.lower() or "claude-3.7" in model_id.lower() or "anthropic.claude" in model_id.lower()
-            
-            if is_claude_3_7:
-                # Format messages for Claude 3.7
-                processed_messages = []
-                image_count = 0
-                
-                for message in messages:
-                    processed_content = []
-                    if isinstance(message.get("content"), list):
-                        for item in message["content"]:
-                            if item["type"] == "text":
-                                processed_content.append({"type": "text", "text": item["text"]})
-                            elif item["type"] == "image_url":
-                                if image_count >= 5:  # Claude has a limit of 5 images per API call
-                                    raise ValueError("Maximum of 5 images per API call exceeded")
-                                    
-                                processed_image = self.process_image_claude_3_7(item["image_url"])
-                                processed_content.append(processed_image)
-                                image_count += 1
-                    else:
-                        processed_content = [{"type": "text", "text": message.get("content", "")}]
-                    
-                    processed_messages.append({"role": message["role"], "content": processed_content})
-                
-                # Create the payload for Claude 3.7
-                payload = {
-                    "anthropic_version": "bedrock-2023-05-31",
-                    "max_tokens": body.get("max_tokens", 4096),
-                    "temperature": body.get("temperature", 0.7),
-                    "top_p": body.get("top_p", 0.9),
-                    "messages": processed_messages,
-                }
-                
-                if system_message:
-                    payload["system"] = system_message
 
-                # Add reasoning/thinking for Claude 3.7
-                reasoning_effort = body.get("reasoning_effort", "none")
-                budget_tokens = REASONING_EFFORT_BUDGET_TOKEN_MAP.get(reasoning_effort)
-                
-                # Allow users to input an integer value representing budget tokens
-                if not budget_tokens and reasoning_effort not in REASONING_EFFORT_BUDGET_TOKEN_MAP.keys():
-                    try:
-                        budget_tokens = int(reasoning_effort)
-                    except (ValueError, TypeError):
-                        budget_tokens = None
-                
-                if budget_tokens and body.get("stream", False):
-                    # Apply thinking parameters for Claude 3.7
-                    max_tokens = payload.get("max_tokens", 4096)
-                    combined_tokens = budget_tokens + max_tokens
-                    
-                    if combined_tokens > MAX_COMBINED_TOKENS:
-                        error_message = f"Error: Combined tokens (budget_tokens {budget_tokens} + max_tokens {max_tokens} = {combined_tokens}) exceeds limit of {MAX_COMBINED_TOKENS}"
-                        print(error_message)
-                        return error_message
-                    
-                    payload["max_tokens"] = combined_tokens
-                    payload["thinking"] = {
-                        "type": "enabled",
-                        "budget_tokens": budget_tokens
-                    }
-                    
-                    # Thinking requires temperature 1.0
-                    payload["temperature"] = 1.0
-                    if "top_p" in payload:
-                        del payload["top_p"]
-                    if "top_k" in payload:
-                        del payload["top_k"]
-                
-                if body.get("stream", False):
-                    return self.claude_3_7_stream_response(model_id, payload)
+        system_message, messages = pop_system_message(messages)
+
+        logging.info(f"pop_system_message: {json.dumps(messages)}")
+
+        try:
+            processed_messages = []
+            image_count = 0
+            for message in messages:
+                processed_content = []
+                if isinstance(message.get("content"), list):
+                    for item in message["content"]:
+                        if item["type"] == "text":
+                            processed_content.append({"text": item["text"]})
+                        elif item["type"] == "image_url":
+                            if image_count >= 20:
+                                raise ValueError("Maximum of 20 images per API call exceeded")
+                            processed_image = self.process_image(item["image_url"])
+                            processed_content.append(processed_image)
+                            image_count += 1
                 else:
-                    return self.claude_3_7_get_completion(model_id, payload)
+                    processed_content = [{"text": message.get("content", "")}]
+
+                processed_messages.append({"role": message["role"], "content": processed_content})
+
+            payload = {"modelId": model_id,
+                       "messages": processed_messages,
+                       "system": [{'text': system_message if system_message else 'you are an intelligent ai assistant'}],
+                       "inferenceConfig": {"temperature": body.get("temperature", 0.5)},
+                       "additionalModelRequestFields": {"top_k": body.get("top_k", 200), "top_p": body.get("top_p", 0.9)}
+                       }
+            if body.get("stream", False):
+                return self.stream_response(model_id, payload)
             else:
-                # Original implementation for older Claude models
-                processed_messages = []
-                image_count = 0
-                for message in messages:
-                    processed_content = []
-                    if isinstance(message.get("content"), list):
-                        for item in message["content"]:
-                            if item["type"] == "text":
-                                processed_content.append({"text": item["text"]})
-                            elif item["type"] == "image_url":
-                                if image_count >= 20:
-                                    raise ValueError("Maximum of 20 images per API call exceeded")
-                                processed_image = self.process_image(item["image_url"])
-                                processed_content.append(processed_image)
-                                image_count += 1
-                    else:
-                        processed_content = [{"text": message.get("content", "")}]
-                    processed_messages.append({"role": message["role"], "content": processed_content})
-                
-                payload = {
-                    "modelId": model_id,
-                    "messages": processed_messages,
-                    "system": [{'text': system_message if system_message else 'you are an intelligent ai assistant'}],
-                    "inferenceConfig": {"temperature": body.get("temperature", 0.7)},
-                    "additionalModelRequestFields": {"top_k": body.get("top_k", 40), "top_p": body.get("top_p", 0.9)}
-                }
-                
-                if body.get("stream", False):
-                    return self.stream_response(model_id, payload)
-                else:
-                    return self.get_completion(model_id, payload)
-                
+                return self.get_completion(model_id, payload)
         except Exception as e:
             return f"Error: {e}"
 
-    def process_image(self, image: dict):
+    def process_image(self, image: str):
         img_stream = None
         if image["url"].startswith("data:image"):
             if ',' in image["url"]:
                 base64_string = image["url"].split(',')[1]
             image_data = base64.b64decode(base64_string)
+
             img_stream = BytesIO(image_data)
         else:
-            response = requests.get(image["url"])
-            img_stream = BytesIO(response.content)
-        
+            img_stream = requests.get(image["url"]).content
         return {
             "image": {"format": "png" if image["url"].endswith(".png") else "jpeg",
-                     "source": {"bytes": img_stream.read()}}
+                      "source": {"bytes": img_stream.read()}}
         }
 
-    def process_image_claude_3_7(self, image: dict):
-        """Process images specifically for Claude 3.7 format"""
-        if image["url"].startswith("data:image"):
-            mime_type, base64_data = image["url"].split(",", 1)
-            media_type = mime_type.split(":")[1].split(";")[0]
-            return {
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": media_type,
-                    "data": base64_data
-                }
-            }
-        else:
-            response = requests.get(image["url"])
-            img_stream = BytesIO(response.content)
-            image_bytes = img_stream.read()
-            
-            # Determine media type based on URL extension
-            media_type = "image/jpeg"
-            if image["url"].lower().endswith(".png"):
-                media_type = "image/png"
-            
-            return {
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": media_type,
-                    "data": base64.b64encode(image_bytes).decode('utf-8')
-                }
-            }
-
     def stream_response(self, model_id: str, payload: dict) -> Generator:
-        """Stream response for traditional Claude models"""
         if "system" in payload:
             del payload["system"]
         if "additionalModelRequestFields" in payload:
@@ -290,64 +176,5 @@ class Pipeline:
                 yield chunk["contentBlockDelta"]["delta"]["text"]
 
     def get_completion(self, model_id: str, payload: dict) -> str:
-        """Get completion for traditional Claude models"""
         response = self.bedrock_runtime.converse(**payload)
         return response['output']['message']['content'][0]['text']
-    
-    def claude_3_7_stream_response(self, model_id: str, payload: dict) -> Generator:
-        """Stream response for Claude 3.7 Sonnet"""
-        payload["stream"] = True
-        try:
-            byte_stream = self.bedrock_runtime.invoke_model_with_response_stream(
-                modelId=model_id,
-                body=json.dumps(payload),
-                contentType="application/json",
-                accept="application/json"
-            )
-            
-            for event in byte_stream["body"]:
-                chunk = json.loads(event["chunk"]["bytes"].decode())
-                
-                if chunk.get("type") == "content_block_delta" and "delta" in chunk and "text" in chunk["delta"]:
-                    yield chunk["delta"]["text"]
-                elif chunk.get("type") == "content_block_start" and chunk.get("content_block", {}).get("type") == "thinking":
-                    yield "
-
-<details type="reasoning" done="true" duration="1">
-<summary>Thought for 1 seconds</summary>
-> \n"
->                 elif chunk.get("type") == "thinking_delta" or (chunk.get("delta", {}).get("type") == "thinking_delta"):
->                     thinking_text = chunk.get("delta", {}).get("thinking", "")
->                     if thinking_text:
->                         yield thinking_text
->                 elif chunk.get("delta", {}).get("type") == "signature_delta":
->                     yield "\n
-</details>
-\n\n"
-                elif chunk.get("type") == "message_stop":
-                    break
-                    
-        except Exception as e:
-            yield f"Streaming error: {str(e)}"
-    
-    def claude_3_7_get_completion(self, model_id: str, payload: dict) -> str:
-        """Get completion for Claude 3.7 Sonnet"""
-        try:
-            response = self.bedrock_runtime.invoke_model(
-                modelId=model_id,
-                body=json.dumps(payload),
-                contentType="application/json",
-                accept="application/json"
-            )
-            
-            response_body = json.loads(response["body"].read())
-            
-            # Extract text from the response
-            if "content" in response_body:
-                for item in response_body["content"]:
-                    if item["type"] == "text":
-                        return item["text"]
-            
-            return ""
-        except Exception as e:
-            return f"Error: {str(e)}"
