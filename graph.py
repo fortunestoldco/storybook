@@ -5,6 +5,8 @@ import operator
 from typing import List, Dict, Any
 from langgraph.checkpoint.mongodb import MongoDBSaver
 from pymongo import MongoClient
+import re
+import time
 
 from state import AgentState
 from utils import check_quality_gate, extract_chunk_references
@@ -41,7 +43,13 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
             "cultural_authenticity_expert", # to initialization phase
             "positioning_specialist",
             "title_blurb_optimizer",
-            "differentiation_strategist"
+            "differentiation_strategist",
+            "structure_architect",
+            "plot_development_specialist",
+            "world_building_expert",
+            "character_psychology_specialist",
+            "character_voice_designer",
+            "character_relationship_mapper"
         ],
         "development": [
             "executive_director", "creative_director", "structure_architect",
@@ -107,7 +115,69 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 current_input["referenced_chunks"] = referenced_chunks
                 state["current_input"] = current_input
 
-                # Enhanced delegation detection for all specialists
+                # Initialize or retrieve delegation tracking
+                if "pending_delegations" not in state:
+                    state["pending_delegations"] = []
+
+                # If we already have pending delegations, process the next one
+                if state["pending_delegations"]:
+                    next_delegation = state["pending_delegations"].pop(0)
+                    print(f"Processing next pending delegation to {next_delegation}")
+                    return next_delegation
+
+                # Find delegations section in the format "Tasks:" followed by bullet points
+                tasks_section = None
+                if "tasks:" in last_message_lower:
+                    # Find the tasks section
+                    tasks_section_match = re.search(r"tasks:(.*?)(?:\n\n|$)", last_message_lower, re.DOTALL)
+                    if tasks_section_match:
+                        tasks_section = tasks_section_match.group(1)
+
+                # Extract bullet points with specialist assignments
+                if tasks_section:
+                    # Find all bullet points with specialist assignments
+                    bullet_pattern = r"[-•*]\s*([\w\s]+?):\s*([^\n]+)"
+                    delegations = re.findall(bullet_pattern, last_message)
+
+                    # Process all delegations found
+                    for specialist, task_desc in delegations:
+                        specialist_lower = specialist.lower().strip()
+
+                        # Map specialist names to node names
+                        specialist_mappings = {
+                            "creative director": "creative_director",
+                            "structure architect": "structure_architect",
+                            "plot development specialist": "plot_development_specialist",
+                            "world building expert": "world_building_expert",
+                            "character psychology specialist": "character_psychology_specialist",
+                            "character voice designer": "character_voice_designer",
+                            "character relationship mapper": "character_relationship_mapper",
+                            "domain knowledge specialist": "domain_knowledge_specialist",
+                            "cultural authenticity expert": "cultural_authenticity_expert"
+                        }
+
+                        # Find matching node name
+                        for key, node_name in specialist_mappings.items():
+                            if key in specialist_lower and node_name in phase_agents:
+                                # Add to pending delegations if not the first one
+                                if not state["pending_delegations"]:
+                                    # First delegation is handled immediately
+                                    print(f"Routing to first delegation: {node_name}")
+                                    # Store remaining delegations for later
+                                    for other_specialist, other_task in delegations:
+                                        other_specialist_lower = other_specialist.lower().strip()
+                                        for other_key, other_node in specialist_mappings.items():
+                                            if other_key in other_specialist_lower and other_node in phase_agents and other_node != node_name:
+                                                state["pending_delegations"].append(other_node)
+                                                print(f"Stored pending delegation to {other_node}")
+                                    return node_name
+                                else:
+                                    # Should not reach here as we process first delegation immediately
+                                    # but just in case, add to pending
+                                    state["pending_delegations"].append(node_name)
+                                    print(f"Added {node_name} to pending delegations")
+
+                # Enhanced delegation detection for all specialists - fallback to keyword matching
                 specialist_mappings = {
                     # Creative team
                     "creative director": "creative_director",
@@ -194,8 +264,14 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                         return "market_alignment_director"
 
         def route_after_creative_director(state: AgentState) -> str:
-            """Route after the creative director in initialization phase."""
+            """Route after the creative director node in initialization phase."""
             messages = state.get("messages", [])
+
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
 
             # Get the last assistant message if there is one
             last_message = None
@@ -204,7 +280,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                     last_message = msg.get("content", "")
                     break
 
-            # Check if creative director referred to specific needs or specialists
+            # Check if creative director delegated to a specific specialist
             if last_message:
                 last_message_lower = last_message.lower()
 
@@ -253,68 +329,34 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 # Go back to executive_director to reassess
                 return "executive_director"
             else:
-                # Stay with creative director for one more iteration to encourage delegation
+                # Go to executive director to check for more delegations
                 return "executive_director"
 
-        def route_after_market_alignment_director(state: AgentState) -> str:
-            """Route after the market alignment director in initialization phase."""
-            messages = state.get("messages", [])
+        def route_after_specialist(state: AgentState) -> str:
+            """Route after a specialist to handle delegation flow."""
+            # Get the current specialist name
+            specialist_type = state.get("lnode", "")
 
-            # Check if market director wants to do research or delegates
-            last_message = None
-            for msg in reversed(messages):
-                if msg.get("role") == "assistant":
-                    last_message = msg.get("content", "")
-                    break
+            # If there are pending delegations, we should continue with those
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing from {specialist_type} to next pending delegation: {next_delegation}")
+                return next_delegation
 
-            if last_message:
-                last_message_lower = last_message.lower()
-
-                # Get referenced chunks from the market director's message
-                referenced_chunks = extract_chunk_references(last_message)
-                current_input = state.get("current_input", {}).copy()
-                current_input["referenced_chunks"] = referenced_chunks
-                state["current_input"] = current_input
-
-                # Enhanced delegation detection
-                if "positioning specialist" in last_message_lower:
-                    return "positioning_specialist"
-
-                if "title/blurb optimizer" in last_message_lower or "marketing copy" in last_message_lower:
-                    return "title_blurb_optimizer"
-
-                if "differentiation strategist" in last_message_lower:
-                    return "differentiation_strategist"
-
-                # Check for research needs
-                if "research" in last_message_lower or "investigate" in last_message_lower:
-                    return "market_research"
-
-            # Count visits to market alignment director
-            market_visits = sum(1 for msg in messages if
-                               msg.get("role") == "user" and
-                               "Market Alignment Director" in msg.get("content", ""))
-
-            # Prevent infinite loops
-            if market_visits > 5:  # Increased from 2 to 5
-                print("Forcing quality assessment update after 5 market director visits to prevent infinite loops")
-                # Force quality assessment update
-                project = state.get("project", {})
-                quality_assessment = project.get("quality_assessment", {})
-                quality_assessment["market_alignment"] = 0.7
-                project["quality_assessment"] = quality_assessment
-                return "executive_director"
-            elif market_visits > 2:
-                # Return to executive director after a few visits
-                return "executive_director"
-            else:
-                # Return to executive director
-                return "executive_director"
+            # Otherwise, return to executive director to check for more tasks
+            print(f"Specialist {specialist_type} completed work, returning to executive_director")
+            return "executive_director"
 
         def route_after_research(state: AgentState) -> str:
             """Route after research nodes."""
             # Route back to the appropriate specialist based on research type
             research_type = state.get("lnode", "")
+
+            # Check if there are pending delegations first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing from {research_type} to next pending delegation: {next_delegation}")
+                return next_delegation
 
             if research_type == "domain_research":
                 return "domain_knowledge_specialist"
@@ -338,7 +380,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
 
         builder.add_conditional_edges(
             "market_alignment_director",
-            route_after_market_alignment_director
+            route_after_specialist
         )
 
         # Add research routing
@@ -357,9 +399,15 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
             route_after_research
         )
 
-        # Only add edges if both source and target nodes exist in this phase
-        if "domain_knowledge_specialist" in phase_agents:
-            builder.add_edge("domain_knowledge_specialist", "executive_director")
+        # Add specialist routing
+        for specialist in ["structure_architect", "plot_development_specialist",
+                          "world_building_expert", "character_psychology_specialist",
+                          "character_voice_designer", "character_relationship_mapper",
+                          "domain_knowledge_specialist", "cultural_authenticity_expert",
+                          "positioning_specialist", "title_blurb_optimizer",
+                          "differentiation_strategist"]:
+            if specialist in phase_agents:
+                builder.add_conditional_edges(specialist, route_after_specialist)
 
     elif phase == "development":
         def route_after_executive_director(state: AgentState) -> str:
@@ -383,6 +431,74 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 current_input = state.get("current_input", {}).copy()
                 current_input["referenced_chunks"] = referenced_chunks
                 state["current_input"] = current_input
+
+                # Initialize or retrieve delegation tracking
+                if "pending_delegations" not in state:
+                    state["pending_delegations"] = []
+
+                # If we already have pending delegations, process the next one
+                if state["pending_delegations"]:
+                    next_delegation = state["pending_delegations"].pop(0)
+                    print(f"Processing next pending delegation to {next_delegation}")
+                    return next_delegation
+
+                # Find delegations section in the format "Tasks:" followed by bullet points
+                tasks_section = None
+                if "tasks:" in last_message_lower:
+                    # Find the tasks section
+                    tasks_section_match = re.search(r"tasks:(.*?)(?:\n\n|$)", last_message_lower, re.DOTALL)
+                    if tasks_section_match:
+                        tasks_section = tasks_section_match.group(1)
+
+                # Extract bullet points with specialist assignments
+                if tasks_section:
+                    # Find all bullet points with specialist assignments
+                    bullet_pattern = r"[-•*]\s*([\w\s]+?):\s*([^\n]+)"
+                    delegations = re.findall(bullet_pattern, last_message)
+
+                    # Process all delegations found
+                    for specialist, task_desc in delegations:
+                        specialist_lower = specialist.lower().strip()
+
+                        # Map specialist names to node names
+                        specialist_mappings = {
+                            # Creative team
+                            "creative director": "creative_director",
+                            "structure architect": "structure_architect",
+                            "plot development specialist": "plot_development_specialist",
+                            "world building expert": "world_building_expert",
+                            "character psychology specialist": "character_psychology_specialist",
+                            "character voice designer": "character_voice_designer",
+                            "character relationship mapper": "character_relationship_mapper",
+
+                            # Research team
+                            "domain knowledge specialist": "domain_knowledge_specialist",
+                            "cultural authenticity expert": "cultural_authenticity_expert",
+
+                            # Market team
+                            "market alignment director": "market_alignment_director"
+                        }
+
+                        # Find matching node name
+                        for key, node_name in specialist_mappings.items():
+                            if key in specialist_lower and node_name in phase_agents:
+                                # Add to pending delegations if not the first one
+                                if not state["pending_delegations"]:
+                                    # First delegation is handled immediately
+                                    print(f"Routing to first delegation: {node_name}")
+                                    # Store remaining delegations for later
+                                    for other_specialist, other_task in delegations:
+                                        other_specialist_lower = other_specialist.lower().strip()
+                                        for other_key, other_node in specialist_mappings.items():
+                                            if other_key in other_specialist_lower and other_node in phase_agents and other_node != node_name:
+                                                state["pending_delegations"].append(other_node)
+                                                print(f"Stored pending delegation to {other_node}")
+                                    return node_name
+                                else:
+                                    # Should not reach here as we process first delegation immediately
+                                    # but just in case, add to pending
+                                    state["pending_delegations"].append(node_name)
+                                    print(f"Added {node_name} to pending delegations")
 
                 # Enhanced detection of specialist delegation
                 specialist_mappings = {
@@ -465,6 +581,12 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
         def route_after_creative_director(state: AgentState) -> str:
             """Route after the creative director node."""
             messages = state.get("messages", [])
+
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
 
             # Get the last assistant message
             last_message = None
@@ -566,6 +688,12 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
         # Add routing for specialists to prevent loops
         def route_after_structure_architect(state: AgentState) -> str:
             """Route after the structure architect node to prevent loops with Creative Director."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             messages = state.get("messages", [])
 
             # Count visits to Structure Architect
@@ -617,6 +745,12 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
         # Add routing for research nodes
         def route_after_research(state: AgentState) -> str:
             """Route after research nodes."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             research_type = state.get("lnode", "")
 
             if research_type == "domain_research":
@@ -666,6 +800,12 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
         # Use conditional routing for specialists rather than direct edges to prevent loops
         def route_after_specialist(state: AgentState) -> str:
             """Route after a specialist to prevent loops."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             messages = state.get("messages", [])
 
             # Count visits to this specialist
@@ -746,6 +886,76 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 current_input = state.get("current_input", {}).copy()
                 current_input["referenced_chunks"] = referenced_chunks
                 state["current_input"] = current_input
+
+                # Initialize or retrieve delegation tracking
+                if "pending_delegations" not in state:
+                    state["pending_delegations"] = []
+
+                # If we already have pending delegations, process the next one
+                if state["pending_delegations"]:
+                    next_delegation = state["pending_delegations"].pop(0)
+                    print(f"Processing next pending delegation to {next_delegation}")
+                    return next_delegation
+
+                # Find delegations section in the format "Tasks:" followed by bullet points
+                tasks_section = None
+                if "tasks:" in last_message_lower:
+                    # Find the tasks section
+                    tasks_section_match = re.search(r"tasks:(.*?)(?:\n\n|$)", last_message_lower, re.DOTALL)
+                    if tasks_section_match:
+                        tasks_section = tasks_section_match.group(1)
+
+                # Extract bullet points with specialist assignments
+                if tasks_section:
+                    # Find all bullet points with specialist assignments
+                    bullet_pattern = r"[-•*]\s*([\w\s]+?):\s*([^\n]+)"
+                    delegations = re.findall(bullet_pattern, last_message)
+
+                    # Process all delegations found
+                    for specialist, task_desc in delegations:
+                        specialist_lower = specialist.lower().strip()
+
+                        # Map specialist names to node names
+                        specialist_mappings = {
+                            # Content team
+                            "content development director": "content_development_director",
+                            "chapter drafter": "chapter_drafters",
+                            "chapter drafters": "chapter_drafters",
+                            "dialogue crafter": "dialogue_crafters",
+                            "dialogue crafters": "dialogue_crafters",
+                            "scene construction specialist": "scene_construction_specialists",
+                            "scene construction specialists": "scene_construction_specialists",
+                            "continuity manager": "continuity_manager",
+                            "voice consistency monitor": "voice_consistency_monitor",
+                            "emotional arc designer": "emotional_arc_designer",
+
+                            # Creative team
+                            "creative director": "creative_director",
+
+                            # Research
+                            "domain knowledge specialist": "domain_knowledge_specialist"
+                        }
+
+                        # Find matching node name
+                        for key, node_name in specialist_mappings.items():
+                            if key in specialist_lower and node_name in phase_agents:
+                                # Add to pending delegations if not the first one
+                                if not state["pending_delegations"]:
+                                    # First delegation is handled immediately
+                                    print(f"Routing to first delegation: {node_name}")
+                                    # Store remaining delegations for later
+                                    for other_specialist, other_task in delegations:
+                                        other_specialist_lower = other_specialist.lower().strip()
+                                        for other_key, other_node in specialist_mappings.items():
+                                            if other_key in other_specialist_lower and other_node in phase_agents and other_node != node_name:
+                                                state["pending_delegations"].append(other_node)
+                                                print(f"Stored pending delegation to {other_node}")
+                                    return node_name
+                                else:
+                                    # Should not reach here as we process first delegation immediately
+                                    # but just in case, add to pending
+                                    state["pending_delegations"].append(node_name)
+                                    print(f"Added {node_name} to pending delegations")
 
                 # Enhanced delegation detection for all specialists
                 specialist_mappings = {
@@ -835,6 +1045,12 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
 
         def route_after_content_director(state: AgentState) -> str:
             """Route after the content development director node."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             messages = state.get("messages", [])
 
             # Get the last assistant message
@@ -907,6 +1123,12 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
         # Add routing for research
         def route_after_research(state: AgentState) -> str:
             """Route after research nodes."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             research_type = state.get("lnode", "")
 
             if research_type == "domain_research":
@@ -917,6 +1139,12 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
         # Add routing for content creators to go back to executive director for review
         def route_after_content_creator(state: AgentState) -> str:
             """Route after content creators back to executive director for review."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             # Always return to executive director for review after content creation
             return "executive_director"
 
@@ -972,6 +1200,71 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 current_input = state.get("current_input", {}).copy()
                 current_input["referenced_chunks"] = referenced_chunks
                 state["current_input"] = current_input
+
+                # Initialize or retrieve delegation tracking
+                if "pending_delegations" not in state:
+                    state["pending_delegations"] = []
+
+                # If we already have pending delegations, process the next one
+                if state["pending_delegations"]:
+                    next_delegation = state["pending_delegations"].pop(0)
+                    print(f"Processing next pending delegation to {next_delegation}")
+                    return next_delegation
+
+                # Find delegations section in the format "Tasks:" followed by bullet points
+                tasks_section = None
+                if "tasks:" in last_message_lower:
+                    # Find the tasks section
+                    tasks_section_match = re.search(r"tasks:(.*?)(?:\n\n|$)", last_message_lower, re.DOTALL)
+                    if tasks_section_match:
+                        tasks_section = tasks_section_match.group(1)
+
+                # Extract bullet points with specialist assignments
+                if tasks_section:
+                    # Find all bullet points with specialist assignments
+                    bullet_pattern = r"[-•*]\s*([\w\s]+?):\s*([^\n]+)"
+                    delegations = re.findall(bullet_pattern, last_message)
+
+                    # Process all delegations found
+                    for specialist, task_desc in delegations:
+                        specialist_lower = specialist.lower().strip()
+
+                        # Map specialist names to node names
+                        specialist_mappings = {
+                            # Editorial team
+                            "editorial director": "editorial_director",
+                            "creative director": "creative_director",
+                            "market alignment director": "market_alignment_director",
+                            "structural editor": "structural_editor",
+                            "character arc evaluator": "character_arc_evaluator",
+                            "thematic coherence analyst": "thematic_coherence_analyst",
+                            "prose enhancement specialist": "prose_enhancement_specialist",
+                            "dialogue refinement expert": "dialogue_refinement_expert",
+                            "rhythm cadence optimizer": "rhythm_cadence_optimizer",
+                            "grammar consistency checker": "grammar_consistency_checker",
+                            "fact verification specialist": "fact_verification_specialist"
+                        }
+
+                        # Find matching node name
+                        for key, node_name in specialist_mappings.items():
+                            if key in specialist_lower and node_name in phase_agents:
+                                # Add to pending delegations if not the first one
+                                if not state["pending_delegations"]:
+                                    # First delegation is handled immediately
+                                    print(f"Routing to first delegation: {node_name}")
+                                    # Store remaining delegations for later
+                                    for other_specialist, other_task in delegations:
+                                        other_specialist_lower = other_specialist.lower().strip()
+                                        for other_key, other_node in specialist_mappings.items():
+                                            if other_key in other_specialist_lower and other_node in phase_agents and other_node != node_name:
+                                                state["pending_delegations"].append(other_node)
+                                                print(f"Stored pending delegation to {other_node}")
+                                    return node_name
+                                else:
+                                    # Should not reach here as we process first delegation immediately
+                                    # but just in case, add to pending
+                                    state["pending_delegations"].append(node_name)
+                                    print(f"Added {node_name} to pending delegations")
 
                 # Enhanced delegation detection for all refinement specialists
                 specialist_mappings = {
@@ -1059,6 +1352,12 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
 
         def route_after_editorial_director(state: AgentState) -> str:
             """Route after the editorial director node with focus on manuscript improvement."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             messages = state.get("messages", [])
 
             # Get the last assistant message
@@ -1130,6 +1429,12 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
         # Add routing for fact verification and research
         def route_after_fact_verification(state: AgentState) -> str:
             """Route after fact verification specialist."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             messages = state.get("messages", [])
 
             # Get the last assistant message
@@ -1147,11 +1452,23 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
 
         def route_after_research(state: AgentState) -> str:
             """Route after domain research."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             return "fact_verification_specialist"
 
         # Add routing for prose and dialogue refinement specialists to go back to executive
         def route_after_refinement_specialist(state: AgentState) -> str:
             """Route after refinement specialists back to executive director for review."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             # Always return to executive director for review after refinement
             return "executive_director"
 
@@ -1214,6 +1531,66 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 current_input["referenced_chunks"] = referenced_chunks
                 state["current_input"] = current_input
 
+                # Initialize or retrieve delegation tracking
+                if "pending_delegations" not in state:
+                    state["pending_delegations"] = []
+
+                # If we already have pending delegations, process the next one
+                if state["pending_delegations"]:
+                    next_delegation = state["pending_delegations"].pop(0)
+                    print(f"Processing next pending delegation to {next_delegation}")
+                    return next_delegation
+
+                # Find delegations section in the format "Tasks:" followed by bullet points
+                tasks_section = None
+                if "tasks:" in last_message_lower:
+                    # Find the tasks section
+                    tasks_section_match = re.search(r"tasks:(.*?)(?:\n\n|$)", last_message_lower, re.DOTALL)
+                    if tasks_section_match:
+                        tasks_section = tasks_section_match.group(1)
+
+                # Extract bullet points with specialist assignments
+                if tasks_section:
+                    # Find all bullet points with specialist assignments
+                    bullet_pattern = r"[-•*]\s*([\w\s]+?):\s*([^\n]+)"
+                    delegations = re.findall(bullet_pattern, last_message)
+
+                    # Process all delegations found
+                    for specialist, task_desc in delegations:
+                        specialist_lower = specialist.lower().strip()
+
+                        # Map specialist names to node names
+                        specialist_mappings = {
+                            "editorial director": "editorial_director",
+                            "market alignment director": "market_alignment_director",
+                            "positioning specialist": "positioning_specialist",
+                            "title/blurb optimizer": "title_blurb_optimizer",
+                            "title blurb optimizer": "title_blurb_optimizer",
+                            "differentiation strategist": "differentiation_strategist",
+                            "formatting standards expert": "formatting_standards_expert"
+                        }
+
+                        # Find matching node name
+                        for key, node_name in specialist_mappings.items():
+                            if key in specialist_lower and node_name in phase_agents:
+                                # Add to pending delegations if not the first one
+                                if not state["pending_delegations"]:
+                                    # First delegation is handled immediately
+                                    print(f"Routing to first delegation: {node_name}")
+                                    # Store remaining delegations for later
+                                    for other_specialist, other_task in delegations:
+                                        other_specialist_lower = other_specialist.lower().strip()
+                                        for other_key, other_node in specialist_mappings.items():
+                                            if other_key in other_specialist_lower and other_node in phase_agents and other_node != node_name:
+                                                state["pending_delegations"].append(other_node)
+                                                print(f"Stored pending delegation to {other_node}")
+                                    return node_name
+                                else:
+                                    # Should not reach here as we process first delegation immediately
+                                    # but just in case, add to pending
+                                    state["pending_delegations"].append(node_name)
+                                    print(f"Added {node_name} to pending delegations")
+
                 # Enhanced delegation detection for all finalization specialists
                 specialist_mappings = {
                     "editorial director": "editorial_director",
@@ -1273,6 +1650,12 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
 
         def route_after_market_director(state: AgentState) -> str:
             """Route after the market alignment director node."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             messages = state.get("messages", [])
 
             # Get the last assistant message
@@ -1329,6 +1712,12 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
 
         def route_after_research(state: AgentState) -> str:
             """Route after market research."""
+            # Check if there are pending delegations from executive director first
+            if "pending_delegations" in state and state["pending_delegations"]:
+                next_delegation = state["pending_delegations"].pop(0)
+                print(f"Routing to next pending delegation: {next_delegation}")
+                return next_delegation
+
             return "market_alignment_director"
 
         builder.add_conditional_edges(
@@ -1358,16 +1747,18 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
     # Try to compile with the MongoDB checkpointer
     try:
         if mongo_uri:
-            # Create MongoDB client for checkpointing
-            print(f"Creating MongoDB checkpointer for project {project_id}, phase {phase}")
             mongo_client = MongoClient(mongo_uri)
             checkpointer = MongoDBSaver(mongo_client)
-            return builder.compile(checkpointer=checkpointer)
+            configurable = {
+                "thread_id": f"{project_id}_{phase}_{int(time.time())}",
+                "checkpoint_id": project_id,
+                "checkpoint_ns": phase
+            }
+            return builder.compile(checkpointer=checkpointer, configurable=configurable)
         else:
-            print(f"MongoDB connection string not available. Proceeding without checkpointing for {project_id}, phase {phase}")
             return builder.compile()
     except Exception as e:
-        print(f"Warning: Failed to create MongoDB checkpointer with error: {str(e)}. Proceeding without checkpointing.")
+        print(f"Warning: Failed to create MongoDB checkpointer: {str(e)}. Proceeding without checkpointing.")
         return builder.compile()
 
 def create_main_graph(config: Dict[str, Any]) -> StateGraph:
@@ -1386,10 +1777,15 @@ def create_main_graph(config: Dict[str, Any]) -> StateGraph:
     for phase in ["initialization", "development", "creation", "refinement", "finalization"]:
         # Create a phase-specific config that includes the phase name
         phase_config = config.copy()
-        phase_config["phase"] = phase
-        phase_config["project_id"] = "composite_project"
-        phase_config["agent_factory"] = agent_factory
-
+        phase_config["configurable"] = config.get("configurable", {}).copy()
+        phase_config["configurable"].update({
+            "phase": phase,
+            "project_id": config.get("project_id", "composite_project"),
+            "agent_factory": agent_factory,
+            "thread_id": f"{config.get('project_id', 'composite_project')}_{phase}_{int(time.time())}",
+            "checkpoint_id": config.get('project_id', 'composite_project'),
+            "checkpoint_ns": phase
+        })
         phase_graphs[phase] = create_phase_graph(phase_config)
 
     # Add phase graphs as nodes to the main graph
@@ -1434,7 +1830,22 @@ def create_main_graph(config: Dict[str, Any]) -> StateGraph:
     # Add a final edge from finalization to END
     builder.add_edge("finalization", END)
 
-    return builder.compile()
+    # Try to use MongoDB checkpointer if available
+    try:
+        if mongo_uri:
+            mongo_client = MongoClient(mongo_uri)
+            checkpointer = MongoDBSaver(mongo_client)
+            configurable = {
+                "thread_id": f"main_graph_{int(time.time())}",
+                "checkpoint_id": "main_graph",
+                "checkpoint_ns": "main"
+            }
+            return builder.compile(checkpointer=checkpointer, configurable=configurable)
+        else:
+            return builder.compile()
+    except Exception as e:
+        print(f"Warning: Failed to create MongoDB checkpointer: {str(e)}. Proceeding without checkpointing.")
+        return builder.compile()
 
 # This function creates a comprehensive graph with all agents exposed
 def create_storybook_graph(config: Dict[str, Any]) -> StateGraph:
@@ -1585,7 +1996,12 @@ def create_storybook_graph(config: Dict[str, Any]) -> StateGraph:
         if mongo_uri:
             mongo_client = MongoClient(mongo_uri)
             checkpointer = MongoDBSaver(mongo_client)
-            return builder.compile(checkpointer=checkpointer)
+            configurable = {
+                "thread_id": f"storybook_{int(time.time())}",
+                "checkpoint_id": "storybook",
+                "checkpoint_ns": "full"
+            }
+            return builder.compile(checkpointer=checkpointer, configurable=configurable)
         else:
             return builder.compile()
     except Exception as e:

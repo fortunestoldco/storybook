@@ -1,3 +1,15 @@
+import os
+import warnings
+import traceback
+from typing import Dict, Any, List, Optional, Callable
+import torch
+import queue
+import time
+import functools
+from datetime import datetime
+import re
+import threading
+import logging
 
 from pymongo import MongoClient
 from huggingface_hub import login
@@ -7,13 +19,51 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.callbacks.manager import CallbackManager
 from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.callbacks.tracers import LangChainTracer
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.outputs import ChatResult, ChatGeneration
+from transformers import AutoTokenizer, pipeline
 
 from tools import ResearchTools
 from utils import retry_with_exponential_backoff, cleanup_memory, extract_chunk_references
 from prompts import DEFAULT_PROMPTS
 from config import HUGGINGFACE_API_TOKEN, MONGODB_URI, LANGSMITH_API_KEY, LANGSMITH_TRACING_ENABLED, LANGSMITH_PROJECT
+from graph import create_phase_graph
 
-# Utility functions for manuscript updates
+logger = logging.getLogger(__name__)
+
+# Default chat template for models that don't have one
+DEFAULT_CHAT_TEMPLATE = """{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{% for message in messages %}{% if message['role'] == 'system' %}<|im_start|>system
+{{ message['content'] }}<|im_end|>
+{% elif message['role'] == 'user' %}<|im_start|>user
+{{ message['content'] }}<|im_end|>
+{% elif message['role'] == 'assistant' %}<|im_start|>assistant
+{{ message['content'] }}<|im_end|>
+{% else %}<|im_start|>{{ message['role'] }}
+{{ message['content'] }}<|im_end|>
+{% endif %}{% endfor %}{% if add_generation_prompt %}<|im_start|>assistant
+{% endif %}"""
+
+# Initialize LangSmith tracer
+langchain_tracer = None
+langsmith_project_name = LANGSMITH_PROJECT
+if LANGSMITH_TRACING_ENABLED and LANGSMITH_API_KEY:
+    langchain_tracer = LangChainTracer(
+        project_name=langsmith_project_name,
+    )
+    # Set debug to get more detailed tracing
+    from langchain_core.globals import set_debug
+    set_debug(True)
+    print(f"LangSmith tracing enabled for project: {langsmith_project_name}")
+else:
+    print("LangSmith tracing not enabled. Check LANGSMITH_API_KEY and LANGSMITH_TRACING environment variables.")
+
+# Initialize the callback manager for streaming
+streaming_callback = StreamingStdOutCallbackHandler()
+callback_manager = CallbackManager([streaming_callback])
+if langchain_tracer:
+    callback_manager.add_handler(langchain_tracer)
+
 def is_content_creation_agent(agent_name: str) -> bool:
     """Determine if the agent is a content creation/refinement agent that produces rewrites."""
     content_creation_agents = {
@@ -182,25 +232,472 @@ def reassemble_manuscript(manuscript_chunks):
 
     return full_manuscript
 
-# Setup LangSmith tracer
-langchain_tracer = None
-langsmith_project_name = LANGSMITH_PROJECT
-if LANGSMITH_TRACING_ENABLED and LANGSMITH_API_KEY:
-    langchain_tracer = LangChainTracer(
-        project_name=langsmith_project_name,
-    )
-    # Set debug to get more detailed tracing
-    from langchain_core.globals import set_debug
-    set_debug(True)
-    print(f"LangSmith tracing enabled for project: {langsmith_project_name}")
-else:
-    print("LangSmith tracing not enabled. Check LANGSMITH_API_KEY and LANGSMITH_TRACING environment variables.")
+class Storybook:
+    def __init__(self, title: str, author: str, synopsis: str, manuscript: str):
+        self.title = title
+        self.author = author
+        self.synopsis = synopsis
+        self.manuscript = manuscript
+        self._text_splitter = None
+        self.manuscript_chunks = self.split_manuscript(manuscript)
+        self.mongo_client = None
+        self.initialize_mongo_client()
 
-# Initialize the callback manager for streaming
-streaming_callback = StreamingStdOutCallbackHandler()
-callback_manager = CallbackManager([streaming_callback])
-if langchain_tracer:
-    callback_manager.add_handler(langchain_tracer)
+        # Add default model configuration
+        self.model_config = {
+            "model_id": "HuggingFaceH4/zephyr-7b-beta",
+            "task": "text-generation",
+            "temperature": 0.1,
+            "max_new_tokens": 512,
+            "do_sample": True,
+            "repetition_penalty": 1.03
+        }
+
+        # Initialize agent factory
+        self.agent_factory = None
+
+        # Initialize storybook graph
+        self.storybook_graph = None
+        from graph import create_storybook_graph
+        try:
+            self.storybook_graph = create_storybook_graph({"agent_factory": None, "project_id": "default"})
+            logger.info("Initialized storybook graph")
+        except Exception as e:
+            logger.warning(f"Could not initialize storybook graph: {str(e)}")
+
+        # Store quality history
+        self.quality_history = []
+
+    def initialize_mongo_client(self):
+        """Initialize MongoDB client using environment variables."""
+        if MONGODB_URI:
+            try:
+                self.mongo_client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+                self.mongo_client.admin.command('ping')
+                logger.info("MongoDB connection successful")
+            except Exception as e:
+                logger.warning(f"MongoDB connection failed: {str(e)}")
+
+    def update_model_config(self, new_config: Dict[str, Any]):
+        """Update the model configuration."""
+        if isinstance(new_config, dict):
+            self.model_config.update(new_config)
+            logger.info(f"Updated model configuration: {self.model_config.get('model_id', 'unknown')}")
+
+            # If we have an agent factory, update its configuration as well
+            if hasattr(self, 'agent_factory') and self.agent_factory is not None:
+                try:
+                    self.agent_factory.update_model_config(new_config)
+                    logger.info("Updated agent factory model configuration")
+                except Exception as e:
+                    logger.warning(f"Could not update agent factory model config: {str(e)}")
+        else:
+            logger.warning(f"Invalid model config provided: {type(new_config)}")
+
+    def set_text_splitter(self, splitter):
+        """Set the text splitter for the Storybook instance."""
+        if splitter is not None:
+            self._text_splitter = splitter
+            logger.info("Text splitter set for Storybook instance")
+        else:
+            logger.warning("Attempted to set None as text splitter, ignoring")
+
+    def split_manuscript(self, manuscript: str, chunk_size: int = 1000, chunk_overlap: int = 100) -> List[Dict[str, Any]]:
+        """Split manuscript into manageable chunks."""
+        if not manuscript:
+            return []
+
+        # Use the set text splitter if available, otherwise create a default one
+        if hasattr(self, '_text_splitter') and self._text_splitter is not None:
+            splitter = self._text_splitter
+        else:
+            splitter = RecursiveCharacterTextSplitter(
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+                separators=["\n\n", "\n", ". ", " ", ""]
+            )
+
+        texts = splitter.split_text(manuscript)
+        return [
+            {
+                "chunk_id": i,
+                "content": text,
+                "start_char": manuscript.find(text),
+                "end_char": manuscript.find(text) + len(text),
+            }
+            for i, text in enumerate(texts)
+        ]
+
+    def reassemble_manuscript(self) -> str:
+        """Reassemble full manuscript from chunks."""
+        sorted_chunks = sorted(self.manuscript_chunks, key=lambda x: x.get("chunk_id", 0))
+        full_manuscript = ""
+        for chunk in sorted_chunks:
+            content = chunk.get("content", "")
+            # Add spacing between chunks if needed
+            if full_manuscript and not (full_manuscript.endswith("\n") or content.startswith("\n")):
+                full_manuscript += "\n\n"
+            full_manuscript += content
+        return full_manuscript
+
+    def update_chunk(self, chunk_id: int, new_content: str) -> None:
+        """Update specific chunk content."""
+        for chunk in self.manuscript_chunks:
+            if chunk["chunk_id"] == chunk_id:
+                chunk["content"] = new_content
+                break
+        self.manuscript = self.reassemble_manuscript()
+
+    def get_chunk(self, chunk_id: int) -> Optional[Dict[str, Any]]:
+        """Get chunk by ID."""
+        return next((chunk for chunk in self.manuscript_chunks if chunk["chunk_id"] == chunk_id), None)
+
+    def get_all_chunks(self) -> List[Dict[str, Any]]:
+        """Get all manuscript chunks."""
+        return self.manuscript_chunks
+
+    def get_summary(self) -> str:
+        """Get storybook summary."""
+        return f"Title: {self.title}\nAuthor: {self.author}\nSynopsis: {self.synopsis}\nTotal Chunks: {len(self.manuscript_chunks)}"
+
+    def get_manuscript_statistics(self, state=None) -> Dict[str, Any]:
+        """Get manuscript statistics."""
+        try:
+            chunks = state.get("project", {}).get("manuscript_chunks", []) if state else self.manuscript_chunks
+            words = 0
+            characters = 0
+            paragraphs = 0
+            sentences = 0
+
+            for chunk in chunks:
+                content = chunk.get("content", "")
+                words += len(content.split())
+                characters += len(content)
+                paragraphs += content.count("\n\n") + 1
+                sentences += sum(1 for s in re.findall(r'[.!?]+', content))
+
+            return {
+                "total_chunks": len(chunks),
+                "total_words": words,
+                "total_characters": characters,
+                "total_paragraphs": paragraphs,
+                "total_sentences": sentences,
+                "average_paragraph_length": words / paragraphs if paragraphs > 0 else 0,
+                "average_sentence_length": words / sentences if sentences > 0 else 0
+            }
+        except Exception as e:
+            logger.error(f"Error getting manuscript statistics: {str(e)}")
+            return {"error": str(e), "total_chunks": 0, "total_words": 0}
+
+    def run_storybook_phase(self, state: Dict[str, Any], phase: str = "initialization",
+                           progress_callback: Optional[Callable] = None, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Run a specific phase of the storybook workflow."""
+        try:
+            valid_phases = ["initialization", "development", "creation", "refinement", "finalization"]
+            if phase not in valid_phases:
+                raise ValueError(f"Invalid phase: {phase}. Must be one of {valid_phases}")
+
+            state["phase"] = phase
+
+            if config is None:
+                config = {}
+
+            # Ensure configurable is a dict
+            if "configurable" not in config:
+                config["configurable"] = {}
+
+            # Add project ID and thread ID if not provided
+            project_id = state.get("project", {}).get("id", "default_project")
+            if "checkpoint_id" not in config["configurable"]:
+                config["configurable"]["checkpoint_id"] = project_id
+            if "checkpoint_ns" not in config["configurable"]:
+                config["configurable"]["checkpoint_ns"] = phase
+            if "thread_id" not in config["configurable"]:
+                config["configurable"]["thread_id"] = f"{project_id}_{phase}_{int(time.time())}"
+
+            # Add model configuration
+            if hasattr(self, 'model_config'):
+                config["configurable"]["model_config"] = self.model_config
+
+            if progress_callback:
+                progress_callback(f"Starting {phase} phase")
+
+            # Create agent factory if not already created
+            if not hasattr(self, 'agent_factory') or self.agent_factory is None:
+                from agent import AgentFactory
+                self.agent_factory = AgentFactory(config, self.model_config)
+                if progress_callback:
+                    progress_callback(f"Created agent factory with model: {self.model_config.get('model_id', 'unknown')}")
+
+            # Add agent factory to config
+            config["configurable"]["agent_factory"] = self.agent_factory
+
+            phase_graph = create_phase_graph(config)
+            result = phase_graph.invoke(state)
+
+            # Track quality assessments for visualization
+            if "project" in result and "quality_assessment" in result["project"]:
+                if not hasattr(self, 'quality_history'):
+                    self.quality_history = []
+                self.quality_history.append(result["project"]["quality_assessment"])
+
+                # Store quality history in the state for persistence
+                if "quality_history" not in result:
+                    result["quality_history"] = []
+                result["quality_history"] = self.quality_history
+
+            if progress_callback:
+                progress_callback(f"Completed {phase} phase")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error in {phase} phase: {str(e)}")
+            logger.debug(traceback.format_exc())
+            state["error"] = f"Error in {phase} phase: {str(e)}"
+            return state
+
+    def initialize_storybook_project(self, title: str, synopsis: str, manuscript: str,
+                                   notes: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Initialize new storybook project."""
+        project_id = str(datetime.now().timestamp())
+
+        # Reset quality history for new project
+        self.quality_history = []
+
+        return {
+            "project": {
+                "id": project_id,
+                "title": title,
+                "synopsis": synopsis,
+                "manuscript": manuscript,
+                "manuscript_chunks": self.split_manuscript(manuscript),
+                "notes": notes or {},
+                "type": "new",
+                "quality_assessment": {
+                    "clarity": 0.5,
+                    "coherence": 0.5,
+                    "engagement": 0.5,
+                    "style": 0.5,
+                    "overall": 0.5
+                },
+                "created_at": datetime.now().isoformat()
+            },
+            "phase": "initialization",
+            "current_input": {
+                "task": "Initialize the Storybook project",
+                "referenced_chunks": [],
+                "research_results": ""
+            },
+            "messages": [
+                {"role": "system", "content": "Initializing new Storybook project"},
+                {"role": "user", "content": f"Title: {title}\nSynopsis: {synopsis}\nManuscript: {manuscript[:500]}..."}
+            ],
+            "count": 0,
+            "lnode": "initialization",
+            "quality_history": [
+                {
+                    "clarity": 0.5,
+                    "coherence": 0.5,
+                    "engagement": 0.5,
+                    "style": 0.5,
+                    "overall": 0.5
+                }
+            ]
+        }
+
+    def get_available_checkpoints(self) -> List[Dict[str, Any]]:
+        """Get available checkpoints from MongoDB."""
+        if not self.mongo_client:
+            logger.warning("MongoDB client not initialized")
+            return []
+
+        try:
+            db = self.mongo_client["storybook"]
+            checkpoints = list(db["checkpoints"].find(
+                {},
+                {"checkpoint_name": 1, "last_modified": 1, "state.project.id": 1, "state.phase": 1, "_id": 0}
+            ))
+
+            formatted_checkpoints = []
+            for cp in checkpoints:
+                try:
+                    project_id = cp.get("state", {}).get("project", {}).get("id", "unknown")
+                    phase = cp.get("state", {}).get("phase", "unknown")
+                    formatted_checkpoints.append({
+                        "checkpoint_id": cp.get("checkpoint_name"),
+                        "project_id": project_id,
+                        "phase": phase,
+                        "last_modified": cp.get("last_modified", "unknown")
+                    })
+                except Exception as e:
+                    logger.warning(f"Error processing checkpoint: {str(e)}")
+
+            return formatted_checkpoints
+        except Exception as e:
+            logger.error(f"Error retrieving checkpoints: {str(e)}")
+            return []
+
+    def load_checkpoint(self, checkpoint_id: str) -> Dict[str, Any]:
+        """Load a checkpoint from MongoDB."""
+        if not self.mongo_client:
+            raise ValueError("MongoDB client not initialized")
+
+        try:
+            db = self.mongo_client["storybook"]
+            checkpoint = db["checkpoints"].find_one({"checkpoint_name": checkpoint_id})
+
+            if checkpoint and "state" in checkpoint:
+                logger.info(f"Loaded checkpoint: {checkpoint_id}")
+
+                # Update quality history from state if available
+                state = checkpoint["state"]
+                if "quality_history" in state:
+                    self.quality_history = state["quality_history"]
+                elif "project" in state and "quality_assessment" in state["project"]:
+                    self.quality_history = [state["project"]["quality_assessment"]]
+
+                return state
+            else:
+                raise ValueError(f"Checkpoint not found or invalid: {checkpoint_id}")
+        except Exception as e:
+            logger.error(f"Error loading checkpoint: {str(e)}")
+            raise RuntimeError(f"Error loading checkpoint: {str(e)}")
+
+    def save_checkpoint(self, state: Dict[str, Any], checkpoint_id: str) -> None:
+        """Save a checkpoint to MongoDB."""
+        if not self.mongo_client:
+            raise ValueError("MongoDB client not initialized")
+
+        try:
+            # Ensure quality history is in the state
+            if hasattr(self, 'quality_history') and self.quality_history:
+                if "quality_history" not in state:
+                    state["quality_history"] = []
+                state["quality_history"] = self.quality_history
+
+            db = self.mongo_client["storybook"]
+            db["checkpoints"].update_one(
+                {"checkpoint_name": checkpoint_id},
+                {"$set": {
+                    "checkpoint_name": checkpoint_id,
+                    "state": state,
+                    "last_modified": datetime.now().isoformat()
+                }},
+                upsert=True
+            )
+            logger.info(f"Saved checkpoint: {checkpoint_id}")
+        except Exception as e:
+            logger.error(f"Error saving checkpoint: {str(e)}")
+            raise RuntimeError(f"Error saving checkpoint: {str(e)}")
+
+    def export_manuscript(self, state: Dict[str, Any], format: str = "text") -> str:
+        """Export manuscript in various formats."""
+        if not state or "project" not in state or "manuscript" not in state["project"]:
+            raise ValueError("Invalid state or missing manuscript")
+
+        manuscript = state["project"]["manuscript"]
+        title = state["project"].get("title", "Untitled")
+
+        if format == "text":
+            return manuscript
+        elif format == "markdown":
+            # Create a simple markdown version
+            md_content = f"# {title}\n\n{manuscript}"
+            return md_content
+        elif format == "html":
+            # Create a simple HTML version
+            html_content = f"<!DOCTYPE html>\n<html>\n<head>\n<title>{title}</title>\n</head>\n<body>\n<h1>{title}</h1>\n"
+
+            # Convert paragraphs to HTML
+            paragraphs = manuscript.split("\n\n")
+            for p in paragraphs:
+                if p.strip():
+                    # Check if it's a heading (starts with #)
+                    if p.strip().startswith("# "):
+                        h_level = len(re.match(r'^#+', p.strip()).group())
+                        h_content = p.strip()[h_level:].strip()
+                        html_content += f"<h{h_level}>{h_content}</h{h_level}>\n"
+                    else:
+                        html_content += f"<p>{p}</p>\n"
+
+            html_content += "</body>\n</html>"
+            return html_content
+        else:
+            # Default to text format
+            return manuscript
+
+class StreamingTokenCallback(StreamingStdOutCallbackHandler):
+    def __init__(self, queue):
+        super().__init__()
+        self.queue = queue
+        self.token_buffer = ""
+
+    def on_llm_start(self, serialized: dict, prompts: list, **kwargs) -> None:
+        """Handle the start of LLM generation."""
+        self.token_buffer = ""
+
+    def on_llm_new_token(self, token: str, **kwargs) -> None:
+        """Process new tokens as they're generated."""
+        if token:
+            self.token_buffer += token
+            if len(self.token_buffer) > 80 or any(p in token for p in '.!?'):
+                try:
+                    self.queue.put_nowait(self.token_buffer)
+                    self.token_buffer = ""
+                except queue.Full:
+                    pass
+
+    def on_llm_end(self, response, **kwargs) -> None:
+        """Handle remaining tokens at generation end."""
+        if self.token_buffer:
+            try:
+                self.queue.put_nowait(self.token_buffer)
+            except queue.Full:
+                pass
+            self.token_buffer = ""
+
+class SafeFallbackModel(BaseChatModel):
+    """A safe fallback model that returns predefined responses when other models fail."""
+
+    def __init__(self, agent_name_=None):
+        super().__init__()
+        self._agent_name = agent_name_ or "unknown"
+
+    @property
+    def _llm_type(self) -> str:
+        """Return identifier for this LLM."""
+        return "safe_fallback"
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        """Generate a safe fallback response."""
+        try:
+            # Create a contextual fallback message
+            response = (
+                f"I apologize, but I'm currently operating in fallback mode for {self._agent_name}. "
+                "The main language model encountered an issue. Please try:\n"
+                "1. Using a different model\n"
+                "2. Reducing the input size\n"
+                "3. Checking your system resources\n"
+                "4. Restarting the application"
+            )
+
+            # Create message in expected format
+            message = AIMessage(content=response)
+            generation = ChatGeneration(message=message)
+
+            # Return in the expected ChatResult format
+            return ChatResult(generations=[generation])
+
+        except Exception as e:
+            # Ultimate fallback if even the safe response fails
+            message = AIMessage(content=f"Critical error in fallback model: {str(e)}")
+            generation = ChatGeneration(message=message)
+            return ChatResult(generations=[generation])
+
+    async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+        """Async version of generate - returns same response."""
+        return self._generate(messages, stop, run_manager, **kwargs)
 
 class AgentFactory:
     def __init__(self, config, model_config=None, tavily_client=None):
@@ -487,6 +984,25 @@ class AgentFactory:
             fallback = SafeFallbackModel(agent_name_=agent_name or "default")
             # Don't cache fallback models
             return fallback
+
+    def update_model_config(self, new_config: Dict[str, Any]):
+        """Update the model configuration."""
+        if isinstance(new_config, dict):
+            # Update default model config if provided
+            if "model_id" in new_config or "task" in new_config or "temperature" in new_config or "max_new_tokens" in new_config or "do_sample" in new_config or "repetition_penalty" in new_config:
+                self.default_model_config.update({k: v for k, v in new_config.items() if k in self.default_model_config})
+
+            # Update agent-specific configs if provided
+            if "agent_configs" in new_config and isinstance(new_config["agent_configs"], dict):
+                self.agent_model_configs.update(new_config["agent_configs"])
+
+            # Clear model cache to force reload with new configuration
+            self.model_cache = {}
+            self.model_usage_tracker = []
+
+            logger.info(f"Updated model configurations. Default model: {self.default_model_config.get('model_id', 'unknown')}")
+        else:
+            logger.warning(f"Invalid model config provided: {type(new_config)}")
 
     def create_research_agent(self, research_type: str):
         """Create a research agent function."""
@@ -870,79 +1386,3 @@ class AgentFactory:
             return updated_state
 
         return agent_function
-
-class StreamingTokenCallback(StreamingStdOutCallbackHandler):
-    def __init__(self, queue):
-        super().__init__()
-        self.queue = queue
-        self.token_buffer = ""
-
-    def on_llm_start(self, serialized: dict, prompts: list, **kwargs) -> None:
-        """Handle the start of LLM generation."""
-        self.token_buffer = ""
-
-    def on_llm_new_token(self, token: str, **kwargs) -> None:
-        """Process new tokens as they're generated."""
-        if token:
-            self.token_buffer += token
-            if len(self.token_buffer) > 80 or any(p in token for p in '.!?'):
-                try:
-                    self.queue.put_nowait(self.token_buffer)
-                    self.token_buffer = ""
-                except queue.Full:
-                    pass
-
-    def on_llm_end(self, response, **kwargs) -> None:
-        """Handle remaining tokens at generation end."""
-        if self.token_buffer:
-            try:
-                self.queue.put_nowait(self.token_buffer)
-            except queue.Full:
-                pass
-            self.token_buffer = ""
-
-from langchain_core.messages import AIMessage, SystemMessage
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.outputs import ChatResult, ChatGeneration
-
-class SafeFallbackModel(BaseChatModel):
-    """A safe fallback model that returns predefined responses when other models fail."""
-
-    def __init__(self, agent_name_=None):
-        super().__init__()
-        self._agent_name = agent_name_ or "unknown"
-
-    @property
-    def _llm_type(self) -> str:
-        """Return identifier for this LLM."""
-        return "safe_fallback"
-
-    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
-        """Generate a safe fallback response."""
-        try:
-            # Create a contextual fallback message
-            response = (
-                f"I apologize, but I'm currently operating in fallback mode for {self._agent_name}. "
-                "The main language model encountered an issue. Please try:\n"
-                "1. Using a different model\n"
-                "2. Reducing the input size\n"
-                "3. Checking your system resources\n"
-                "4. Restarting the application"
-            )
-
-            # Create message in expected format
-            message = AIMessage(content=response)
-            generation = ChatGeneration(message=message)
-
-            # Return in the expected ChatResult format
-            return ChatResult(generations=[generation])
-
-        except Exception as e:
-            # Ultimate fallback if even the safe response fails
-            message = AIMessage(content=f"Critical error in fallback model: {str(e)}")
-            generation = ChatGeneration(message=message)
-            return ChatResult(generations=[generation])
-
-    async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
-        """Async version of generate - returns same response."""
-        return self._generate(messages, stop, run_manager, **kwargs)

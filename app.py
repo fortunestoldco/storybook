@@ -12,14 +12,14 @@ from pymongo import MongoClient
 import re
 import os
 import warnings
-import loggings
+import logging
 
 from utils import init_cuda, cleanup_memory, get_memory_usage, split_manuscript, validate_state
 from state import AgentState
 from config import MODEL_CHOICES, DEFAULT_MODEL_CONFIG, AGENT_TEAMS, ALL_AGENTS, MONGODB_URI, create_agent_model_configs
 from agent import AgentFactory
 from graph import create_phase_graph, create_main_graph, create_storybook_graph
-from storybook import Storybook
+from storybook_class import Storybook
 
 # Configure logging
 logger = logging.getLogger(__name__)
