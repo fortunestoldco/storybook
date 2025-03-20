@@ -823,18 +823,7 @@ class AgentFactory:
                 print(f"No chat template found for model {model_id}, adding a default template")
 
                 # Set a default ChatML-style template which works for many models
-                default_template = """{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{% for message in messages %}{% if message['role'] == 'system' %}<|im_end|>system
-{{ message['content'] }}<|im_end|>
-{% elif message['role'] == 'user' %}<|im_end|>user
-{{ message['content'] }}<|im_end|>
-{% elif message['role'] == 'assistant' %}<|im_end|>assistant
-{{ message['content'] }}<|im_end|>
-{% else %}<|im_end|>{{ message['role'] }}
-{{ message['content'] }}<|im_end|>
-{% endif %}{% endfor %}{% if add_generation_prompt %}<|im_end|>assistant
-{% endif %}"""
-
-                tokenizer.chat_template = default_template
+                tokenizer.chat_template = DEFAULT_CHAT_TEMPLATE
                 print("Added default ChatML template")
 
             print("Creating pipeline with configured tokenizer")
