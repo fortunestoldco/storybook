@@ -1661,7 +1661,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
             # Get the last assistant message
             last_message = None
             for msg in reversed(messages):
-                if msg.get("role") == "assistant":
+                if msg.get("role") == "assistant"):
                     last_message = msg.get("content", "")
                     break
 
@@ -1754,7 +1754,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 "checkpoint_id": project_id,
                 "checkpoint_ns": phase
             }
-            return builder.compile(checkpointer=checkpointer, configurable=configurable)
+            return builder.compile(checkpointer=checkpointer)
         else:
             return builder.compile()
     except Exception as e:
@@ -1840,7 +1840,7 @@ def create_main_graph(config: Dict[str, Any]) -> StateGraph:
                 "checkpoint_id": "main_graph",
                 "checkpoint_ns": "main"
             }
-            return builder.compile(checkpointer=checkpointer, configurable=configurable)
+            return builder.compile(checkpointer=checkpointer)
         else:
             return builder.compile()
     except Exception as e:
@@ -2001,7 +2001,7 @@ def create_storybook_graph(config: Dict[str, Any]) -> StateGraph:
                 "checkpoint_id": "storybook",
                 "checkpoint_ns": "full"
             }
-            return builder.compile(checkpointer=checkpointer, configurable=configurable)
+            return builder.compile(checkpointer=checkpointer)
         else:
             return builder.compile()
     except Exception as e:
