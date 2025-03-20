@@ -48,7 +48,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
             "plot_development_specialist",
             "world_building_expert",
             "character_psychology_specialist",
-            "character_voice_designer",
+            "character_voice_designer", 
             "character_relationship_mapper"
         ],
         "development": [
@@ -118,13 +118,13 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 # Initialize or retrieve delegation tracking
                 if "pending_delegations" not in state:
                     state["pending_delegations"] = []
-
+                
                 # If we already have pending delegations, process the next one
                 if state["pending_delegations"]:
                     next_delegation = state["pending_delegations"].pop(0)
                     print(f"Processing next pending delegation to {next_delegation}")
                     return next_delegation
-
+                
                 # Find delegations section in the format "Tasks:" followed by bullet points
                 tasks_section = None
                 if "tasks:" in last_message_lower:
@@ -132,21 +132,21 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                     tasks_section_match = re.search(r"tasks:(.*?)(?:\n\n|$)", last_message_lower, re.DOTALL)
                     if tasks_section_match:
                         tasks_section = tasks_section_match.group(1)
-
+                
                 # Extract bullet points with specialist assignments
                 if tasks_section:
                     # Find all bullet points with specialist assignments
                     bullet_pattern = r"[-•*]\s*([\w\s]+?):\s*([^\n]+)"
                     delegations = re.findall(bullet_pattern, last_message)
-
+                    
                     # Process all delegations found
                     for specialist, task_desc in delegations:
                         specialist_lower = specialist.lower().strip()
-
+                        
                         # Map specialist names to node names
                         specialist_mappings = {
                             "creative director": "creative_director",
-                            "structure architect": "structure_architect",
+                            "structure architect": "structure_architect", 
                             "plot development specialist": "plot_development_specialist",
                             "world building expert": "world_building_expert",
                             "character psychology specialist": "character_psychology_specialist",
@@ -155,7 +155,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                             "domain knowledge specialist": "domain_knowledge_specialist",
                             "cultural authenticity expert": "cultural_authenticity_expert"
                         }
-
+                        
                         # Find matching node name
                         for key, node_name in specialist_mappings.items():
                             if key in specialist_lower and node_name in phase_agents:
@@ -336,13 +336,13 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
             """Route after a specialist to handle delegation flow."""
             # Get the current specialist name
             specialist_type = state.get("lnode", "")
-
+            
             # If there are pending delegations, we should continue with those
             if "pending_delegations" in state and state["pending_delegations"]:
                 next_delegation = state["pending_delegations"].pop(0)
                 print(f"Routing from {specialist_type} to next pending delegation: {next_delegation}")
                 return next_delegation
-
+            
             # Otherwise, return to executive director to check for more tasks
             print(f"Specialist {specialist_type} completed work, returning to executive_director")
             return "executive_director"
@@ -400,7 +400,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
         )
 
         # Add specialist routing
-        for specialist in ["structure_architect", "plot_development_specialist",
+        for specialist in ["structure_architect", "plot_development_specialist", 
                           "world_building_expert", "character_psychology_specialist",
                           "character_voice_designer", "character_relationship_mapper",
                           "domain_knowledge_specialist", "cultural_authenticity_expert",
@@ -435,13 +435,13 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 # Initialize or retrieve delegation tracking
                 if "pending_delegations" not in state:
                     state["pending_delegations"] = []
-
+                
                 # If we already have pending delegations, process the next one
                 if state["pending_delegations"]:
                     next_delegation = state["pending_delegations"].pop(0)
                     print(f"Processing next pending delegation to {next_delegation}")
                     return next_delegation
-
+                
                 # Find delegations section in the format "Tasks:" followed by bullet points
                 tasks_section = None
                 if "tasks:" in last_message_lower:
@@ -449,17 +449,17 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                     tasks_section_match = re.search(r"tasks:(.*?)(?:\n\n|$)", last_message_lower, re.DOTALL)
                     if tasks_section_match:
                         tasks_section = tasks_section_match.group(1)
-
+                
                 # Extract bullet points with specialist assignments
                 if tasks_section:
                     # Find all bullet points with specialist assignments
                     bullet_pattern = r"[-•*]\s*([\w\s]+?):\s*([^\n]+)"
                     delegations = re.findall(bullet_pattern, last_message)
-
+                    
                     # Process all delegations found
                     for specialist, task_desc in delegations:
                         specialist_lower = specialist.lower().strip()
-
+                        
                         # Map specialist names to node names
                         specialist_mappings = {
                             # Creative team
@@ -478,7 +478,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                             # Market team
                             "market alignment director": "market_alignment_director"
                         }
-
+                        
                         # Find matching node name
                         for key, node_name in specialist_mappings.items():
                             if key in specialist_lower and node_name in phase_agents:
@@ -890,13 +890,13 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 # Initialize or retrieve delegation tracking
                 if "pending_delegations" not in state:
                     state["pending_delegations"] = []
-
+                
                 # If we already have pending delegations, process the next one
                 if state["pending_delegations"]:
                     next_delegation = state["pending_delegations"].pop(0)
                     print(f"Processing next pending delegation to {next_delegation}")
                     return next_delegation
-
+                
                 # Find delegations section in the format "Tasks:" followed by bullet points
                 tasks_section = None
                 if "tasks:" in last_message_lower:
@@ -904,17 +904,17 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                     tasks_section_match = re.search(r"tasks:(.*?)(?:\n\n|$)", last_message_lower, re.DOTALL)
                     if tasks_section_match:
                         tasks_section = tasks_section_match.group(1)
-
+                
                 # Extract bullet points with specialist assignments
                 if tasks_section:
                     # Find all bullet points with specialist assignments
                     bullet_pattern = r"[-•*]\s*([\w\s]+?):\s*([^\n]+)"
                     delegations = re.findall(bullet_pattern, last_message)
-
+                    
                     # Process all delegations found
                     for specialist, task_desc in delegations:
                         specialist_lower = specialist.lower().strip()
-
+                        
                         # Map specialist names to node names
                         specialist_mappings = {
                             # Content team
@@ -924,7 +924,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                             "dialogue crafter": "dialogue_crafters",
                             "dialogue crafters": "dialogue_crafters",
                             "scene construction specialist": "scene_construction_specialists",
-                            "scene construction specialists": "scene_construction_specialists",
+                            "scene construction specialists": "scene_construction_specialists", 
                             "continuity manager": "continuity_manager",
                             "voice consistency monitor": "voice_consistency_monitor",
                             "emotional arc designer": "emotional_arc_designer",
@@ -935,7 +935,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                             # Research
                             "domain knowledge specialist": "domain_knowledge_specialist"
                         }
-
+                        
                         # Find matching node name
                         for key, node_name in specialist_mappings.items():
                             if key in specialist_lower and node_name in phase_agents:
@@ -1204,13 +1204,13 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 # Initialize or retrieve delegation tracking
                 if "pending_delegations" not in state:
                     state["pending_delegations"] = []
-
+                
                 # If we already have pending delegations, process the next one
                 if state["pending_delegations"]:
                     next_delegation = state["pending_delegations"].pop(0)
                     print(f"Processing next pending delegation to {next_delegation}")
                     return next_delegation
-
+                
                 # Find delegations section in the format "Tasks:" followed by bullet points
                 tasks_section = None
                 if "tasks:" in last_message_lower:
@@ -1218,17 +1218,17 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                     tasks_section_match = re.search(r"tasks:(.*?)(?:\n\n|$)", last_message_lower, re.DOTALL)
                     if tasks_section_match:
                         tasks_section = tasks_section_match.group(1)
-
+                
                 # Extract bullet points with specialist assignments
                 if tasks_section:
                     # Find all bullet points with specialist assignments
                     bullet_pattern = r"[-•*]\s*([\w\s]+?):\s*([^\n]+)"
                     delegations = re.findall(bullet_pattern, last_message)
-
+                    
                     # Process all delegations found
                     for specialist, task_desc in delegations:
                         specialist_lower = specialist.lower().strip()
-
+                        
                         # Map specialist names to node names
                         specialist_mappings = {
                             # Editorial team
@@ -1244,7 +1244,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                             "grammar consistency checker": "grammar_consistency_checker",
                             "fact verification specialist": "fact_verification_specialist"
                         }
-
+                        
                         # Find matching node name
                         for key, node_name in specialist_mappings.items():
                             if key in specialist_lower and node_name in phase_agents:
@@ -1468,7 +1468,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 next_delegation = state["pending_delegations"].pop(0)
                 print(f"Routing to next pending delegation: {next_delegation}")
                 return next_delegation
-
+                
             # Always return to executive director for review after refinement
             return "executive_director"
 
@@ -1534,13 +1534,13 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 # Initialize or retrieve delegation tracking
                 if "pending_delegations" not in state:
                     state["pending_delegations"] = []
-
+                
                 # If we already have pending delegations, process the next one
                 if state["pending_delegations"]:
                     next_delegation = state["pending_delegations"].pop(0)
                     print(f"Processing next pending delegation to {next_delegation}")
                     return next_delegation
-
+                
                 # Find delegations section in the format "Tasks:" followed by bullet points
                 tasks_section = None
                 if "tasks:" in last_message_lower:
@@ -1548,17 +1548,17 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                     tasks_section_match = re.search(r"tasks:(.*?)(?:\n\n|$)", last_message_lower, re.DOTALL)
                     if tasks_section_match:
                         tasks_section = tasks_section_match.group(1)
-
+                
                 # Extract bullet points with specialist assignments
                 if tasks_section:
                     # Find all bullet points with specialist assignments
                     bullet_pattern = r"[-•*]\s*([\w\s]+?):\s*([^\n]+)"
                     delegations = re.findall(bullet_pattern, last_message)
-
+                    
                     # Process all delegations found
                     for specialist, task_desc in delegations:
                         specialist_lower = specialist.lower().strip()
-
+                        
                         # Map specialist names to node names
                         specialist_mappings = {
                             "editorial director": "editorial_director",
@@ -1569,7 +1569,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                             "differentiation strategist": "differentiation_strategist",
                             "formatting standards expert": "formatting_standards_expert"
                         }
-
+                        
                         # Find matching node name
                         for key, node_name in specialist_mappings.items():
                             if key in specialist_lower and node_name in phase_agents:
@@ -1661,7 +1661,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
             # Get the last assistant message
             last_message = None
             for msg in reversed(messages):
-                if msg.get("role") == "assistant"):
+                if msg.get("role") == "assistant":
                     last_message = msg.get("content", "")
                     break
 
@@ -1754,7 +1754,7 @@ def create_phase_graph(config: RunnableConfig) -> StateGraph:
                 "checkpoint_id": project_id,
                 "checkpoint_ns": phase
             }
-            return builder.compile(checkpointer=checkpointer)
+            return builder.compile(checkpointer=checkpointer, configurable=configurable)
         else:
             return builder.compile()
     except Exception as e:
@@ -1840,7 +1840,7 @@ def create_main_graph(config: Dict[str, Any]) -> StateGraph:
                 "checkpoint_id": "main_graph",
                 "checkpoint_ns": "main"
             }
-            return builder.compile(checkpointer=checkpointer)
+            return builder.compile(checkpointer=checkpointer, configurable=configurable)
         else:
             return builder.compile()
     except Exception as e:
@@ -2001,7 +2001,7 @@ def create_storybook_graph(config: Dict[str, Any]) -> StateGraph:
                 "checkpoint_id": "storybook",
                 "checkpoint_ns": "full"
             }
-            return builder.compile(checkpointer=checkpointer)
+            return builder.compile(checkpointer=checkpointer, configurable=configurable)
         else:
             return builder.compile()
     except Exception as e:
