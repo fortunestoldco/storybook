@@ -21,3 +21,4 @@ accelerate
 torch
 matplotlib
 spaces
+networkx
