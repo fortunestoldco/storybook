@@ -579,8 +579,8 @@ class writer_gui:
                             memory_stats = cleanup_memory()
                             system_memory = memory_stats["system"]
                             if system_memory["percent_used"] > 90:  # If system memory usage is high
-                                stream_buffer.append(f"[{datetime.now().strftime('%H:%M:%S')}] WARNING: High memory usage ({system_memory['percent_used']}%). Performing cleanup.")
-                                logger.warning(f"High memory usage ({system_memory['percent_used']}%). Performing cleanup.")
+                                stream_buffer.append(f"[{datetime.now().strftime('%H:%M:%S')}] WARNING: High memory usage ({system_memory['percent_used']}). Performing cleanup.")
+                                logger.warning(f"High memory usage ({system_memory['percent_used']}). Performing cleanup.")
 
                     # Get any remaining progress updates
                     while not progress_queue.empty():
@@ -933,8 +933,8 @@ class writer_gui:
                             memory_stats = cleanup_memory()
                             system_memory = memory_stats["system"]
                             if system_memory["percent_used"] > 90:  # If system memory usage is high
-                                stream_buffer.append(f"[{datetime.now().strftime('%H:%M:%S')}] WARNING: High memory usage ({system_memory['percent_used']}%). Performing cleanup.")
-                                logger.warning(f"High memory usage ({system_memory['percent_used']}%). Performing cleanup.")
+                                stream_buffer.append(f"[{datetime.now().strftime('%H:%M:%S')}] WARNING: High memory usage ({system_memory['percent_used']}). Performing cleanup.")
+                                logger.warning(f"High memory usage ({system_memory['percent_used']}). Performing cleanup.")
 
                     # Get any remaining progress updates
                     while not progress_queue.empty():
